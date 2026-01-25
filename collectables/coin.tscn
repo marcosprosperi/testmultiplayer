@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://d2l5myn53o5qe"]
+
+[ext_resource type="Script" uid="uid://cobjn6j7lgvb1" path="res://collectables/coin.gd" id="1_bxyop"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_5uct3"]
+size = Vector2(32, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yjmdh"]
+size = Vector2(32, 32)
+
+[node name="Coin" type="Area2D"]
+script = ExtResource("1_bxyop")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(16, -16)
+texture = SubResource("PlaceholderTexture2D_5uct3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(16, -16)
+shape = SubResource("RectangleShape2D_yjmdh")

@@ -1,0 +1,62 @@
+[gd_scene load_steps=6 format=4 uid="uid://bxwdv7rjp1mf5"]
+
+[ext_resource type="Texture2D" uid="uid://rkod5inpj6e6" path="res://icon.svg" id="1_014kd"]
+[ext_resource type="Script" uid="uid://dd5ga2ivyfnee" path="res://scenes/level_1.gd" id="1_bswci"]
+[ext_resource type="PackedScene" uid="uid://d2l5myn53o5qe" path="res://collectables/coin.tscn" id="3_rus8k"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bswci"]
+texture = ExtResource("1_014kd")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-63.50331, -64.06779, 63.5, -63.5, 64.204094, 64.2041, -64.204094, 63.566837)
+
+[sub_resource type="TileSet" id="TileSet_rus8k"]
+physics_layer_0/collision_layer = 512
+physics_layer_0/collision_mask = 0
+sources/1 = SubResource("TileSetAtlasSource_bswci")
+
+[node name="Level_1" type="Node2D"]
+script = ExtResource("1_bswci")
+
+[node name="CollectablesMultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("uid://d2l5myn53o5qe")
+spawn_path = NodePath("../Collectables")
+
+[node name="PlayerMultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+_spawnable_scenes = PackedStringArray("uid://c8gcs13fdxxkr", "")
+spawn_path = NodePath("../Players")
+
+[node name="Players" type="Node" parent="."]
+
+[node name="Marker2D" type="Marker2D" parent="."]
+
+[node name="TileMapLayer" type="TileMapLayer" parent="."]
+position = Vector2(0, -377)
+tile_map_data = PackedByteArray("AAD6/zwAAQAAAAAAAAD6/zsAAQAAAAAAAAD7/zsAAQAAAAAAAAD8/zsAAQAAAAAAAAD9/zsAAQAAAAAAAAD+/zsAAQAAAAAAAAD//zsAAQAAAAAAAAAAADsAAQAAAAAAAAABADsAAQAAAAAAAAACADsAAQAAAAAAAAADADsAAQAAAAAAAAAEADsAAQAAAAAAAAAFADsAAQAAAAAAAAAGADsAAQAAAAAAAAAHADsAAQAAAAAAAAAIADoAAQAAAAAAAAAJADoAAQAAAAAAAAAKADoAAQAAAAAAAAALADkAAQAAAAAAAAAMADkAAQAAAAAAAAANADkAAQAAAAAAAAAOADkAAQAAAAAAAAAPADkAAQAAAAAAAAAQADkAAQAAAAAAAAAQADgAAQAAAAAAAAARADgAAQAAAAAAAAASADgAAQAAAAAAAAATADgAAQAAAAAAAAAUADgAAQAAAAAAAAAUADcAAQAAAAAAAAAVADcAAQAAAAAAAAAWADcAAQAAAAAAAAAXADcAAQAAAAAAAAAYADcAAQAAAAAAAAAZADcAAQAAAAAAAAAaADcAAQAAAAAAAAAbADcAAQAAAAAAAAAcADcAAQAAAAAAAAAcADgAAQAAAAAAAAAdADgAAQAAAAAAAAAdADkAAQAAAAAAAAAeADkAAQAAAAAAAAAfADkAAQAAAAAAAAAfADoAAQAAAAAAAAAgADoAAQAAAAAAAAAhADoAAQAAAAAAAAAiADoAAQAAAAAAAAAjADoAAQAAAAAAAAAkADoAAQAAAAAAAAAlADoAAQAAAAAAAAAmADoAAQAAAAAAAAAnADoAAQAAAAAAAAAoADoAAQAAAAAAAAApADoAAQAAAAAAAAAqADoAAQAAAAAAAAArADoAAQAAAAAAAAAsADsAAQAAAAAAAAAtADsAAQAAAAAAAAAuADsAAQAAAAAAAAAvADwAAQAAAAAAAAAwADwAAQAAAAAAAAAxADwAAQAAAAAAAAAyADwAAQAAAAAAAAAzADwAAQAAAAAAAAA0ADwAAQAAAAAAAAA1ADwAAQAAAAAAAAA2ADwAAQAAAAAAAAA3ADwAAQAAAAAAAAA4ADwAAQAAAAAAAAA5ADsAAQAAAAAAAAA6ADsAAQAAAAAAAAA7ADoAAQAAAAAAAAA8ADoAAQAAAAAAAAA9ADoAAQAAAAAAAAA+ADkAAQAAAAAAAAA/ADkAAQAAAAAAAABAADkAAQAAAAAAAABBADkAAQAAAAAAAABCADkAAQAAAAAAAABDADkAAQAAAAAAAABEADkAAQAAAAAAAABFADkAAQAAAAAAAABGADkAAQAAAAAAAABHADkAAQAAAAAAAABIADkAAQAAAAAAAABJADkAAQAAAAAAAABKADkAAQAAAAAAAABLADkAAQAAAAAAAABMADkAAQAAAAAAAABNADkAAQAAAAAAAABOADkAAQAAAAAAAABPADoAAQAAAAAAAABQADoAAQAAAAAAAABRADoAAQAAAAAAAABSADoAAQAAAAAAAAA=")
+tile_set = SubResource("TileSet_rus8k")
+
+[node name="Collectables" type="Node" parent="."]
+
+[node name="Coin" parent="Collectables" instance=ExtResource("3_rus8k")]
+position = Vector2(111, 170)
+
+[node name="Coin2" parent="Collectables" instance=ExtResource("3_rus8k")]
+position = Vector2(148, 333)
+
+[node name="Coin3" parent="Collectables" instance=ExtResource("3_rus8k")]
+position = Vector2(293, 333)
+
+[node name="Coin4" parent="Collectables" instance=ExtResource("3_rus8k")]
+position = Vector2(415, 343)
+
+[node name="Coin5" parent="Collectables" instance=ExtResource("3_rus8k")]
+position = Vector2(506, 365)
+
+[node name="Coin6" parent="Collectables" instance=ExtResource("3_rus8k")]
+position = Vector2(638, 380)
+
+[node name="Coin7" parent="Collectables" instance=ExtResource("3_rus8k")]
+position = Vector2(738, 402)
+
+[node name="Coin8" parent="Collectables" instance=ExtResource("3_rus8k")]
+position = Vector2(858, 412)
