@@ -23,7 +23,7 @@ _spawnable_scenes = PackedStringArray("uid://d2l5myn53o5qe")
 spawn_path = NodePath("../Collectables")
 
 [node name="PlayerMultiplayerSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("uid://c8gcs13fdxxkr", "")
+_spawnable_scenes = PackedStringArray("uid://c8gcs13fdxxkr")
 spawn_path = NodePath("../Players")
 
 [node name="Players" type="Node" parent="."]

@@ -6,7 +6,7 @@ const JUMP_VELOCITY = -400.0
 var health = 0
 
 func _enter_tree():
-	s et_multiplayer_authority(name.to_int())
+	set_multiplayer_authority(name.to_int())
 
 func _ready() -> void:
 	if is_multiplayer_authority():

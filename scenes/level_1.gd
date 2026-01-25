@@ -4,8 +4,7 @@ extends Node2D
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	if multiplayer.is_server():
-		create_player(1)
-		for id in NetworkManager.players:
+		for id in PlayersManager.joined_players:
 			create_player(id)
 	
 
