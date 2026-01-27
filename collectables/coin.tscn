@@ -9,6 +9,7 @@ size = Vector2(32, 32)
 size = Vector2(32, 32)
 
 [node name="Coin" type="Area2D"]
+collision_layer = 4
 script = ExtResource("1_bxyop")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
