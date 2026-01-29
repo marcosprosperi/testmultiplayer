@@ -11,7 +11,7 @@ func _on_body_entered(body: Node2D) -> void:
 		if body.name.is_valid_int():
 			var player_id = body.name.to_int()
 			if PlayersManager.has_method("add_points_to_player"):
-				PlayersManager.add_points_to_player.rpc(player_id, 10)
+				PlayersManager.add_points_to_player.rpc(player_id, 1)
 				_remove_coin.rpc()
 
 @rpc("authority", "call_local", "reliable")

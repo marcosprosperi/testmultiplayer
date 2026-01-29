@@ -1,4 +1,4 @@
-extends Node
+class_name Main extends Node
 
 @onready var level_container: Node = $LevelContainer	
 @onready var players: Node = $Players
