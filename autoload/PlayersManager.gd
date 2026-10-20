@@ -7,13 +7,16 @@ const COLORS = [
 ]
 
 # Only players that confirmed a name and color:
-# id -> {name, color, score, points, finishes}
-# (score: coins, points: championship, finishes: position in each race)
+# id -> {name, color, points, finishes}
+# (points: championship, finishes: position in each race)
 var joined_players = {}
 var game_started := false
+# Chosen by the host in the lobby
+var settings = {"coins": true}
 
 signal finish_level
 signal players_changed
+signal settings_changed
 # Server only: a new player confirmed their profile
 signal player_added(id: int)
 # Server only
@@ -24,7 +27,24 @@ signal profile_result(ok: bool, message: String)
 func reset() -> void:
 	joined_players = {}
 	game_started = false
+	settings = {"coins": true}
 	players_changed.emit()
+	settings_changed.emit()
+
+## Coins give extra points but slow you down (host option)
+func coins_enabled() -> bool:
+	return settings.get("coins", true)
+
+## Host only
+func set_coins_enabled(enabled: bool) -> void:
+	if multiplayer.is_server():
+		settings["coins"] = enabled
+		_sync_settings.rpc(settings)
+
+@rpc("authority", "call_local", "reliable")
+func _sync_settings(server_settings: Dictionary) -> void:
+	settings = server_settings
+	settings_changed.emit()
 
 func has_player(id: int) -> bool:
 	return joined_players.has(id)
@@ -71,10 +91,9 @@ func request_profile(player_name: String, color_index: int) -> void:
 		return
 
 	var is_new = not joined_players.has(id)
-	var score = 0 if is_new else joined_players[id]["score"]
 	var points = 0 if is_new else joined_players[id]["points"]
 	var finishes = [] if is_new else joined_players[id]["finishes"]
-	joined_players[id] = {"name": player_name, "color": color_index, "score": score,
+	joined_players[id] = {"name": player_name, "color": color_index,
 		"points": points, "finishes": finishes}
 	_sync_player_list.rpc(joined_players, game_started)
 	_profile_result.rpc_id(id, true, "")
@@ -137,21 +156,7 @@ static func is_ahead(a: Dictionary, b: Dictionary) -> bool:
 
 func send_state_to(id: int) -> void:
 	_sync_player_list.rpc_id(id, joined_players, game_started)
-
-@rpc("any_peer", "call_local", "reliable")
-func add_points_to_player(id: int, amount: int) -> void:
-	if not multiplayer.is_server():
-		return
-		
-	if joined_players.has(id):
-		joined_players[id]["score"] += amount
-		
-		_sync_player_list.rpc(joined_players, game_started)
-		print("El jugador ", id, " ahora tiene: ", joined_players[id]["score"])
-		
-		if joined_players[id]["score"] == 50:
-			finish_level.emit()
-			print("Meta alcanzada, cambiando nivel...")
+	_sync_settings.rpc_id(id, settings)
 
 @rpc("authority", "call_local", "reliable")
 func _sync_player_list(server_data: Dictionary, started: bool) -> void:

@@ -2,6 +2,9 @@ extends Node
 
 ## Championship points by finishing position (1st, 2nd, ...)
 const POINTS = [10, 8, 6, 5, 4, 3, 2, 1]
+## Each coin is +1 point but makes you this much slower, up to MAX_SLOWDOWN
+const COIN_SLOWDOWN = 0.04
+const MAX_SLOWDOWN = 0.3
 ## Seconds the results table stays up before the next race
 const RESULTS_TIME = 6.0
 ## Seconds the champion is shown before a new championship starts
@@ -18,10 +21,13 @@ signal finish_order_changed
 signal state_changed
 signal grid_changed
 signal round_changed
+signal coins_changed
 # Everyone finished: results is [{id, name, color, position, gained, total}]
 signal results_shown(results: Array, final: bool)
 
 var state := State.WAITING
+# Coins picked up by each player in this race (synced by the server)
+var race_coins = {}
 # Which race of the championship this is (0-based) and how many there are
 var round_index := 0
 var rounds_total := 1
@@ -58,6 +64,7 @@ func register_level(level: Node2D) -> void:
 		_ready_players.clear()
 		_race_token += 1
 		_sync_finish_order.rpc(finish_order)
+		_sync_coins.rpc({})
 		_sync_state.rpc(State.WAITING, 0)
 		_start_anyway_after_timeout(_race_token)
 
@@ -70,6 +77,7 @@ func reset() -> void:
 	state = State.WAITING
 	grid_order = []
 	_last_finish_order = []
+	race_coins = {}
 	finish_order_changed.emit()
 	state_changed.emit()
 	grid_changed.emit()
@@ -79,6 +87,27 @@ func send_state_to(id: int) -> void:
 	_sync_state.rpc_id(id, state, countdown_value, race_time())
 	_sync_grid.rpc_id(id, grid_order)
 	_sync_round.rpc_id(id, round_index, rounds_total)
+	_sync_coins.rpc_id(id, race_coins)
+
+func coins_of(id: int) -> int:
+	return race_coins.get(id, 0)
+
+## 1.0 = normal speed; each coin carried this race makes you slower
+func speed_factor(id: int) -> float:
+	if not PlayersManager.coins_enabled():
+		return 1.0
+	return 1.0 - minf(coins_of(id) * COIN_SLOWDOWN, MAX_SLOWDOWN)
+
+## Server only: called by a coin when a player touches it
+func collect_coin(id: int) -> void:
+	if multiplayer.is_server():
+		race_coins[id] = coins_of(id) + 1
+		_sync_coins.rpc(race_coins)
+
+@rpc("authority", "call_local", "reliable")
+func _sync_coins(coins: Dictionary) -> void:
+	race_coins = coins
+	coins_changed.emit()
 
 ## Server only: called by Main before loading each level
 func set_round(index: int, total: int) -> void:
@@ -244,8 +273,9 @@ func _check_everyone_finished() -> void:
 		if not PlayersManager.has_player(id):
 			continue
 		var gained = POINTS[results.size()] if results.size() < POINTS.size() else 0
-		PlayersManager.add_race_result(id, results.size() + 1, gained)
-		results.append({"id": id, "position": results.size() + 1, "gained": gained})
+		var coins = coins_of(id) if PlayersManager.coins_enabled() else 0
+		PlayersManager.add_race_result(id, results.size() + 1, gained + coins)
+		results.append({"id": id, "position": results.size() + 1, "gained": gained, "coins": coins})
 	for result in results:
 		result["name"] = PlayersManager.name_of(result.id)
 		result["color"] = PlayersManager.color_of(result.id)

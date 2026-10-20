@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://race/hazards/saw.tscn" id="saw"]
 [ext_resource type="PackedScene" path="res://race/hazards/falling_platform.tscn" id="falling"]
 [ext_resource type="PackedScene" uid="uid://bfsx5wh40fsn8" path="res://Enemies/Cannon/cannon.tscn" id="cannon"]
+[ext_resource type="PackedScene" uid="uid://d2l5myn53o5qe" path="res://collectables/coin.tscn" id="coin"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_fall"]
 size = Vector2(3600, 32)
@@ -23,6 +24,8 @@ tile_map_data = PackedByteArray("AAD//xQABAAGAAEAAAD//xUABAAGAAEAAAD//xYABAAGAAE
 tile_set = ExtResource("level_tileset")
 
 [node name="Hazards" type="Node2D" parent="."]
+
+[node name="Coins" type="Node2D" parent="."]
 
 [node name="Spikes1" parent="Hazards" instance=ExtResource("spikes")]
 position = Vector2(320, 640)
@@ -63,6 +66,60 @@ tiles = 5
 [node name="Spikes5" parent="Hazards" instance=ExtResource("spikes")]
 position = Vector2(2816, 640)
 tiles = 3
+
+[node name="SpikeCoin1" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(320, 620)
+
+[node name="SpikeCoin2" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(344, 608)
+
+[node name="SpikeCoin3" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(368, 620)
+
+[node name="HighCoin1" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(808, 550)
+
+[node name="HighCoin2" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(840, 550)
+
+[node name="HighCoin3" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(872, 550)
+
+[node name="FallingCoinA1" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(1240, 614)
+
+[node name="FallingCoinA2" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(1272, 614)
+
+[node name="FallingCoinA3" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(1304, 614)
+
+[node name="FallingCoinB1" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(1496, 598)
+
+[node name="FallingCoinB2" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(1528, 598)
+
+[node name="FallingCoinB3" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(1560, 598)
+
+[node name="WallCoin1" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(1896, 582)
+
+[node name="WallCoin2" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(1928, 582)
+
+[node name="PitSawCoin" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(2328, 544)
+
+[node name="PlatformCoin1" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(2664, 566)
+
+[node name="PlatformCoin2" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(2696, 566)
+
+[node name="PlatformCoin3" parent="Coins" instance=ExtResource("coin")]
+position = Vector2(2728, 566)
 
 [node name="Cannon" parent="." instance=ExtResource("cannon")]
 position = Vector2(2128, 640)

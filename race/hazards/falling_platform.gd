@@ -55,6 +55,7 @@ func _fall() -> void:
 	if _state != State.IDLE:
 		return
 	_state = State.SHAKING
+	Sfx.play_at("crack", global_position)
 	var shake = create_tween()
 	for i in int(shake_time / 0.05):
 		shake.tween_property(self, "position", _origin + Vector2(randf_range(-1.5, 1.5), 0), 0.05)

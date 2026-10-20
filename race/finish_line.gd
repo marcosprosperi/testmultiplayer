@@ -10,7 +10,9 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
 func _on_body_entered(body: Node2D) -> void:
-	if body is Player and body.is_multiplayer_authority():
+	if body is Player and body.is_multiplayer_authority() \
+			and not RaceManager.has_finished(body.name.to_int()):
+		Sfx.play("finish")
 		RaceManager.report_finish.rpc_id(1)
 
 # Checkered flag on a pole, drawn so it doesn't need a texture
