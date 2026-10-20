@@ -1,0 +1,54 @@
+[gd_scene format=4 uid="uid://cibp8iksdlty"]
+
+[ext_resource type="Texture2D" uid="uid://rkod5inpj6e6" path="res://icon.svg" id="1_jm1iu"]
+[ext_resource type="PackedScene" uid="uid://d2l5myn53o5qe" path="res://collectables/coin.tscn" id="2_pbc48"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_eqxsl"]
+texture = ExtResource("1_jm1iu")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-64, -64, 64, -64, 64, 64, -64, 64)
+
+[sub_resource type="TileSet" id="TileSet_b4j7a"]
+tile_size = Vector2i(128, 128)
+physics_layer_0/collision_layer = 512
+physics_layer_0/collision_mask = 0
+sources/0 = SubResource("TileSetAtlasSource_eqxsl")
+
+[node name="Level_2" type="Node2D" unique_id=2140859353]
+
+[node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1644811239]
+tile_map_data = PackedByteArray("AAAAAAQAAAAAAAAAAAABAAQAAAAAAAAAAAACAAQAAAAAAAAAAAADAAQAAAAAAAAAAAAEAAQAAAAAAAAAAAAFAAQAAAAAAAAAAAAGAAQAAAAAAAAAAAAHAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAA=")
+tile_set = SubResource("TileSet_b4j7a")
+
+[node name="Collectables" type="Node" parent="." unique_id=1238118734]
+
+[node name="Coin" parent="Collectables" unique_id=1605376979 instance=ExtResource("2_pbc48")]
+position = Vector2(78, 364)
+
+[node name="Coin2" parent="Collectables" unique_id=277315058 instance=ExtResource("2_pbc48")]
+position = Vector2(161, 365)
+
+[node name="Coin3" parent="Collectables" unique_id=1327685760 instance=ExtResource("2_pbc48")]
+position = Vector2(262, 402)
+
+[node name="Coin4" parent="Collectables" unique_id=1741279813 instance=ExtResource("2_pbc48")]
+position = Vector2(359, 400)
+
+[node name="Coin5" parent="Collectables" unique_id=142824347 instance=ExtResource("2_pbc48")]
+position = Vector2(470, 399)
+
+[node name="Coin6" parent="Collectables" unique_id=1355798226 instance=ExtResource("2_pbc48")]
+position = Vector2(571, 396)
+
+[node name="Coin7" parent="Collectables" unique_id=422946871 instance=ExtResource("2_pbc48")]
+position = Vector2(672, 396)
+
+[node name="Coin8" parent="Collectables" unique_id=1546094921 instance=ExtResource("2_pbc48")]
+position = Vector2(772, 396)
+
+[node name="Coin9" parent="Collectables" unique_id=2112592545 instance=ExtResource("2_pbc48")]
+position = Vector2(872, 394)
+
+[node name="Coin10" parent="Collectables" unique_id=364514178 instance=ExtResource("2_pbc48")]
+position = Vector2(984, 394)
