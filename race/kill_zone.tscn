@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/kill_zone.gd" id="1_kill"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kill"]
+size = Vector2(32, 16)
+
+[node name="KillZone" type="Area2D"]
+collision_layer = 0
+script = ExtResource("1_kill")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_kill")

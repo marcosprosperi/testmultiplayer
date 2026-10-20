@@ -11,9 +11,8 @@ func _enter_tree():
 	set_multiplayer_authority(name.to_int())
 
 func _ready() -> void:
-	var spawn = get_tree().get_nodes_in_group("spawn")
-	if !spawn.is_empty():
-		global_position = spawn[0].position
+	if RaceManager.has_spawn():
+		global_position = RaceManager.get_spawn_position()
 
 	animated_sprite_2d.scale.x = 1
 	if is_multiplayer_authority():
@@ -51,3 +50,16 @@ func _physics_process(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 
 	move_and_slide()
+
+## Losing sends the player back to the start of the level
+func die() -> void:
+	if not is_multiplayer_authority():
+		return
+	respawn()
+
+func respawn() -> void:
+	if not is_multiplayer_authority():
+		return
+	velocity = Vector2.ZERO
+	if RaceManager.has_spawn():
+		global_position = RaceManager.get_spawn_position()

@@ -7,6 +7,9 @@
 [ext_resource type="Texture2D" uid="uid://igkgy81ehx8n" path="res://resources/staticObjects_.png" id="4_15mv3"]
 [ext_resource type="Texture2D" uid="uid://crbc0mwbugp8q" path="res://resources/nature-paltformer-tileset-16x16.png" id="5_e3sih"]
 [ext_resource type="PackedScene" uid="uid://bfsx5wh40fsn8" path="res://Enemies/Cannon/cannon.tscn" id="7_pa8r4"]
+[ext_resource type="Script" path="res://race/level.gd" id="race_level"]
+[ext_resource type="PackedScene" path="res://race/finish_line.tscn" id="race_finish"]
+[ext_resource type="Script" path="res://race/kill_zone.gd" id="race_kill"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2y5yt"]
 texture = ExtResource("1_fcfvj")
@@ -994,7 +997,11 @@ sources/2 = SubResource("TileSetAtlasSource_2os1m")
 sources/3 = SubResource("TileSetAtlasSource_go7sj")
 sources/4 = SubResource("TileSetAtlasSource_7gny6")
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fall"]
+size = Vector2(2400, 32)
+
 [node name="Level_1" type="Node2D" unique_id=1498359125]
+script = ExtResource("race_level")
 
 [node name="Spawn" type="Marker2D" parent="." unique_id=2067152986 groups=["spawn"]]
 position = Vector2(35, 598)
@@ -1032,3 +1039,14 @@ position = Vector2(897, 606)
 
 [node name="Cannon" parent="." unique_id=1602349020 instance=ExtResource("7_pa8r4")]
 position = Vector2(1076, 632)
+
+[node name="FinishLine" parent="." instance=ExtResource("race_finish")]
+position = Vector2(1960, 631)
+
+[node name="FallKillZone" type="Area2D" parent="."]
+position = Vector2(1000, 760)
+collision_layer = 0
+script = ExtResource("race_kill")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FallKillZone"]
+shape = SubResource("RectangleShape2D_fall")

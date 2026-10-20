@@ -23,6 +23,7 @@ config/icon="res://icon.svg"
 
 NetworkManager="*res://autoload/NetworkManager.gd"
 PlayersManager="*res://autoload/PlayersManager.gd"
+RaceManager="*res://autoload/RaceManager.gd"
 
 [display]
 

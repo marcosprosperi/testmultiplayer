@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://rkod5inpj6e6" path="res://icon.svg" id="1_jm1iu"]
 [ext_resource type="PackedScene" uid="uid://d2l5myn53o5qe" path="res://collectables/coin.tscn" id="2_pbc48"]
+[ext_resource type="Script" path="res://race/level.gd" id="race_level"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_eqxsl"]
 texture = ExtResource("1_jm1iu")
@@ -16,6 +17,7 @@ physics_layer_0/collision_mask = 0
 sources/0 = SubResource("TileSetAtlasSource_eqxsl")
 
 [node name="Level_2" type="Node2D" unique_id=2140859353]
+script = ExtResource("race_level")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1644811239]
 tile_map_data = PackedByteArray("AAAAAAQAAAAAAAAAAAABAAQAAAAAAAAAAAACAAQAAAAAAAAAAAADAAQAAAAAAAAAAAAEAAQAAAAAAAAAAAAFAAQAAAAAAAAAAAAGAAQAAAAAAAAAAAAHAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAA=")

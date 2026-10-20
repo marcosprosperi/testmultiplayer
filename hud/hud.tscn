@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/hud.gd" id="1_hud"]
+[ext_resource type="Script" path="res://hud/race_track.gd" id="2_track"]
+
+[node name="Hud" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="RaceTrack" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 6.0
+offset_right = 100.0
+offset_bottom = 20.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("2_track")
+
+[node name="PositionLabel" type="Label" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -26.0
+offset_right = 120.0
+offset_bottom = -6.0
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 14
+text = "1º / 1"
