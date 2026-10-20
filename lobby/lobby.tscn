@@ -1,0 +1,131 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://lobby/lobby.gd" id="1_lobby"]
+
+[node name="Lobby" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1_lobby")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.09, 0.13, 0.92)
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Sala de espera"
+
+[node name="AddressRow" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="AddressLabel" type="Label" parent="Panel/Margin/VBox/AddressRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 3
+text = "Compartí tu IP"
+
+[node name="CopyButton" type="Button" parent="Panel/Margin/VBox/AddressRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Copiar IP"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Columns" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Profile" type="VBoxContainer" parent="Panel/Margin/VBox/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameTitle" type="Label" parent="Panel/Margin/VBox/Columns/Profile"]
+layout_mode = 2
+text = "Tu nombre"
+
+[node name="NameEdit" type="LineEdit" parent="Panel/Margin/VBox/Columns/Profile"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Escribí tu nombre"
+
+[node name="ColorTitle" type="Label" parent="Panel/Margin/VBox/Columns/Profile"]
+layout_mode = 2
+text = "Tu color"
+
+[node name="ColorsBox" type="HBoxContainer" parent="Panel/Margin/VBox/Columns/Profile"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ConfirmButton" type="Button" parent="Panel/Margin/VBox/Columns/Profile"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Listo"
+
+[node name="StatusLabel" type="Label" parent="Panel/Margin/VBox/Columns/Profile"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="VSeparator" type="VSeparator" parent="Panel/Margin/VBox/Columns"]
+layout_mode = 2
+
+[node name="Players" type="VBoxContainer" parent="Panel/Margin/VBox/Columns"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+
+[node name="PlayersTitle" type="Label" parent="Panel/Margin/VBox/Columns/Players"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Jugadores"
+
+[node name="PlayersList" type="VBoxContainer" parent="Panel/Margin/VBox/Columns/Players"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="LeaveButton" type="Button" parent="Panel/Margin/VBox/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Salir"
+
+[node name="Spacer" type="Control" parent="Panel/Margin/VBox/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StartButton" type="Button" parent="Panel/Margin/VBox/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Empezar carrera"

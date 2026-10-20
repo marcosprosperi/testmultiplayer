@@ -1,15 +1,13 @@
 class_name Hud extends CanvasLayer
 
-const PLAYER_COLORS = [
-	Color("#e74c3c"), Color("#3498db"), Color("#2ecc71"), Color("#f1c40f"),
-	Color("#9b59b6"), Color("#e67e22"), Color("#1abc9c"), Color("#ecf0f1"),
-]
-
 @onready var race_track: RaceTrack = $RaceTrack
 @onready var position_label: Label = $PositionLabel
 
 func _process(_delta: float) -> void:
-	if !is_connected_to_game(multiplayer):
+	# Only shown while the local player is racing (not in the lobby)
+	visible = is_connected_to_game(multiplayer) and get_tree().get_nodes_in_group("player").any(
+		func(p): return p.is_multiplayer_authority())
+	if !visible:
 		return
 	var ranking = get_ranking()
 	race_track.entries = _track_entries()
@@ -20,16 +18,10 @@ static func is_connected_to_game(api: MultiplayerAPI) -> bool:
 		and api.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
 
 static func color_for(id: int) -> Color:
-	return PLAYER_COLORS[_player_index(id) % PLAYER_COLORS.size()]
+	return PlayersManager.color_of(id)
 
 static func name_for(id: int) -> String:
-	return "Jugador %d" % (_player_index(id) + 1)
-
-# Stable number for each player, by join order (peer ids sorted)
-static func _player_index(id: int) -> int:
-	var ids = PlayersManager.joined_players.keys()
-	ids.sort()
-	return max(ids.find(id), 0)
+	return PlayersManager.name_of(id)
 
 ## Players that finished keep their arrival order, the rest go by progress
 func get_ranking() -> Array:

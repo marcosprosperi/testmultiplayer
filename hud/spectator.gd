@@ -37,7 +37,7 @@ func _watch(player: Player) -> void:
 	if player == watched:
 		return
 	# Remote players' cameras stay off unless someone is spectating them
-	if is_instance_valid(watched) and !watched.is_multiplayer_authority():
+	if is_instance_valid(watched) and watched.is_inside_tree() and !watched.is_multiplayer_authority():
 		watched.camera_2d.enabled = false
 	watched = player
 	if is_instance_valid(watched):
