@@ -26,9 +26,10 @@ func _on_life_timer_timeout():
 		queue_free()
 
 func _on_body_entered(body: Node2D) -> void:
+	# The hit player's own peer sends it back to the start
+	if body is Player and body.is_multiplayer_authority():
+		body.die()
 	if !is_multiplayer_authority():
 		return
-	if body.is_in_group("player"):
-		print("Ball hit ", body.name)
 	# Despawning on the server also removes the ball on the clients
 	queue_free()
