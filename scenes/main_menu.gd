@@ -57,7 +57,8 @@ func _refresh_games() -> void:
 		var game = LanDiscovery.games[ip]
 		var full = game.players >= game.max_players
 		var state = "llena" if full else ("en carrera" if game.started else "esperando")
-		var text = "%s  —  %s  (%d/%d, %s)" % [game.name, ip, game.players, game.max_players, state]
+		var host = (" · host: %s" % game.host) if game.get("host", "") != "" else ""
+		var text = "%s  (%d/%d, %s%s)  —  %s" % [game.name, game.players, game.max_players, state, host, ip]
 		var index = games_list.add_item(text)
 		games_list.set_item_disabled(index, full)
 		_list_ips.append(ip)

@@ -3,7 +3,8 @@ extends Node
 ## Sound effects. play() is for things that happen to you (your jump, your
 ## coin...), play_at() for things in the world you hear when you're near.
 
-const SOUNDS = ["beep", "go", "jump", "death", "coin", "finish", "results", "champion", "cannon", "crack"]
+const SOUNDS = ["beep", "go", "jump", "death", "coin", "finish", "results", "champion", "cannon", "crack",
+	"click", "spikes", "slam", "wind"]
 ## Positional sounds fade out over this distance
 const HEARING_DISTANCE = 600.0
 

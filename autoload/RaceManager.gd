@@ -22,6 +22,8 @@ signal state_changed
 signal grid_changed
 signal round_changed
 signal coins_changed
+# Someone stepped on a TrapButton (emitted on every screen)
+signal trap_triggered(id: int)
 # Everyone finished: results is [{id, name, color, position, gained, total}]
 signal results_shown(results: Array, final: bool)
 

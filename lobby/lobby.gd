@@ -16,6 +16,7 @@ class_name Lobby extends CanvasLayer
 @onready var leave_button: Button = %LeaveButton
 @onready var start_button: Button = %StartButton
 @onready var coins_check: CheckButton = %CoinsCheck
+@onready var game_name_edit: LineEdit = %GameNameEdit
 
 const NAME_TAKEN_MESSAGE = "Ese nombre ya está en uso"
 
@@ -24,6 +25,10 @@ var color_buttons: Array[Button] = []
 
 func _ready() -> void:
 	name_edit.max_length = PlayersManager.MAX_NAME_LENGTH
+	game_name_edit.max_length = PlayersManager.MAX_GAME_NAME_LENGTH
+	# Only the host names the game; the others see it as the title
+	game_name_edit.visible = NetworkManager.is_hosting
+	game_name_edit.text_changed.connect(func(text): PlayersManager.set_game_name(text))
 	for i in PlayersManager.COLORS.size():
 		var button = Button.new()
 		button.custom_minimum_size = Vector2(18, 18)
@@ -63,13 +68,16 @@ func _refresh() -> void:
 	visible = not (confirmed and PlayersManager.game_started)
 
 	if NetworkManager.is_hosting:
-		title.text = "Tu partida"
+		title.text = "Nombre de la partida:"
+		var my_name = name_edit.text.strip_edges()
+		game_name_edit.placeholder_text = "Partida de %s" % my_name if my_name != "" else "Ej: Carrera de los viernes"
 		var ips = NetworkManager.get_local_ips()
 		var ip_text = ", ".join(ips) if not ips.is_empty() else "127.0.0.1"
 		address_label.text = "Compartí tu IP: %s  (puerto %d)" % [ip_text, NetworkManager.PORT]
 	elif connected:
-		title.text = "Carrera en curso" if PlayersManager.game_started else "Sala de espera"
-		address_label.text = "Conectado a " + NetworkManager.join_address
+		title.text = PlayersManager.game_display_name()
+		var state = "Carrera en curso" if PlayersManager.game_started else "Sala de espera"
+		address_label.text = "%s · conectado a %s" % [state, NetworkManager.join_address]
 	else:
 		title.text = "Conectando..."
 		address_label.text = "Buscando la partida en " + NetworkManager.join_address
