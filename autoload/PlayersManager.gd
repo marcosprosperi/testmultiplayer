@@ -1,6 +1,7 @@
 extends Node
 
 const MAX_NAME_LENGTH = 12
+const MAX_GAME_NAME_LENGTH = 24
 const COLORS = [
 	Color("#e74c3c"), Color("#3498db"), Color("#2ecc71"), Color("#f1c40f"),
 	Color("#9b59b6"), Color("#e67e22"), Color("#1abc9c"), Color("#ecf0f1"),
@@ -12,7 +13,7 @@ const COLORS = [
 var joined_players = {}
 var game_started := false
 # Chosen by the host in the lobby
-var settings = {"coins": true}
+var settings = {"coins": true, "game_name": ""}
 
 signal finish_level
 signal players_changed
@@ -27,13 +28,26 @@ signal profile_result(ok: bool, message: String)
 func reset() -> void:
 	joined_players = {}
 	game_started = false
-	settings = {"coins": true}
+	settings = {"coins": true, "game_name": ""}
 	players_changed.emit()
 	settings_changed.emit()
 
 ## Coins give extra points but slow you down (host option)
 func coins_enabled() -> bool:
 	return settings.get("coins", true)
+
+## The name the host gave the game, or "Partida de <host>" if they left it empty
+func game_display_name() -> String:
+	var game_name = settings.get("game_name", "").strip_edges()
+	if game_name != "":
+		return game_name
+	return "Partida de %s" % name_of(1) if has_player(1) else "Partida nueva"
+
+## Host only
+func set_game_name(game_name: String) -> void:
+	if multiplayer.is_server():
+		settings["game_name"] = game_name.strip_edges().left(MAX_GAME_NAME_LENGTH)
+		_sync_settings.rpc(settings)
 
 ## Host only
 func set_coins_enabled(enabled: bool) -> void:

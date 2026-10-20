@@ -51,9 +51,9 @@ func _process(delta: float) -> void:
 		_receive()
 
 func _broadcast() -> void:
-	var host_name = PlayersManager.name_of(1) if PlayersManager.has_player(1) else "Partida nueva"
 	var info = {
-		"name": host_name,
+		"name": PlayersManager.game_display_name(),
+		"host": PlayersManager.name_of(1) if PlayersManager.has_player(1) else "",
 		"players": multiplayer.get_peers().size() + 1,
 		"max_players": NetworkManager.MAX_PLAYERS,
 		"started": PlayersManager.game_started,
