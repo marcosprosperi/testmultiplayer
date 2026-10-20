@@ -21,6 +21,7 @@ var countdown_value := 0
 var _ready_players := {}
 # Bumped on every level so timers from a previous one stop
 var _race_token := 0
+var _racing_since_msec := 0
 # Starting grid, pole position first (synced by the server)
 var grid_order: Array = []
 # Server only: result of the previous level, used to build the next grid
@@ -65,7 +66,7 @@ func reset() -> void:
 
 func send_state_to(id: int) -> void:
 	_sync_finish_order.rpc_id(id, finish_order)
-	_sync_state.rpc_id(id, state, countdown_value)
+	_sync_state.rpc_id(id, state, countdown_value, race_time())
 	_sync_grid.rpc_id(id, grid_order)
 
 ## Players can only move once the countdown is over
@@ -135,7 +136,9 @@ func _run_countdown() -> void:
 	_sync_state.rpc(State.RACING, 0)
 
 @rpc("authority", "call_local", "reliable")
-func _sync_state(new_state: State, value: int) -> void:
+func _sync_state(new_state: State, value: int, elapsed := 0.0) -> void:
+	if new_state == State.RACING and (state != State.RACING or elapsed > 0.0):
+		_racing_since_msec = Time.get_ticks_msec() - int(elapsed * 1000.0)
 	state = new_state
 	countdown_value = value
 	state_changed.emit()
@@ -161,16 +164,27 @@ func has_spawn() -> bool:
 func get_finish() -> Node2D:
 	return _find_in_level("finish")
 
-## 0.0 at the start, 1.0 at the finish line (the course runs left to right)
+## 0.0 at the start, 1.0 at the finish line, measured along the straight
+## line from the spawn to the finish (works for sideways and vertical levels)
 func get_progress(player: Node2D) -> float:
 	var finish = get_finish()
 	if finish == null or !has_spawn():
 		return 0.0
-	var start_x = get_spawn_position().x
-	var length = finish.global_position.x - start_x
-	if is_zero_approx(length):
+	var start = get_spawn_position()
+	var course = finish.global_position - start
+	if course.is_zero_approx():
 		return 0.0
-	return clampf((player.global_position.x - start_x) / length, 0.0, 1.0)
+	return clampf((player.global_position - start).dot(course) / course.length_squared(), 0.0, 1.0)
+
+## Seconds since "¡ARRANCA!" (0 before). Moving parts that must look the same
+## on every screen (like the balloons) are driven by this clock.
+func race_time() -> float:
+	if state != State.RACING:
+		return 0.0
+	return (Time.get_ticks_msec() - _racing_since_msec) / 1000.0
+
+func get_camera_zoom() -> float:
+	return current_level.camera_zoom if is_instance_valid(current_level) and "camera_zoom" in current_level else 1.0
 
 func has_finished(id: int) -> bool:
 	return finish_order.has(id)
