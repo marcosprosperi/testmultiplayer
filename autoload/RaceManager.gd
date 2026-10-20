@@ -5,11 +5,14 @@ const NEXT_LEVEL_DELAY = 3.0
 const COUNTDOWN_FROM = 3
 ## Start anyway if someone takes longer than this to load the level
 const MAX_WAIT_FOR_PLAYERS = 10.0
+## Distance between starting grid slots
+const GRID_GAP = 22.0
 
 enum State { WAITING, COUNTDOWN, RACING }
 
 signal finish_order_changed
 signal state_changed
+signal grid_changed
 
 var state := State.WAITING
 # 3, 2, 1 during the countdown
@@ -18,6 +21,10 @@ var countdown_value := 0
 var _ready_players := {}
 # Bumped on every level so timers from a previous one stop
 var _race_token := 0
+# Starting grid, pole position first (synced by the server)
+var grid_order: Array = []
+# Server only: result of the previous level, used to build the next grid
+var _last_finish_order: Array = []
 
 var current_level: Node2D
 # Peer ids in the order they crossed the finish line (synced by the server)
@@ -31,6 +38,10 @@ func _ready() -> void:
 func register_level(level: Node2D) -> void:
 	current_level = level
 	if multiplayer.is_server():
+		if not finish_order.is_empty():
+			_last_finish_order = finish_order.duplicate()
+		grid_order = _build_grid()
+		_sync_grid.rpc(grid_order)
 		finish_order.clear()
 		_changing_level = false
 		_ready_players.clear()
@@ -46,12 +57,16 @@ func reset() -> void:
 	_ready_players.clear()
 	_race_token += 1
 	state = State.WAITING
+	grid_order = []
+	_last_finish_order = []
 	finish_order_changed.emit()
 	state_changed.emit()
+	grid_changed.emit()
 
 func send_state_to(id: int) -> void:
 	_sync_finish_order.rpc_id(id, finish_order)
 	_sync_state.rpc_id(id, state, countdown_value)
+	_sync_grid.rpc_id(id, grid_order)
 
 ## Players can only move once the countdown is over
 func can_move() -> bool:
@@ -85,6 +100,25 @@ func _check_everyone_ready() -> void:
 	if not players.is_empty() and players.all(func(id): return _ready_players.has(id)):
 		_run_countdown()
 
+# First race: random order. Then a reversed grid: whoever won starts last,
+# so the same player doesn't always lead. New players start at the back.
+func _build_grid() -> Array:
+	var ids = PlayersManager.joined_players.keys()
+	if _last_finish_order.is_empty():
+		ids.shuffle()
+		return ids
+	var order = _last_finish_order.filter(func(id): return ids.has(id))
+	order.reverse()
+	for id in ids:
+		if not order.has(id):
+			order.append(id)
+	return order
+
+@rpc("authority", "call_local", "reliable")
+func _sync_grid(order: Array) -> void:
+	grid_order = order
+	grid_changed.emit()
+
 func _start_anyway_after_timeout(token: int) -> void:
 	await get_tree().create_timer(MAX_WAIT_FOR_PLAYERS).timeout
 	if token == _race_token and state == State.WAITING and not PlayersManager.joined_players.is_empty():
@@ -109,6 +143,17 @@ func _sync_state(new_state: State, value: int) -> void:
 func get_spawn_position() -> Vector2:
 	var spawn = _find_in_level("spawn")
 	return spawn.global_position if spawn else Vector2.ZERO
+
+## Grid slot for the start of the race. The Spawn marker is the back of the
+## grid (where players go after losing) and the pole is ahead of it.
+## Players not in the grid (joined late) start at the back.
+func get_start_position(id: int) -> Vector2:
+	var spawn = get_spawn_position()
+	var index = grid_order.find(id)
+	if index == -1:
+		return spawn
+	var slots_from_back = grid_order.size() - 1 - index
+	return spawn + Vector2(slots_from_back * GRID_GAP, 0)
 
 func has_spawn() -> bool:
 	return _find_in_level("spawn") != null

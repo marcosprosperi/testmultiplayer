@@ -2,11 +2,18 @@ class_name Player extends CharacterBody2D
 
 const SPEED = 300.0
 const JUMP_VELOCITY = -400.0
+## Running right behind another player (slipstream) makes you faster,
+## so the ones starting at the back can catch up
+const SLIPSTREAM_RANGE = 140.0
+const SLIPSTREAM_HEIGHT = 20.0
+const SLIPSTREAM_BOOST = 1.2
 
 @onready var camera_2d: Camera2D = $Camera2D
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
 
 var name_label: Label
+# Synced so everyone sees the speed lines
+var slipstream := false
 
 func _enter_tree():
 	# Set authority based on the node name (which is now just the ID)
@@ -14,7 +21,7 @@ func _enter_tree():
 
 func _ready() -> void:
 	if RaceManager.has_spawn():
-		global_position = RaceManager.get_spawn_position()
+		global_position = RaceManager.get_start_position(name.to_int())
 
 	_create_name_label()
 	PlayersManager.players_changed.connect(_update_name_label)
@@ -22,6 +29,7 @@ func _ready() -> void:
 	animated_sprite_2d.scale.x = 1
 	if is_multiplayer_authority():
 		camera_2d.make_current()
+		RaceManager.grid_changed.connect(_on_grid_changed)
 		RaceManager.notify_local_ready()
 	else:
 		camera_2d.enabled = false
@@ -53,13 +61,42 @@ func _physics_process(delta: float) -> void:
 	
 	
 		
+	slipstream = not frozen and _is_in_slipstream(direction)
+	var speed = SPEED * SLIPSTREAM_BOOST if slipstream else SPEED
+
 	if direction:
-		velocity.x = direction * SPEED
+		velocity.x = direction * speed
 		animated_sprite_2d.play("run")
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 
 	move_and_slide()
+
+func _process(_delta: float) -> void:
+	queue_redraw()
+
+func _is_in_slipstream(direction: float) -> bool:
+	if direction == 0:
+		return false
+	for other in get_tree().get_nodes_in_group("player"):
+		if other == self:
+			continue
+		var distance_ahead = (other.global_position.x - global_position.x) * signf(direction)
+		if distance_ahead > 8 and distance_ahead < SLIPSTREAM_RANGE \
+				and absf(other.global_position.y - global_position.y) < SLIPSTREAM_HEIGHT:
+			return true
+	return false
+
+# Speed lines behind the player while in the slipstream
+func _draw() -> void:
+	if not slipstream:
+		return
+	var back = -signf(animated_sprite_2d.scale.x)
+	var flicker = (Time.get_ticks_msec() / 60) % 3
+	for i in 3:
+		var y = -6.0 - i * 6.0
+		var start = 8.0 + ((i + flicker) % 3) * 3.0
+		draw_line(Vector2(back * start, y), Vector2(back * (start + 12.0), y), Color(1, 1, 1, 0.7), 1.0)
 
 # Name in the player's color floating over their head
 func _create_name_label() -> void:
@@ -84,9 +121,19 @@ func die() -> void:
 		return
 	respawn()
 
+## Before the start: your grid slot. During the race: the back of the grid.
 func respawn() -> void:
 	if not is_multiplayer_authority():
 		return
 	velocity = Vector2.ZERO
-	if RaceManager.has_spawn():
+	if not RaceManager.has_spawn():
+		return
+	if RaceManager.can_move():
 		global_position = RaceManager.get_spawn_position()
+	else:
+		global_position = RaceManager.get_start_position(name.to_int())
+
+# The grid can arrive after the level loads: move to your slot
+func _on_grid_changed() -> void:
+	if not RaceManager.can_move():
+		respawn()
