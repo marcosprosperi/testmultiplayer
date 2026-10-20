@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://hud/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://hud/race_track.gd" id="2_track"]
 [ext_resource type="Script" path="res://hud/spectator.gd" id="3_spectator"]
+[ext_resource type="Script" path="res://hud/countdown.gd" id="4_countdown"]
 
 [node name="Hud" type="CanvasLayer"]
 script = ExtResource("1_hud")
@@ -48,3 +49,29 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 12
 horizontal_alignment = 1
 script = ExtResource("3_spectator")
+
+[node name="Countdown" type="Control" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -120.0
+offset_top = 26.0
+offset_right = 120.0
+offset_bottom = 88.0
+grow_horizontal = 2
+mouse_filter = 2
+script = ExtResource("4_countdown")
+
+[node name="BigLabel" type="Label" parent="Countdown"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -36.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+vertical_alignment = 1

@@ -22,6 +22,7 @@ func _ready() -> void:
 	animated_sprite_2d.scale.x = 1
 	if is_multiplayer_authority():
 		camera_2d.make_current()
+		RaceManager.notify_local_ready()
 	else:
 		camera_2d.enabled = false
 
@@ -37,13 +38,14 @@ func _physics_process(delta: float) -> void:
 		velocity += get_gravity() * delta
 		animated_sprite_2d.play("jump")
 
-	# After the finish line the controls are used to switch spectator cameras
-	var finished := RaceManager.has_finished(name.to_int())
+	# Frozen until the countdown ends; after the finish line the controls
+	# are used to switch spectator cameras
+	var frozen := RaceManager.has_finished(name.to_int()) or not RaceManager.can_move()
 
-	if Input.is_action_just_pressed("jump") and is_on_floor() and not finished:
+	if Input.is_action_just_pressed("jump") and is_on_floor() and not frozen:
 		velocity.y = JUMP_VELOCITY
 
-	var direction := 0.0 if finished else Input.get_axis("left", "right")
+	var direction := 0.0 if frozen else Input.get_axis("left", "right")
 	if velocity.x > 0:
 		animated_sprite_2d.scale.x = 1 
 	elif velocity.x < 0:

@@ -50,14 +50,16 @@ func _on_player_removed(id: int):
 
 func change_level(level_scene: PackedScene):
 	# Remove old level
+	# (taken out of the tree right away so the new one can reuse its name)
 	for child in level_container.get_children():
 		if child.is_in_group("Level"):
+			level_container.remove_child(child)
 			child.queue_free()
 	
 	# Instantiate new level
 	var new_level = level_scene.instantiate()
 	if new_level:
-		level_container.add_child(new_level)
+		level_container.add_child(new_level, true)
 		new_level.add_to_group("Level")
 	
 func _on_level_finished():
