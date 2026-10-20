@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/hazards/trap_door.gd" id="1_door"]
+
+[node name="TrapDoor" type="Node2D"]
+script = ExtResource("1_door")
+
+[node name="Floor" type="StaticBody2D" parent="."]
+collision_layer = 512
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Floor"]

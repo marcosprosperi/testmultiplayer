@@ -2,8 +2,25 @@ class_name Hud extends CanvasLayer
 
 @onready var race_track: RaceTrack = $RaceTrack
 @onready var position_label: Label = $PositionLabel
+@onready var toast: Label = $Toast
 
-func _process(_delta: float) -> void:
+const TOAST_TIME = 2.5
+var _toast_left := 0.0
+
+func _ready() -> void:
+	RaceManager.trap_triggered.connect(_on_trap_triggered)
+	toast.text = ""
+
+func _on_trap_triggered(id: int) -> void:
+	var who = "Activaste" if id == multiplayer.get_unique_id() else "%s activó" % PlayersManager.name_of(id)
+	toast.text = "⚠ %s una trampa más adelante" % who
+	toast.add_theme_color_override("font_color", PlayersManager.color_of(id))
+	_toast_left = TOAST_TIME
+
+func _process(delta: float) -> void:
+	if _toast_left > 0.0:
+		_toast_left -= delta
+		toast.modulate.a = clampf(_toast_left / 0.5, 0.0, 1.0)
 	# Only shown while the local player is racing (not in the lobby)
 	visible = is_connected_to_game(multiplayer) and get_tree().get_nodes_in_group("player").any(
 		func(p): return p.is_multiplayer_authority())

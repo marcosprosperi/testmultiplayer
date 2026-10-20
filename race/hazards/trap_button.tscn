@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/hazards/trap_button.gd" id="1_button"]
+
+[node name="TrapButton" type="Area2D"]
+collision_layer = 0
+script = ExtResource("1_button")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]

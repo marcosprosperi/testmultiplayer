@@ -14,6 +14,8 @@ const SLIPSTREAM_BOOST = 1.2
 var name_label: Label
 # Synced so everyone sees the speed lines
 var slipstream := false
+# Added to the velocity for one frame by things like fans
+var push := Vector2.ZERO
 
 func _enter_tree():
 	# Set authority based on the node name (which is now just the ID)
@@ -75,6 +77,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.x = move_toward(velocity.x, 0, SPEED)
 
+	velocity.x += push.x
+	push = Vector2.ZERO
 	move_and_slide()
 
 func _process(_delta: float) -> void:
