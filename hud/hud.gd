@@ -9,15 +9,27 @@ const PLAYER_COLORS = [
 @onready var position_label: Label = $PositionLabel
 
 func _process(_delta: float) -> void:
+	if !is_connected_to_game(multiplayer):
+		return
 	var ranking = get_ranking()
 	race_track.entries = _track_entries()
 	_update_position_label(ranking)
 
+static func is_connected_to_game(api: MultiplayerAPI) -> bool:
+	return api.has_multiplayer_peer() \
+		and api.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+
 static func color_for(id: int) -> Color:
+	return PLAYER_COLORS[_player_index(id) % PLAYER_COLORS.size()]
+
+static func name_for(id: int) -> String:
+	return "Jugador %d" % (_player_index(id) + 1)
+
+# Stable number for each player, by join order (peer ids sorted)
+static func _player_index(id: int) -> int:
 	var ids = PlayersManager.joined_players.keys()
 	ids.sort()
-	var index = max(ids.find(id), 0)
-	return PLAYER_COLORS[index % PLAYER_COLORS.size()]
+	return max(ids.find(id), 0)
 
 ## Players that finished keep their arrival order, the rest go by progress
 func get_ranking() -> Array:
