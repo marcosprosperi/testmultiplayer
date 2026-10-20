@@ -12,19 +12,23 @@ const LEVEL_2 = preload("uid://cibp8iksdlty") # Ensure this UID is correct or us
 @export var player_scene: PackedScene = preload("res://scenes/player.tscn")
 
 func _ready() -> void:
-	# Only the server should spawn the initial level to ensure sync via Spawner
-	if multiplayer.is_server():
-		change_level(LEVEL_1)
-		
-		PlayersManager.player_added.connect(_on_player_added)
-		# Spawn existing players (like the host)
-		for id in PlayersManager.joined_players:
-			create_player(id)
-	
+	PlayersManager.player_added.connect(_on_player_added)
+	PlayersManager.player_removed.connect(_on_player_removed)
 	PlayersManager.finish_level.connect(_on_level_finished)
+	# Host or join now that the spawners exist
+	NetworkManager.start()
+
+## Host only: called from the lobby
+func start_game() -> void:
+	if not multiplayer.is_server() or PlayersManager.game_started:
+		return
+	PlayersManager.start_game()
+	change_level(LEVEL_1)
+	for id in PlayersManager.joined_players:
+		create_player(id)
 
 func create_player(id: int) -> void:
-	if not multiplayer.is_server():
+	if not multiplayer.is_server() or players.has_node(str(id)):
 		return
 		
 	var new_player = player_scene.instantiate()
@@ -35,9 +39,14 @@ func create_player(id: int) -> void:
 		# The Spawner will automatically replicate this to clients
 		# because "players" is the spawn_path
 
+# A player confirmed name and color; late joiners enter the race right away
 func _on_player_added(id: int):
-	if multiplayer.is_server():
+	if multiplayer.is_server() and PlayersManager.game_started:
 		create_player(id)
+
+func _on_player_removed(id: int):
+	if multiplayer.is_server() and players.has_node(str(id)):
+		players.get_node(str(id)).queue_free()
 
 func change_level(level_scene: PackedScene):
 	# Remove old level

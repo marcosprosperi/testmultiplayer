@@ -8,11 +8,26 @@ signal finish_order_changed
 var current_level: Node2D
 # Peer ids in the order they crossed the finish line (synced by the server)
 var finish_order: Array = []
+var _changing_level := false
+
+func _ready() -> void:
+	PlayersManager.players_changed.connect(_check_everyone_finished)
 
 func register_level(level: Node2D) -> void:
 	current_level = level
-	finish_order.clear()
+	if multiplayer.is_server():
+		finish_order.clear()
+		_changing_level = false
+		_sync_finish_order.rpc(finish_order)
+
+func reset() -> void:
+	current_level = null
+	finish_order = []
+	_changing_level = false
 	finish_order_changed.emit()
+
+func send_state_to(id: int) -> void:
+	_sync_finish_order.rpc_id(id, finish_order)
 
 func get_spawn_position() -> Vector2:
 	var spawn = _find_in_level("spawn")
@@ -51,10 +66,18 @@ func report_finish() -> void:
 	finish_order.append(id)
 	_sync_finish_order.rpc(finish_order)
 	print("Jugador ", id, " llegó a la meta en posición ", finish_order.size())
+	_check_everyone_finished()
 
-	if finish_order.size() >= PlayersManager.joined_players.size():
-		await get_tree().create_timer(NEXT_LEVEL_DELAY).timeout
-		PlayersManager.finish_level.emit()
+# Also runs when someone leaves, so the race doesn't wait for them
+func _check_everyone_finished() -> void:
+	if not multiplayer.is_server() or _changing_level or not is_instance_valid(current_level):
+		return
+	var players = PlayersManager.joined_players.keys()
+	if players.is_empty() or not players.all(func(id): return finish_order.has(id)):
+		return
+	_changing_level = true
+	await get_tree().create_timer(NEXT_LEVEL_DELAY).timeout
+	PlayersManager.finish_level.emit()
 
 @rpc("authority", "call_local", "reliable")
 func _sync_finish_order(order: Array) -> void:

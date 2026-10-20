@@ -2,60 +2,137 @@
 
 [ext_resource type="Script" uid="uid://cvg2vccvc6d0e" path="res://scenes/main_menu.gd" id="1_l6cm7"]
 
-[node name="MainMenu" type="Control" unique_id=1835833771]
+[node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
 script = ExtResource("1_l6cm7")
 
-[node name="ReadyBox" type="VBoxContainer" parent="." unique_id=355413852]
+[node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -28.0
-offset_right = 28.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.09, 0.13, 1)
 
-[node name="ReadyButton" type="Button" parent="ReadyBox" unique_id=819535516]
-visible = false
-layout_mode = 2
-text = "Ready"
-
-[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=148341751]
+[node name="StartScreen" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -25.5
-offset_top = -33.0
-offset_right = 25.5
-offset_bottom = 33.0
+offset_left = -100.0
+offset_top = -80.0
+offset_right = 100.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Title" type="Label" parent="StartScreen"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "CARRERA"
+horizontal_alignment = 1
+
+[node name="ErrorLabel" type="Label" parent="StartScreen"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.46, 0.46, 1)
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="HostButton" type="Button" parent="StartScreen"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Crear partida"
+
+[node name="JoinButton" type="Button" parent="StartScreen"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Unirse a una partida"
+
+[node name="QuitButton" type="Button" parent="StartScreen"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Salir"
+
+[node name="JoinScreen" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Host" type="Button" parent="VBoxContainer" unique_id=186613588]
+[node name="Margin" type="MarginContainer" parent="JoinScreen"]
 layout_mode = 2
-text = "HOST"
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
 
-[node name="Join" type="Button" parent="VBoxContainer" unique_id=954257568]
+[node name="VBox" type="VBoxContainer" parent="JoinScreen/Margin"]
 layout_mode = 2
-text = "JOIN"
+theme_override_constants/separation = 6
 
-[node name="VBoxContainer2" type="VBoxContainer" parent="." unique_id=1249842861]
-visible = false
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="Label" type="Label" parent="VBoxContainer2" unique_id=1985443606]
+[node name="Title" type="Label" parent="JoinScreen/Margin/VBox"]
 layout_mode = 2
-text = "waiting players...."
+theme_override_font_sizes/font_size = 16
+text = "Unirse a una partida"
+
+[node name="DiscoveryLabel" type="Label" parent="JoinScreen/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Buscando partidas en tu red..."
+
+[node name="GamesList" type="ItemList" parent="JoinScreen/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="JoinSelectedButton" type="Button" parent="JoinScreen/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Unirse a la partida elegida"
+
+[node name="IpRow" type="HBoxContainer" parent="JoinScreen/Margin/VBox"]
+layout_mode = 2
+
+[node name="IpTitle" type="Label" parent="JoinScreen/Margin/VBox/IpRow"]
+layout_mode = 2
+text = "O ingresá la IP del host:"
+
+[node name="IpEdit" type="LineEdit" parent="JoinScreen/Margin/VBox/IpRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "192.168.0.10"
+
+[node name="ConnectButton" type="Button" parent="JoinScreen/Margin/VBox/IpRow"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Conectar"
+
+[node name="BackButton" type="Button" parent="JoinScreen/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Volver"
