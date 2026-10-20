@@ -1,7 +1,6 @@
 class_name Ball extends Area2D
 
-const SPEED: int = 600
-
+var speed := 600.0
 var direction: int
 var damage: int = 1
 @onready var life_timer: Timer = $LifeTimer
@@ -18,7 +17,7 @@ func _ready() -> void:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	global_position.x += direction * SPEED * delta
+	global_position.x += direction * speed * delta
 
 
 func _on_life_timer_timeout():

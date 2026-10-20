@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/hazards/saw.gd" id="1_saw"]
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_saw"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+
+[node name="Saw" type="Area2D"]
+collision_layer = 0
+script = ExtResource("1_saw")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_saw")
