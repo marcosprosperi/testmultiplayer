@@ -53,6 +53,7 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_action_just_pressed("jump") and is_on_floor() and not frozen:
 		velocity.y = JUMP_VELOCITY
+		Sfx.play("jump", -6.0)
 
 	var direction := 0.0 if frozen else Input.get_axis("left", "right")
 	if velocity.x > 0:
@@ -63,7 +64,10 @@ func _physics_process(delta: float) -> void:
 	
 		
 	slipstream = not frozen and _is_in_slipstream(direction)
-	var speed = SPEED * SLIPSTREAM_BOOST if slipstream else SPEED
+	# Coins make you heavier (slower); the slipstream helps
+	var speed = SPEED * RaceManager.speed_factor(name.to_int())
+	if slipstream:
+		speed *= SLIPSTREAM_BOOST
 
 	if direction:
 		velocity.x = direction * speed
@@ -120,6 +124,7 @@ func _update_name_label() -> void:
 func die() -> void:
 	if not is_multiplayer_authority():
 		return
+	Sfx.play("death")
 	respawn()
 
 ## Before the start: your grid slot. During the race: the back of the grid.

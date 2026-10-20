@@ -12,6 +12,8 @@ const OFF = Color(0.15, 0.15, 0.17)
 @onready var big_label: Label = $BigLabel
 
 var _go_time_left := 0.0
+# Last countdown number we beeped for (0 = none yet / already started)
+var _last_beep := 0
 
 func _ready() -> void:
 	RaceManager.state_changed.connect(_on_state_changed)
@@ -29,11 +31,15 @@ func _on_state_changed() -> void:
 	modulate.a = 1.0
 	match RaceManager.state:
 		RaceManager.State.WAITING:
+			_last_beep = 0
 			visible = true
 			big_label.text = "Carrera %d de %d\nEsperando a los jugadores..." % [RaceManager.round_index + 1, RaceManager.rounds_total]
 			big_label.add_theme_font_size_override("font_size", 12)
 			big_label.add_theme_color_override("font_color", Color.WHITE)
 		RaceManager.State.COUNTDOWN:
+			if RaceManager.countdown_value != _last_beep:
+				_last_beep = RaceManager.countdown_value
+				Sfx.play("beep")
 			visible = true
 			big_label.text = str(RaceManager.countdown_value)
 			big_label.add_theme_font_size_override("font_size", 32)
@@ -41,6 +47,9 @@ func _on_state_changed() -> void:
 		RaceManager.State.RACING:
 			# Only celebrate the start if we saw the countdown (not late joiners)
 			if visible:
+				if _last_beep != 0:
+					_last_beep = 0
+					Sfx.play("go")
 				big_label.text = "¡ARRANCA!"
 				big_label.add_theme_font_size_override("font_size", 32)
 				big_label.add_theme_color_override("font_color", GREEN)

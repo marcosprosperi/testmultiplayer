@@ -25,6 +25,7 @@ NetworkManager="*res://autoload/NetworkManager.gd"
 PlayersManager="*res://autoload/PlayersManager.gd"
 RaceManager="*res://autoload/RaceManager.gd"
 LanDiscovery="*res://autoload/LanDiscovery.gd"
+Sfx="*res://autoload/Sfx.gd"
 
 [display]
 

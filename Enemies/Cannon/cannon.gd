@@ -58,6 +58,7 @@ func _physics_process(_delta: float) -> void:
 func play_shoot() -> void:
 	animation_player.stop()
 	animation_player.play("shoot")
+	Sfx.play_at("cannon", global_position, -4.0)
 
 # Called from the "shoot" animation at the moment the barrel fires
 func spawn_ball() -> void:

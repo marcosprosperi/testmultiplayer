@@ -31,6 +31,7 @@ func _process(delta: float) -> void:
 
 func _on_results_shown(results: Array, final: bool) -> void:
 	_final = final
+	Sfx.play("champion" if final else "results")
 	_time_left = RaceManager.FINAL_RESULTS_TIME if final else RaceManager.RESULTS_TIME
 	var race = "Carrera %d de %d" % [RaceManager.round_index + 1, RaceManager.rounds_total]
 	results.sort_custom(func(a, b): return PlayersManager.is_ahead(
@@ -45,7 +46,10 @@ func _on_results_shown(results: Array, final: bool) -> void:
 		subtitle.text = race
 	var rows = []
 	for result in results:
-		rows.append([result.name, result.color, "%dº  +%d" % [result.position, result.gained], result.total])
+		var race_text = "%dº  +%d" % [result.position, result.gained]
+		if PlayersManager.coins_enabled():
+			race_text += "   +%d mon." % result.coins
+		rows.append([result.name, result.color, race_text, result.total])
 	_fill(rows)
 	visible = true
 

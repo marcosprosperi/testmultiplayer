@@ -15,6 +15,7 @@ class_name Lobby extends CanvasLayer
 @onready var players_list: VBoxContainer = %PlayersList
 @onready var leave_button: Button = %LeaveButton
 @onready var start_button: Button = %StartButton
+@onready var coins_check: CheckButton = %CoinsCheck
 
 const NAME_TAKEN_MESSAGE = "Ese nombre ya está en uso"
 
@@ -37,6 +38,9 @@ func _ready() -> void:
 	leave_button.pressed.connect(func(): NetworkManager.leave())
 	start_button.pressed.connect(func(): main.start_game())
 	copy_button.pressed.connect(_on_copy_pressed)
+	# Only the host can change the rules; everyone else sees them
+	coins_check.toggled.connect(func(on): PlayersManager.set_coins_enabled(on))
+	PlayersManager.settings_changed.connect(_refresh)
 	PlayersManager.players_changed.connect(_refresh)
 	PlayersManager.profile_result.connect(_on_profile_result)
 	multiplayer.connected_to_server.connect(_refresh)
@@ -88,6 +92,9 @@ func _refresh() -> void:
 		_set_status(NAME_TAKEN_MESSAGE, Color("#ff7675"))
 	elif status_label.text == NAME_TAKEN_MESSAGE:
 		_set_status("", Color.WHITE)
+
+	coins_check.disabled = not NetworkManager.is_hosting
+	coins_check.set_pressed_no_signal(PlayersManager.coins_enabled())
 
 	_refresh_players(my_id)
 	start_button.disabled = not PlayersManager.has_player(1)

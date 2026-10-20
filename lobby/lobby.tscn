@@ -113,6 +113,14 @@ text = "Jugadores"
 unique_name_in_owner = true
 layout_mode = 2
 
+[node name="CoinsCheck" type="CheckButton" parent="Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+focus_mode = 0
+button_pressed = true
+text = "Monedas: +1 punto cada una, pero te hacen más lento"
+
 [node name="Buttons" type="HBoxContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2
 
