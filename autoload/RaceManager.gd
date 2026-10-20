@@ -1,7 +1,11 @@
 extends Node
 
-## Seconds to wait after everyone crosses the finish line before changing level
-const NEXT_LEVEL_DELAY = 3.0
+## Championship points by finishing position (1st, 2nd, ...)
+const POINTS = [10, 8, 6, 5, 4, 3, 2, 1]
+## Seconds the results table stays up before the next race
+const RESULTS_TIME = 6.0
+## Seconds the champion is shown before a new championship starts
+const FINAL_RESULTS_TIME = 10.0
 const COUNTDOWN_FROM = 3
 ## Start anyway if someone takes longer than this to load the level
 const MAX_WAIT_FOR_PLAYERS = 10.0
@@ -13,8 +17,14 @@ enum State { WAITING, COUNTDOWN, RACING }
 signal finish_order_changed
 signal state_changed
 signal grid_changed
+signal round_changed
+# Everyone finished: results is [{id, name, color, position, gained, total}]
+signal results_shown(results: Array, final: bool)
 
 var state := State.WAITING
+# Which race of the championship this is (0-based) and how many there are
+var round_index := 0
+var rounds_total := 1
 # 3, 2, 1 during the countdown
 var countdown_value := 0
 # Server only: players that have the level and their character loaded
@@ -68,6 +78,21 @@ func send_state_to(id: int) -> void:
 	_sync_finish_order.rpc_id(id, finish_order)
 	_sync_state.rpc_id(id, state, countdown_value, race_time())
 	_sync_grid.rpc_id(id, grid_order)
+	_sync_round.rpc_id(id, round_index, rounds_total)
+
+## Server only: called by Main before loading each level
+func set_round(index: int, total: int) -> void:
+	if multiplayer.is_server():
+		_sync_round.rpc(index, total)
+
+func is_last_round() -> bool:
+	return round_index >= rounds_total - 1
+
+@rpc("authority", "call_local", "reliable")
+func _sync_round(index: int, total: int) -> void:
+	round_index = index
+	rounds_total = total
+	round_changed.emit()
 
 ## Players can only move once the countdown is over
 func can_move() -> bool:
@@ -212,8 +237,31 @@ func _check_everyone_finished() -> void:
 	if players.is_empty() or not players.all(func(id): return finish_order.has(id)):
 		return
 	_changing_level = true
-	await get_tree().create_timer(NEXT_LEVEL_DELAY).timeout
+
+	# Hand out the points (players who left don't take a position)
+	var results = []
+	for id in finish_order:
+		if not PlayersManager.has_player(id):
+			continue
+		var gained = POINTS[results.size()] if results.size() < POINTS.size() else 0
+		PlayersManager.add_race_result(id, results.size() + 1, gained)
+		results.append({"id": id, "position": results.size() + 1, "gained": gained})
+	for result in results:
+		result["name"] = PlayersManager.name_of(result.id)
+		result["color"] = PlayersManager.color_of(result.id)
+		result["total"] = PlayersManager.points_of(result.id)
+		result["finishes"] = PlayersManager.joined_players[result.id]["finishes"].duplicate()
+	var final = is_last_round()
+	_show_results.rpc(results, final)
+
+	await get_tree().create_timer(FINAL_RESULTS_TIME if final else RESULTS_TIME).timeout
+	if final:
+		PlayersManager.reset_points()
 	PlayersManager.finish_level.emit()
+
+@rpc("authority", "call_local", "reliable")
+func _show_results(results: Array, final: bool) -> void:
+	results_shown.emit(results, final)
 
 @rpc("authority", "call_local", "reliable")
 func _sync_finish_order(order: Array) -> void:

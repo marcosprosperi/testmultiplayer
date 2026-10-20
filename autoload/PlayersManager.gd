@@ -6,7 +6,9 @@ const COLORS = [
 	Color("#9b59b6"), Color("#e67e22"), Color("#1abc9c"), Color("#ecf0f1"),
 ]
 
-# Only players that confirmed a name and color: id -> {name, color, score}
+# Only players that confirmed a name and color:
+# id -> {name, color, score, points, finishes}
+# (score: coins, points: championship, finishes: position in each race)
 var joined_players = {}
 var game_started := false
 
@@ -70,7 +72,10 @@ func request_profile(player_name: String, color_index: int) -> void:
 
 	var is_new = not joined_players.has(id)
 	var score = 0 if is_new else joined_players[id]["score"]
-	joined_players[id] = {"name": player_name, "color": color_index, "score": score}
+	var points = 0 if is_new else joined_players[id]["points"]
+	var finishes = [] if is_new else joined_players[id]["finishes"]
+	joined_players[id] = {"name": player_name, "color": color_index, "score": score,
+		"points": points, "finishes": finishes}
 	_sync_player_list.rpc(joined_players, game_started)
 	_profile_result.rpc_id(id, true, "")
 	if is_new:
@@ -89,6 +94,46 @@ func start_game() -> void:
 		return
 	game_started = true
 	_sync_player_list.rpc(joined_players, game_started)
+
+func points_of(id: int) -> int:
+	return joined_players[id]["points"] if joined_players.has(id) else 0
+
+## Server only: championship points for finishing a race in `position`
+func add_race_result(id: int, position: int, amount: int) -> void:
+	if multiplayer.is_server() and joined_players.has(id):
+		joined_players[id]["points"] += amount
+		joined_players[id]["finishes"].append(position)
+		_sync_player_list.rpc(joined_players, game_started)
+
+## Server only: a new championship starts
+func reset_points() -> void:
+	if not multiplayer.is_server():
+		return
+	for id in joined_players:
+		joined_players[id]["points"] = 0
+		joined_players[id]["finishes"] = []
+	_sync_player_list.rpc(joined_players, game_started)
+
+## Ids in championship order (see is_ahead)
+func standings() -> Array:
+	var ids = joined_players.keys()
+	ids.sort_custom(func(a, b): return is_ahead(joined_players[a], joined_players[b]))
+	return ids
+
+## Championship order between two players ({points, finishes}): more points;
+## tied on points, more wins, then more 2nd places, and so on (like F1);
+## still tied, whoever did better in the last race
+static func is_ahead(a: Dictionary, b: Dictionary) -> bool:
+	if a.points != b.points:
+		return a.points > b.points
+	for position in range(1, NetworkManager.MAX_PLAYERS + 1):
+		var a_count = a.finishes.count(position)
+		var b_count = b.finishes.count(position)
+		if a_count != b_count:
+			return a_count > b_count
+	if not a.finishes.is_empty() and not b.finishes.is_empty():
+		return a.finishes[-1] < b.finishes[-1]
+	return false
 
 func send_state_to(id: int) -> void:
 	_sync_player_list.rpc_id(id, joined_players, game_started)

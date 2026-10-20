@@ -15,6 +15,7 @@ var _go_time_left := 0.0
 
 func _ready() -> void:
 	RaceManager.state_changed.connect(_on_state_changed)
+	RaceManager.round_changed.connect(_on_state_changed)
 	_on_state_changed()
 
 func _process(delta: float) -> void:
@@ -29,7 +30,7 @@ func _on_state_changed() -> void:
 	match RaceManager.state:
 		RaceManager.State.WAITING:
 			visible = true
-			big_label.text = "Esperando a los jugadores..."
+			big_label.text = "Carrera %d de %d\nEsperando a los jugadores..." % [RaceManager.round_index + 1, RaceManager.rounds_total]
 			big_label.add_theme_font_size_override("font_size", 12)
 			big_label.add_theme_color_override("font_color", Color.WHITE)
 		RaceManager.State.COUNTDOWN:

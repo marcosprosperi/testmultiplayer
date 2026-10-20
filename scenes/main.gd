@@ -28,6 +28,7 @@ func start_game() -> void:
 		return
 	PlayersManager.start_game()
 	current_level_index = 0
+	RaceManager.set_round(current_level_index, levels.size())
 	change_level(levels[current_level_index])
 	for id in PlayersManager.joined_players:
 		create_player(id)
@@ -70,5 +71,6 @@ func change_level(level_scene: PackedScene):
 func _on_level_finished():
 	if multiplayer.is_server():
 		current_level_index = (current_level_index + 1) % levels.size()
+		RaceManager.set_round(current_level_index, levels.size())
 		# Using call_deferred is safer for physics/scene tree changes
 		call_deferred("change_level", levels[current_level_index])
