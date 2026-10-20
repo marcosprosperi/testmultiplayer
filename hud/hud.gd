@@ -56,7 +56,8 @@ func _update_position_label(ranking: Array) -> void:
 	if local_index == -1:
 		position_label.text = ""
 		return
-	var place = "%dº / %d" % [local_index + 1, ranking.size()]
+	var points = PlayersManager.points_of(ranking[local_index].name.to_int())
+	var place = "%dº / %d  ·  %d pts" % [local_index + 1, ranking.size(), points]
 	var local_id = ranking[local_index].name.to_int()
 	if RaceManager.has_finished(local_id):
 		position_label.text = "¡Meta! " + place

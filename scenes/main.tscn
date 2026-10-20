@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://bxwdv7rjp1mf5" path="res://scenes/level_1.tscn" id="4_level1"]
 [ext_resource type="PackedScene" uid="uid://cibp8iksdlty" path="res://scenes/level_2.tscn" id="5_level2"]
 [ext_resource type="PackedScene" path="res://scenes/level_3.tscn" id="6_level3"]
+[ext_resource type="PackedScene" path="res://hud/standings.tscn" id="7_standings"]
 
 [node name="Main" type="Node" unique_id=1346978070]
 script = ExtResource("1_o5qli")
@@ -23,5 +24,7 @@ spawn_path = NodePath("../LevelContainer")
 [node name="Players" type="Node" parent="." unique_id=389010045]
 
 [node name="Hud" parent="." instance=ExtResource("2_hud")]
+
+[node name="Standings" parent="." instance=ExtResource("7_standings")]
 
 [node name="Lobby" parent="." instance=ExtResource("3_lobby")]

@@ -16,8 +16,9 @@ func _process(_delta: float) -> void:
 
 	var racing = _racing_players()
 	if racing.is_empty():
+		# The results table takes over from here
 		_watch(local)
-		_set_text("¡Llegaron todos! Próximo nivel...", Color.WHITE)
+		text = ""
 		return
 
 	var index = max(racing.find(watched), 0)
