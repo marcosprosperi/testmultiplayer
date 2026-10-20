@@ -49,6 +49,9 @@ position = Vector2(897, 606)
 
 [node name="Cannon" parent="." unique_id=1602349020 instance=ExtResource("7_pa8r4")]
 position = Vector2(1076, 632)
+fire_rate = 1.5
+ball_speed = 250.0
+cannon_look_to = "Left"
 
 [node name="FinishLine" parent="." instance=ExtResource("race_finish")]
 position = Vector2(1960, 631)

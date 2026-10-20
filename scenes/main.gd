@@ -6,12 +6,16 @@ class_name Main extends Node
 @onready var players_spawner: MultiplayerSpawner = $PlayersSpawner
 @onready var level_spawner: MultiplayerSpawner = $LevelMultiplayerSpawner
 
-const LEVEL_1 = preload("uid://bxwdv7rjp1mf5")
-const LEVEL_2 = preload("uid://cibp8iksdlty") # Ensure this UID is correct or use res:// path
-
+## Levels in play order; after the last one it goes back to the first
+@export var levels: Array[PackedScene] = []
 @export var player_scene: PackedScene = preload("res://scenes/player.tscn")
 
+var current_level_index := 0
+
 func _ready() -> void:
+	# Every level in the list can be replicated to the clients
+	for level in levels:
+		level_spawner.add_spawnable_scene(level.resource_path)
 	PlayersManager.player_added.connect(_on_player_added)
 	PlayersManager.player_removed.connect(_on_player_removed)
 	PlayersManager.finish_level.connect(_on_level_finished)
@@ -23,7 +27,8 @@ func start_game() -> void:
 	if not multiplayer.is_server() or PlayersManager.game_started:
 		return
 	PlayersManager.start_game()
-	change_level(LEVEL_1)
+	current_level_index = 0
+	change_level(levels[current_level_index])
 	for id in PlayersManager.joined_players:
 		create_player(id)
 
@@ -64,5 +69,6 @@ func change_level(level_scene: PackedScene):
 	
 func _on_level_finished():
 	if multiplayer.is_server():
+		current_level_index = (current_level_index + 1) % levels.size()
 		# Using call_deferred is safer for physics/scene tree changes
-		call_deferred("change_level", LEVEL_2)
+		call_deferred("change_level", levels[current_level_index])

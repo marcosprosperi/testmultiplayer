@@ -3,16 +3,19 @@
 [ext_resource type="Script" uid="uid://cen1dslc1hrab" path="res://scenes/main.gd" id="1_o5qli"]
 [ext_resource type="PackedScene" path="res://hud/hud.tscn" id="2_hud"]
 [ext_resource type="PackedScene" path="res://lobby/lobby.tscn" id="3_lobby"]
+[ext_resource type="PackedScene" uid="uid://bxwdv7rjp1mf5" path="res://scenes/level_1.tscn" id="4_level1"]
+[ext_resource type="PackedScene" uid="uid://cibp8iksdlty" path="res://scenes/level_2.tscn" id="5_level2"]
+[ext_resource type="PackedScene" path="res://scenes/level_3.tscn" id="6_level3"]
 
 [node name="Main" type="Node" unique_id=1346978070]
 script = ExtResource("1_o5qli")
+levels = Array[PackedScene]([ExtResource("4_level1"), ExtResource("5_level2"), ExtResource("6_level3")])
 
 [node name="PlayersSpawner" type="MultiplayerSpawner" parent="." unique_id=1942581705]
 _spawnable_scenes = PackedStringArray("uid://g03n8e1oanp3")
 spawn_path = NodePath("../Players")
 
 [node name="LevelMultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=1872902997]
-_spawnable_scenes = PackedStringArray("uid://bxwdv7rjp1mf5", "uid://cibp8iksdlty")
 spawn_path = NodePath("../LevelContainer")
 
 [node name="LevelContainer" type="Node" parent="." unique_id=1735856301]

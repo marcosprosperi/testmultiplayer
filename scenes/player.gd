@@ -23,6 +23,7 @@ func _ready() -> void:
 	if RaceManager.has_spawn():
 		global_position = RaceManager.get_start_position(name.to_int())
 
+	camera_2d.zoom = Vector2.ONE * RaceManager.get_camera_zoom()
 	_create_name_label()
 	PlayersManager.players_changed.connect(_update_name_label)
 
