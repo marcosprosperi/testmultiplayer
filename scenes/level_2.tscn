@@ -3,6 +3,8 @@
 [ext_resource type="Texture2D" uid="uid://rkod5inpj6e6" path="res://icon.svg" id="1_jm1iu"]
 [ext_resource type="PackedScene" uid="uid://d2l5myn53o5qe" path="res://collectables/coin.tscn" id="2_pbc48"]
 [ext_resource type="Script" path="res://race/level.gd" id="race_level"]
+[ext_resource type="PackedScene" path="res://race/finish_line.tscn" id="race_finish"]
+[ext_resource type="Script" path="res://race/kill_zone.gd" id="race_kill"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_eqxsl"]
 texture = ExtResource("1_jm1iu")
@@ -16,8 +18,14 @@ physics_layer_0/collision_layer = 512
 physics_layer_0/collision_mask = 0
 sources/0 = SubResource("TileSetAtlasSource_eqxsl")
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fall"]
+size = Vector2(2400, 32)
+
 [node name="Level_2" type="Node2D" unique_id=2140859353]
 script = ExtResource("race_level")
+
+[node name="Spawn" type="Marker2D" parent="." groups=["spawn"]]
+position = Vector2(40, 510)
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=1644811239]
 tile_map_data = PackedByteArray("AAAAAAQAAAAAAAAAAAABAAQAAAAAAAAAAAACAAQAAAAAAAAAAAADAAQAAAAAAAAAAAAEAAQAAAAAAAAAAAAFAAQAAAAAAAAAAAAGAAQAAAAAAAAAAAAHAAQAAAAAAAAAAAAIAAQAAAAAAAAAAAA=")
@@ -54,3 +62,14 @@ position = Vector2(872, 394)
 
 [node name="Coin10" parent="Collectables" unique_id=364514178 instance=ExtResource("2_pbc48")]
 position = Vector2(984, 394)
+
+[node name="FinishLine" parent="." instance=ExtResource("race_finish")]
+position = Vector2(1100, 512)
+
+[node name="FallKillZone" type="Area2D" parent="."]
+position = Vector2(576, 800)
+collision_layer = 0
+script = ExtResource("race_kill")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="FallKillZone"]
+shape = SubResource("RectangleShape2D_fall")

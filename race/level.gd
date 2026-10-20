@@ -7,3 +7,4 @@ func _ready() -> void:
 	for player in get_tree().get_nodes_in_group("player"):
 		if player.is_multiplayer_authority():
 			player.respawn()
+	RaceManager.notify_local_ready()
