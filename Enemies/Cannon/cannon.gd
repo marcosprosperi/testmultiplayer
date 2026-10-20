@@ -2,6 +2,8 @@ class_name Cannon extends Node2D
 
 
 @export var fire_rate = 1.0
+## Slower balls are easier to jump over when the cannon faces the players
+@export var ball_speed := 600.0
 @export_enum("Left", "Right") var cannon_look_to: String = "Left"
 const BALL = preload("uid://dvsy05ku6fb48")
 
@@ -64,5 +66,6 @@ func spawn_ball() -> void:
 		
 	var new_ball = BALL.instantiate() as Ball
 	new_ball.direction = -1 if cannon_look_to == "Left" else 1
+	new_ball.speed = ball_speed
 	# The MultiplayerSpawner replicates the ball to the clients
 	ball_mark_spawn.add_child(new_ball, true)
