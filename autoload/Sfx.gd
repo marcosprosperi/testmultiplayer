@@ -4,7 +4,7 @@ extends Node
 ## coin...), play_at() for things in the world you hear when you're near.
 
 const SOUNDS = ["beep", "go", "jump", "death", "coin", "finish", "results", "champion", "cannon", "crack",
-	"click", "spikes", "slam", "wind"]
+	"click", "spikes", "slam", "wind", "stomp"]
 ## Positional sounds fade out over this distance
 const HEARING_DISTANCE = 600.0
 

@@ -26,7 +26,8 @@ func _ready() -> void:
 
 func _on_phase_changed(new_phase: Phase) -> void:
 	if new_phase == Phase.ACTIVE:
-		# While falling it doesn't push players aside: it squashes them
+		# While falling it doesn't push players aside: it squashes them (its
+		# thin top stays solid, so you can ride it down)
 		set_deadly(kill, true)
 		block_collision.set_deferred("disabled", true)
 		var slam = create_tween()

@@ -2,6 +2,8 @@ extends Node
 
 const MAX_NAME_LENGTH = 12
 const MAX_GAME_NAME_LENGTH = 24
+const MAX_PLAYERS = 8
+const BOT_NAMES = ["Bot Turbo", "Bot Chispa", "Bot Tuerca", "Bot Pixel", "Bot Rayo", "Bot Byte", "Bot Cohete", "Bot Rulo"]
 const COLORS = [
 	Color("#e74c3c"), Color("#3498db"), Color("#2ecc71"), Color("#f1c40f"),
 	Color("#9b59b6"), Color("#e67e22"), Color("#1abc9c"), Color("#ecf0f1"),
@@ -13,9 +15,14 @@ const COLORS = [
 var joined_players = {}
 var game_started := false
 # Chosen by the host in the lobby
-var settings = {"coins": true, "game_name": ""}
+# levels: indices into Main.levels in play order ([] = all, easiest first)
+var settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": [], "bots": false}
+# Server only: how good each bot is (0..1)
+var _bot_skills = {}
 
 signal finish_level
+# Server only: the last race of the championship ended
+signal championship_over
 signal players_changed
 signal settings_changed
 # Server only: a new player confirmed their profile
@@ -28,7 +35,8 @@ signal profile_result(ok: bool, message: String)
 func reset() -> void:
 	joined_players = {}
 	game_started = false
-	settings = {"coins": true, "game_name": ""}
+	settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": [], "bots": false}
+	_bot_skills.clear()
 	players_changed.emit()
 	settings_changed.emit()
 
@@ -47,6 +55,25 @@ func game_display_name() -> String:
 func set_game_name(game_name: String) -> void:
 	if multiplayer.is_server():
 		settings["game_name"] = game_name.strip_edges().left(MAX_GAME_NAME_LENGTH)
+		_sync_settings.rpc(settings)
+
+## Losing sends you back to the last flag you touched instead of the start
+func checkpoints_enabled() -> bool:
+	return settings.get("checkpoints", false)
+
+func get_playlist() -> Array:
+	return settings.get("levels", [])
+
+## Host only
+func set_playlist(level_indices: Array) -> void:
+	if multiplayer.is_server():
+		settings["levels"] = level_indices
+		_sync_settings.rpc(settings)
+
+## Host only
+func set_checkpoints_enabled(enabled: bool) -> void:
+	if multiplayer.is_server():
+		settings["checkpoints"] = enabled
 		_sync_settings.rpc(settings)
 
 ## Host only
@@ -69,17 +96,55 @@ func name_of(id: int) -> String:
 func color_of(id: int) -> Color:
 	return COLORS[joined_players[id]["color"]] if joined_players.has(id) else Color.GRAY
 
+# Bots never block a person: if someone picks a bot's name or color, the bot
+# leaves to make room (see request_profile)
 func is_name_taken(player_name: String, except_id := 0) -> bool:
 	for id in joined_players:
-		if id != except_id and joined_players[id]["name"].to_lower() == player_name.strip_edges().to_lower():
+		if id >= 0 and id != except_id and joined_players[id]["name"].to_lower() == player_name.strip_edges().to_lower():
 			return true
 	return false
 
 func is_color_taken(color_index: int, except_id := 0) -> bool:
 	for id in joined_players:
-		if id != except_id and joined_players[id]["color"] == color_index:
+		if id >= 0 and id != except_id and joined_players[id]["color"] == color_index:
 			return true
 	return false
+
+func is_bot(id: int) -> bool:
+	return id < 0
+
+func bots_enabled() -> bool:
+	return settings.get("bots", false)
+
+## Host only
+func set_bots_enabled(enabled: bool) -> void:
+	if multiplayer.is_server():
+		settings["bots"] = enabled
+		_sync_settings.rpc(settings)
+
+func bot_skill(id: int) -> float:
+	return _bot_skills.get(id, 0.85)
+
+## Server only: fill the race up to MAX_PLAYERS with bots
+func add_bots() -> void:
+	if not multiplayer.is_server():
+		return
+	var free_colors = range(COLORS.size()).filter(func(c): return not is_color_taken(c))
+	var free_names = BOT_NAMES.filter(func(n): return not is_name_taken(n))
+	var count = mini(MAX_PLAYERS - joined_players.size(), mini(free_colors.size(), free_names.size()))
+	for i in count:
+		var id = -(i + 1)
+		joined_players[id] = {"name": free_names[i], "color": free_colors[i], "points": 0, "finishes": []}
+		_bot_skills[id] = randf_range(0.75, 0.95)
+	_sync_player_list.rpc(joined_players, game_started)
+
+## Server only
+func remove_bots() -> void:
+	if not multiplayer.is_server():
+		return
+	for id in joined_players.keys().filter(func(i): return i < 0):
+		remove_player(id)
+	_bot_skills.clear()
 
 ## Sent by each peer to the server (also to change name / color later)
 @rpc("any_peer", "call_local", "reliable")
@@ -104,6 +169,17 @@ func request_profile(player_name: String, color_index: int) -> void:
 		_profile_result.rpc_id(id, false, error)
 		return
 
+	# A bot using that name or color leaves to make room (and one leaves if
+	# the race is full)
+	var bots = joined_players.keys().filter(func(i): return i < 0)
+	for bot in bots:
+		if joined_players[bot]["color"] == color_index or joined_players[bot]["name"].to_lower() == player_name.to_lower():
+			remove_player(bot)
+	bots = joined_players.keys().filter(func(i): return i < 0)
+	if not joined_players.has(id) and not bots.is_empty() and joined_players.size() >= MAX_PLAYERS:
+		bots.sort()
+		remove_player(bots[0])
+
 	var is_new = not joined_players.has(id)
 	var points = 0 if is_new else joined_players[id]["points"]
 	var finishes = [] if is_new else joined_players[id]["finishes"]
@@ -126,6 +202,13 @@ func start_game() -> void:
 	if not multiplayer.is_server():
 		return
 	game_started = true
+	_sync_player_list.rpc(joined_players, game_started)
+
+## Server only: back to the lobby
+func stop_game() -> void:
+	if not multiplayer.is_server():
+		return
+	game_started = false
 	_sync_player_list.rpc(joined_players, game_started)
 
 func points_of(id: int) -> int:

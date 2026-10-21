@@ -2,6 +2,18 @@
 
 [ext_resource type="Script" path="res://lobby/lobby.gd" id="1_lobby"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_levels"]
+bg_color = Color(0.1, 0.11, 0.15, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.25)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
 [node name="Lobby" type="CanvasLayer"]
 layer = 10
 script = ExtResource("1_lobby")
@@ -122,14 +134,46 @@ text = "Jugadores"
 [node name="PlayersList" type="VBoxContainer" parent="Panel/Margin/VBox/Columns/Players"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 3
 
-[node name="CoinsCheck" type="CheckButton" parent="Panel/Margin/VBox"]
+[node name="PlaylistLabel" type="Label" parent="Panel/Margin/VBox/Columns/Players"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+modulate = Color(1, 1, 1, 0.75)
+autowrap_mode = 3
+
+[node name="Options" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="CoinsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 0
 focus_mode = 0
+tooltip_text = "Cada moneda suma 1 punto al terminar la carrera, pero te hace más lento"
 button_pressed = true
-text = "Monedas: +1 punto cada una, pero te hacen más lento"
+text = "Monedas"
+
+[node name="CheckpointsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Al perder volvés a la última bandera que tocaste en vez de al principio"
+text = "Checkpoints"
+
+[node name="BotsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Completa la carrera con bots hasta 8 jugadores. Si entra alguien, un bot le deja su lugar"
+text = "Bots"
+
+[node name="LevelsButton" type="Button" parent="Panel/Margin/VBox/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Niveles…"
 
 [node name="Buttons" type="HBoxContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2
@@ -147,3 +191,72 @@ size_flags_horizontal = 3
 unique_name_in_owner = true
 layout_mode = 2
 text = "Empezar carrera"
+
+[node name="LevelsDim" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="LevelsPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -175.0
+offset_top = -122.0
+offset_right = 175.0
+offset_bottom = 122.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_levels")
+
+[node name="Margin" type="MarginContainer" parent="LevelsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="LevelsPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="LevelsPanel/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Niveles del campeonato"
+
+[node name="Hint" type="Label" parent="LevelsPanel/Margin/VBox"]
+layout_mode = 2
+modulate = Color(1, 1, 1, 0.7)
+text = "Marcá los que se juegan y ordenalos con las flechas"
+
+[node name="LevelRows" type="VBoxContainer" parent="LevelsPanel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Buttons" type="HBoxContainer" parent="LevelsPanel/Margin/VBox"]
+layout_mode = 2
+
+[node name="SortButton" type="Button" parent="LevelsPanel/Margin/VBox/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ordenar por dificultad"
+
+[node name="Spacer" type="Control" parent="LevelsPanel/Margin/VBox/Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LevelsDoneButton" type="Button" parent="LevelsPanel/Margin/VBox/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Listo"

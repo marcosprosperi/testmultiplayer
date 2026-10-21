@@ -6,19 +6,23 @@ class_name Main extends Node
 @onready var players_spawner: MultiplayerSpawner = $PlayersSpawner
 @onready var level_spawner: MultiplayerSpawner = $LevelMultiplayerSpawner
 
-## Levels in play order; after the last one it goes back to the first
-@export var levels: Array[PackedScene] = []
+## Every level that can be played (LevelInfo: title, difficulty, scene).
+## The host picks which ones and in what order in the lobby
+@export var levels: Array[Resource] = []
 @export var player_scene: PackedScene = preload("res://scenes/player.tscn")
 
-var current_level_index := 0
+# Server only: indices into `levels` for this championship, and which one is on
+var playlist: Array = []
+var current_round := 0
 
 func _ready() -> void:
 	# Every level in the list can be replicated to the clients
-	for level in levels:
-		level_spawner.add_spawnable_scene(level.resource_path)
+	for info in levels:
+		level_spawner.add_spawnable_scene(info.scene.resource_path)
 	PlayersManager.player_added.connect(_on_player_added)
 	PlayersManager.player_removed.connect(_on_player_removed)
 	PlayersManager.finish_level.connect(_on_level_finished)
+	PlayersManager.championship_over.connect(_return_to_lobby)
 	# Host or join now that the spawners exist
 	NetworkManager.start()
 
@@ -26,12 +30,39 @@ func _ready() -> void:
 func start_game() -> void:
 	if not multiplayer.is_server() or PlayersManager.game_started:
 		return
+	playlist = PlayersManager.get_playlist().filter(func(i): return i >= 0 and i < levels.size())
+	if playlist.is_empty():
+		playlist = default_playlist()
+	PlayersManager.reset_points()
+	if PlayersManager.bots_enabled():
+		PlayersManager.add_bots()
 	PlayersManager.start_game()
-	current_level_index = 0
-	RaceManager.set_round(current_level_index, levels.size())
-	change_level(levels[current_level_index])
+	current_round = 0
+	RaceManager.set_round(current_round, playlist.size())
+	change_level(levels[playlist[current_round]].scene)
 	for id in PlayersManager.joined_players:
 		create_player(id)
+
+## All levels, easiest first
+func default_playlist() -> Array:
+	var order = range(levels.size())
+	order.sort_custom(func(a, b): return levels[a].difficulty < levels[b].difficulty \
+		or (levels[a].difficulty == levels[b].difficulty and a < b))
+	return order
+
+# Server: the championship ended, everyone goes back to the lobby (still
+# connected, with their name and color) to change things and play again
+func _return_to_lobby() -> void:
+	if not multiplayer.is_server():
+		return
+	for child in level_container.get_children():
+		level_container.remove_child(child)
+		child.queue_free()
+	for player in players.get_children():
+		player.queue_free()
+	RaceManager.end_championship()
+	PlayersManager.remove_bots()
+	PlayersManager.stop_game()
 
 func create_player(id: int) -> void:
 	if not multiplayer.is_server() or players.has_node(str(id)):
@@ -70,7 +101,7 @@ func change_level(level_scene: PackedScene):
 	
 func _on_level_finished():
 	if multiplayer.is_server():
-		current_level_index = (current_level_index + 1) % levels.size()
-		RaceManager.set_round(current_level_index, levels.size())
+		current_round = mini(current_round + 1, playlist.size() - 1)
+		RaceManager.set_round(current_round, playlist.size())
 		# Using call_deferred is safer for physics/scene tree changes
-		call_deferred("change_level", levels[current_level_index])
+		call_deferred("change_level", levels[playlist[current_round]].scene)

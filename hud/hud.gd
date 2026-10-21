@@ -23,7 +23,7 @@ func _process(delta: float) -> void:
 		toast.modulate.a = clampf(_toast_left / 0.5, 0.0, 1.0)
 	# Only shown while the local player is racing (not in the lobby)
 	visible = is_connected_to_game(multiplayer) and get_tree().get_nodes_in_group("player").any(
-		func(p): return p.is_multiplayer_authority())
+		func(p): return p.is_local())
 	if !visible:
 		return
 	var ranking = get_ranking()
@@ -62,14 +62,14 @@ func _track_entries() -> Array:
 		entries.append({
 			"progress": 1.0 if RaceManager.has_finished(id) else RaceManager.get_progress(player),
 			"color": color_for(id),
-			"is_local": player.is_multiplayer_authority(),
+			"is_local": player.is_local(),
 		})
 	# Draw the local player last so it stays on top
 	entries.sort_custom(func(a, b): return !a.is_local and b.is_local)
 	return entries
 
 func _update_position_label(ranking: Array) -> void:
-	var local_index = ranking.find_custom(func(p): return p.is_multiplayer_authority())
+	var local_index = ranking.find_custom(func(p): return p.is_local())
 	if local_index == -1:
 		position_label.text = ""
 		return

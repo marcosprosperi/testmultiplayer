@@ -7,6 +7,12 @@ const JUMP_VELOCITY = -400.0
 const SLIPSTREAM_RANGE = 140.0
 const SLIPSTREAM_HEIGHT = 20.0
 const SLIPSTREAM_BOOST = 1.2
+## Coyote time: you can still jump this long after running off an edge
+const COYOTE_TIME = 0.1
+## Jump buffer: pressing jump this long before landing still jumps
+const JUMP_BUFFER = 0.12
+## Bounce after stomping an enemy
+const STOMP_BOUNCE = -300.0
 
 @onready var camera_2d: Camera2D = $Camera2D
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
@@ -16,10 +22,25 @@ var name_label: Label
 var slipstream := false
 # Added to the velocity for one frame by things like fans
 var push := Vector2.ZERO
+# Last checkpoint flag touched in this level (if the host turned them on)
+var checkpoint = null
+# Bots (negative ids, run by the server) are driven by this instead of the keyboard
+var brain: BotBrain = null
+var _coyote_left := 0.0
+var _jump_buffer_left := 0.0
 
 func _enter_tree():
-	# Set authority based on the node name (which is now just the ID)
-	set_multiplayer_authority(name.to_int())
+	# Set authority based on the node name (which is now just the ID); bots
+	# have negative ids and belong to the server
+	set_multiplayer_authority(1 if is_bot() else name.to_int())
+
+## Bots fill the race up to 8 players; the server moves them
+func is_bot() -> bool:
+	return name.to_int() < 0
+
+## The player this computer controls (not a bot, not someone else)
+func is_local() -> bool:
+	return is_multiplayer_authority() and not is_bot()
 
 func _ready() -> void:
 	if RaceManager.has_spawn():
@@ -31,7 +52,9 @@ func _ready() -> void:
 	PlayersManager.players_changed.connect(_update_name_label)
 
 	animated_sprite_2d.scale.x = 1
-	if is_multiplayer_authority():
+	if is_bot() and multiplayer.is_server():
+		brain = BotBrain.new(self, PlayersManager.bot_skill(name.to_int()))
+	if is_local():
 		camera_2d.make_current()
 		RaceManager.grid_changed.connect(_on_grid_changed)
 		RaceManager.notify_local_ready()
@@ -54,11 +77,26 @@ func _physics_process(delta: float) -> void:
 	# are used to switch spectator cameras
 	var frozen := RaceManager.has_finished(name.to_int()) or not RaceManager.can_move()
 
-	if Input.is_action_just_pressed("jump") and is_on_floor() and not frozen:
-		velocity.y = JUMP_VELOCITY
-		Sfx.play("jump", -6.0)
+	var bot_input = brain.update(delta) if brain else {}
+	if is_on_floor():
+		_coyote_left = COYOTE_TIME
+	else:
+		_coyote_left -= delta
+	if bot_input.get("jump", false) if brain else Input.is_action_just_pressed("jump"):
+		_jump_buffer_left = JUMP_BUFFER
+	else:
+		_jump_buffer_left -= delta
 
-	var direction := 0.0 if frozen else Input.get_axis("left", "right")
+	if _jump_buffer_left > 0.0 and _coyote_left > 0.0 and not frozen:
+		velocity.y = JUMP_VELOCITY
+		_jump_buffer_left = 0.0
+		_coyote_left = 0.0
+		if is_local():
+			Sfx.play("jump", -6.0)
+
+	var direction := 0.0
+	if not frozen:
+		direction = bot_input.get("dir", 0.0) if brain else Input.get_axis("left", "right")
 	if velocity.x > 0:
 		animated_sprite_2d.scale.x = 1 
 	elif velocity.x < 0:
@@ -86,7 +124,8 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 func _is_in_slipstream(direction: float) -> bool:
-	if direction == 0:
+	# Bots don't get it (or they'd all run as one pack); people behind a bot do
+	if direction == 0 or is_bot():
 		return false
 	for other in get_tree().get_nodes_in_group("player"):
 		if other == self:
@@ -125,11 +164,17 @@ func _update_name_label() -> void:
 	name_label.text = PlayersManager.name_of(id)
 	name_label.add_theme_color_override("font_color", PlayersManager.color_of(id))
 
+## Called when you land on an enemy you can squash
+func bounce() -> void:
+	velocity.y = STOMP_BOUNCE
+	_coyote_left = 0.0
+
 ## Losing sends the player back to the start of the level
 func die() -> void:
 	if not is_multiplayer_authority():
 		return
-	Sfx.play("death")
+	if is_local():
+		Sfx.play("death")
 	respawn()
 
 ## Before the start: your grid slot. During the race: the back of the grid.
@@ -140,8 +185,13 @@ func respawn() -> void:
 	if not RaceManager.has_spawn():
 		return
 	if RaceManager.can_move():
-		global_position = RaceManager.get_spawn_position()
+		if checkpoint != null and PlayersManager.checkpoints_enabled():
+			global_position = checkpoint
+		else:
+			global_position = RaceManager.get_spawn_position()
 	else:
+		# A new level is starting
+		checkpoint = null
 		global_position = RaceManager.get_start_position(name.to_int())
 
 # The grid can arrive after the level loads: move to your slot

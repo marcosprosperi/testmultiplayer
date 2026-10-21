@@ -38,7 +38,7 @@ func _watch(player: Player) -> void:
 	if player == watched:
 		return
 	# Remote players' cameras stay off unless someone is spectating them
-	if is_instance_valid(watched) and watched.is_inside_tree() and !watched.is_multiplayer_authority():
+	if is_instance_valid(watched) and watched.is_inside_tree() and !watched.is_local():
 		watched.camera_2d.enabled = false
 	watched = player
 	if is_instance_valid(watched):
@@ -51,7 +51,7 @@ func _set_text(value: String, color: Color) -> void:
 
 func _local_player() -> Player:
 	for player in get_tree().get_nodes_in_group("player"):
-		if player.is_multiplayer_authority():
+		if player.is_local():
 			return player
 	return null
 
