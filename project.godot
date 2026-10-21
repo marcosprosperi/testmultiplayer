@@ -28,6 +28,7 @@ LanDiscovery="*res://autoload/LanDiscovery.gd"
 Sfx="*res://autoload/Sfx.gd"
 Settings="*res://autoload/Settings.gd"
 Music="*res://autoload/Music.gd"
+Transition="*res://autoload/Transition.gd"
 
 [display]
 

@@ -8,6 +8,11 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	body_entered.connect(_on_body_entered)
+	RaceManager.player_finished.connect(_celebrate)
+
+# Confetti for everyone who crosses (on every screen)
+func _celebrate(_id: int, _place: int) -> void:
+	Fx.spawn(Fx.CONFETTI, global_position + Vector2(0, -30))
 
 func _on_body_entered(body: Node2D) -> void:
 	if body is Player and body.is_multiplayer_authority() \

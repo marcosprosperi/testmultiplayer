@@ -68,7 +68,7 @@ func _build_scenery() -> void:
 			ground.set_cell(Vector2i(x, y), NATURE, Vector2i(1, 1))
 		if posmod(x * 7, 5) == 0:
 			ground.set_cell(Vector2i(x, top_row - 1), NATURE, BUSHES[posmod(x, BUSHES.size())])
-	var frames = _player_frames()
+	var frames = PlayerLook.frames()
 	if frames == null:
 		return
 	var colors = PlayersManager.COLORS.duplicate()
@@ -79,15 +79,6 @@ func _build_scenery() -> void:
 		runner.position = Vector2(-30 - i * 100 - randf() * 60, runner.ground_y)
 		runner.setup(frames, colors[i % colors.size()])
 		runners.add_child(runner)
-
-# The racers' animations, read from the player scene without creating one
-func _player_frames() -> SpriteFrames:
-	var state = (load("res://scenes/player.tscn") as PackedScene).get_state()
-	for node in state.get_node_count():
-		for i in state.get_node_property_count(node):
-			if state.get_node_property_name(node, i) == "sprite_frames":
-				return state.get_node_property_value(node, i)
-	return null
 
 func _show_start_screen() -> void:
 	LanDiscovery.stop_listening()

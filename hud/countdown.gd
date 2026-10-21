@@ -16,6 +16,8 @@ var _go_time_left := 0.0
 var _last_beep := 0
 
 func _ready() -> void:
+	big_label.add_theme_font_override("font", preload("res://ui/fonts/LilitaOne-Regular.ttf"))
+	big_label.add_theme_color_override("font_outline_color", Color(0.17, 0.11, 0.23))
 	RaceManager.state_changed.connect(_on_state_changed)
 	RaceManager.round_changed.connect(_on_state_changed)
 	_on_state_changed()
@@ -33,7 +35,7 @@ func _on_state_changed() -> void:
 		RaceManager.State.WAITING:
 			_last_beep = 0
 			visible = true
-			big_label.text = "Carrera %d de %d\nEsperando a los jugadores..." % [RaceManager.round_index + 1, RaceManager.rounds_total]
+			big_label.text = "Esperando a los jugadores..."
 			big_label.add_theme_font_size_override("font_size", 12)
 			big_label.add_theme_color_override("font_color", Color.WHITE)
 		RaceManager.State.COUNTDOWN:

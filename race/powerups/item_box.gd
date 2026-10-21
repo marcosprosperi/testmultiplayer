@@ -38,8 +38,9 @@ func _on_body_entered(body: Node2D) -> void:
 @rpc("authority", "call_local", "reliable")
 func _taken(id: int) -> void:
 	_back_at = RaceManager.race_time() + BACK_AFTER
-	if id == multiplayer.get_unique_id():
-		Sfx.play("item_box")
+	# The box bursts (the sound comes when your slot stops spinning)
+	Fx.spawn(Fx.SPARKLE, global_position, Color.from_hsv(randf(), 0.6, 1.0))
+	Fx.spawn(Fx.STOMP, global_position + Vector2(0, 6))
 
 func _process(_delta: float) -> void:
 	queue_redraw()

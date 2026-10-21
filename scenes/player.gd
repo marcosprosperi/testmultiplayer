@@ -17,7 +17,6 @@ const STOMP_BOUNCE = -300.0
 const LOOK_AHEAD = 70.0
 ## Seconds you stay "gone" (a poof) after losing, before coming back
 const DEATH_TIME = 0.45
-const COLORS_SHADER = preload("res://scenes/player_colors.gdshader")
 ## On ice you speed up and slow down slowly (pixels per second²)
 const ICE_ACCEL = 650.0
 const ICE_FRICTION = 260.0
@@ -67,8 +66,6 @@ func _ready() -> void:
 	camera_2d.offset = RaceManager.get_camera_offset()
 	camera_2d.position_smoothing_enabled = true
 	camera_2d.position_smoothing_speed = 7.0
-	animated_sprite_2d.material = ShaderMaterial.new()
-	animated_sprite_2d.material.shader = COLORS_SHADER
 	_create_name_label()
 	PlayersManager.players_changed.connect(_update_name_label)
 
@@ -111,7 +108,8 @@ func _physics_process(delta: float) -> void:
 	var bot_input = brain.update(delta) if brain else {}
 	# Your keys don't move you while a menu is open over the race
 	var keys = brain == null and not Settings.menu_open
-	if keys and Input.is_action_just_pressed("use_item") and RaceManager.item_of(name.to_int()) != "":
+	if keys and Input.is_action_just_pressed("use_item") and RaceManager.item_of(name.to_int()) != "" \
+			and not ItemSlot.rolling:
 		RaceManager.request_use_item.rpc_id(1)
 	if is_on_floor():
 		_coyote_left = COYOTE_TIME
@@ -233,10 +231,7 @@ func _update_name_label() -> void:
 		name_label.add_theme_color_override("font_color", PlayersManager.color_of(id).lightened(0.25))
 	name_label.reset_size()
 	name_label.position = Vector2(-name_label.size.x / 2.0, -36)
-	var color = PlayersManager.color_of(id)
-	if animated_sprite_2d.material:
-		animated_sprite_2d.material.set_shader_parameter("main_color", color)
-		animated_sprite_2d.material.set_shader_parameter("light_color", color.lightened(0.45))
+	PlayerLook.paint(animated_sprite_2d, PlayersManager.color_of(id))
 
 # When players bunch up, only one name per bunch shows (yours always does)
 func _update_name_visibility() -> void:
