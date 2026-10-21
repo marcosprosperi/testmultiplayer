@@ -9,10 +9,41 @@
 [ext_resource type="PackedScene" path="res://hud/standings.tscn" id="7_standings"]
 [ext_resource type="PackedScene" path="res://scenes/level_4.tscn" id="8_level4"]
 [ext_resource type="PackedScene" path="res://scenes/level_5.tscn" id="9_level5"]
+[ext_resource type="Script" path="res://race/level_info.gd" id="10_level_info"]
+
+[sub_resource type="Resource" id="LevelInfo_1"]
+script = ExtResource("10_level_info")
+title = "Pradera"
+difficulty = 1
+scene = ExtResource("4_level1")
+
+[sub_resource type="Resource" id="LevelInfo_2"]
+script = ExtResource("10_level_info")
+title = "Atardecer"
+difficulty = 2
+scene = ExtResource("5_level2")
+
+[sub_resource type="Resource" id="LevelInfo_3"]
+script = ExtResource("10_level_info")
+title = "Cielo"
+difficulty = 2
+scene = ExtResource("6_level3")
+
+[sub_resource type="Resource" id="LevelInfo_4"]
+script = ExtResource("10_level_info")
+title = "Mazmorra"
+difficulty = 3
+scene = ExtResource("8_level4")
+
+[sub_resource type="Resource" id="LevelInfo_5"]
+script = ExtResource("10_level_info")
+title = "Noche"
+difficulty = 3
+scene = ExtResource("9_level5")
 
 [node name="Main" type="Node" unique_id=1346978070]
 script = ExtResource("1_o5qli")
-levels = Array[PackedScene]([ExtResource("4_level1"), ExtResource("5_level2"), ExtResource("6_level3"), ExtResource("8_level4"), ExtResource("9_level5")])
+levels = Array[Resource]([SubResource("LevelInfo_1"), SubResource("LevelInfo_2"), SubResource("LevelInfo_3"), SubResource("LevelInfo_4"), SubResource("LevelInfo_5")])
 
 [node name="PlayersSpawner" type="MultiplayerSpawner" parent="." unique_id=1942581705]
 _spawnable_scenes = PackedStringArray("uid://g03n8e1oanp3")

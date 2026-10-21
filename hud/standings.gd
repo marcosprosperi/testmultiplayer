@@ -18,7 +18,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _time_left > 0.0:
 		_time_left -= delta
-		var next = "Nuevo campeonato en %d..." if _final else "Próxima carrera en %d..."
+		var next = "Volviendo a la sala en %d..." if _final else "Próxima carrera en %d..."
 		footer.text = next % ceili(maxf(_time_left, 0.0))
 		visible = _time_left > 0.0
 		return

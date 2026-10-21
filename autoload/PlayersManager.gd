@@ -13,9 +13,12 @@ const COLORS = [
 var joined_players = {}
 var game_started := false
 # Chosen by the host in the lobby
-var settings = {"coins": true, "game_name": "", "checkpoints": false}
+# levels: indices into Main.levels in play order ([] = all, easiest first)
+var settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": []}
 
 signal finish_level
+# Server only: the last race of the championship ended
+signal championship_over
 signal players_changed
 signal settings_changed
 # Server only: a new player confirmed their profile
@@ -28,7 +31,7 @@ signal profile_result(ok: bool, message: String)
 func reset() -> void:
 	joined_players = {}
 	game_started = false
-	settings = {"coins": true, "game_name": "", "checkpoints": false}
+	settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": []}
 	players_changed.emit()
 	settings_changed.emit()
 
@@ -52,6 +55,15 @@ func set_game_name(game_name: String) -> void:
 ## Losing sends you back to the last flag you touched instead of the start
 func checkpoints_enabled() -> bool:
 	return settings.get("checkpoints", false)
+
+func get_playlist() -> Array:
+	return settings.get("levels", [])
+
+## Host only
+func set_playlist(level_indices: Array) -> void:
+	if multiplayer.is_server():
+		settings["levels"] = level_indices
+		_sync_settings.rpc(settings)
 
 ## Host only
 func set_checkpoints_enabled(enabled: bool) -> void:
@@ -136,6 +148,13 @@ func start_game() -> void:
 	if not multiplayer.is_server():
 		return
 	game_started = true
+	_sync_player_list.rpc(joined_players, game_started)
+
+## Server only: back to the lobby
+func stop_game() -> void:
+	if not multiplayer.is_server():
+		return
+	game_started = false
 	_sync_player_list.rpc(joined_players, game_started)
 
 func points_of(id: int) -> int:

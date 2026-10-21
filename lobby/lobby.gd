@@ -17,6 +17,13 @@ class_name Lobby extends CanvasLayer
 @onready var start_button: Button = %StartButton
 @onready var coins_check: CheckButton = %CoinsCheck
 @onready var checkpoints_check: CheckButton = %CheckpointsCheck
+@onready var levels_button: Button = %LevelsButton
+@onready var playlist_label: Label = %PlaylistLabel
+@onready var levels_panel: PanelContainer = %LevelsPanel
+@onready var level_rows: VBoxContainer = %LevelRows
+
+const DIFFICULTY_TEXT = ["", "Fácil", "Medio", "Difícil"]
+const DIFFICULTY_COLOR = [Color.WHITE, Color("#55efc4"), Color("#fdcb6e"), Color("#ff7675")]
 @onready var game_name_edit: LineEdit = %GameNameEdit
 
 const NAME_TAKEN_MESSAGE = "Ese nombre ya está en uso"
@@ -48,6 +55,18 @@ func _ready() -> void:
 	coins_check.toggled.connect(func(on): PlayersManager.set_coins_enabled(on))
 	checkpoints_check.toggled.connect(func(on): PlayersManager.set_checkpoints_enabled(on))
 	PlayersManager.settings_changed.connect(_refresh)
+	PlayersManager.settings_changed.connect(_refresh_level_rows)
+	levels_button.visible = NetworkManager.is_hosting
+	levels_button.pressed.connect(func():
+		levels_panel.visible = true
+		%LevelsDim.visible = true
+		_refresh_level_rows())
+	%LevelsDoneButton.pressed.connect(func():
+		levels_panel.visible = false
+		%LevelsDim.visible = false)
+	%SortButton.pressed.connect(func(): PlayersManager.set_playlist(_sorted_by_difficulty(_playlist())))
+	if NetworkManager.is_hosting and PlayersManager.get_playlist().is_empty():
+		PlayersManager.set_playlist(main.default_playlist())
 	PlayersManager.players_changed.connect(_refresh)
 	PlayersManager.profile_result.connect(_on_profile_result)
 	multiplayer.connected_to_server.connect(_refresh)
@@ -109,6 +128,9 @@ func _refresh() -> void:
 	checkpoints_check.set_pressed_no_signal(PlayersManager.checkpoints_enabled())
 
 	_refresh_players(my_id)
+	var names = _playlist().map(func(i): return main.levels[i].title)
+	playlist_label.text = "Carreras (%d): %s" % [names.size(), " → ".join(names)]
+	levels_button.text = "Niveles (%d)…" % names.size()
 	start_button.disabled = not PlayersManager.has_player(1)
 	start_button.tooltip_text = "" if PlayersManager.has_player(1) else "Primero elegí tu nombre y color"
 
@@ -131,6 +153,70 @@ func _refresh_players(my_id: int) -> void:
 		row.text = "%d eligiendo nombre..." % choosing
 		row.modulate = Color(1, 1, 1, 0.6)
 		players_list.add_child(row)
+
+# --- Levels ------------------------------------------------------------------
+
+func _playlist() -> Array:
+	var chosen = PlayersManager.get_playlist().filter(func(i): return i >= 0 and i < main.levels.size())
+	return chosen if not chosen.is_empty() else main.default_playlist()
+
+func _sorted_by_difficulty(order: Array) -> Array:
+	var sorted = order.duplicate()
+	sorted.sort_custom(func(a, b): return main.levels[a].difficulty < main.levels[b].difficulty \
+		or (main.levels[a].difficulty == main.levels[b].difficulty and order.find(a) < order.find(b)))
+	return sorted
+
+func _refresh_level_rows() -> void:
+	if not levels_panel.visible:
+		return
+	for child in level_rows.get_children():
+		level_rows.remove_child(child)
+		child.queue_free()
+	var chosen = _playlist()
+	# Chosen ones in play order first, then the rest
+	var rows = chosen + range(main.levels.size()).filter(func(i): return not chosen.has(i))
+	for i in rows:
+		var info = main.levels[i]
+		var row = HBoxContainer.new()
+		var check = CheckBox.new()
+		check.text = info.title
+		check.button_pressed = chosen.has(i)
+		check.focus_mode = Control.FOCUS_NONE
+		check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		check.toggled.connect(_on_level_toggled.bind(i))
+		row.add_child(check)
+		var difficulty = Label.new()
+		difficulty.text = DIFFICULTY_TEXT[info.difficulty]
+		difficulty.add_theme_color_override("font_color", DIFFICULTY_COLOR[info.difficulty])
+		difficulty.custom_minimum_size = Vector2(50, 0)
+		row.add_child(difficulty)
+		for step in [-1, 1]:
+			var arrow = Button.new()
+			arrow.text = "↑" if step < 0 else "↓"
+			arrow.focus_mode = Control.FOCUS_NONE
+			arrow.disabled = not chosen.has(i)
+			arrow.pressed.connect(_on_level_moved.bind(i, step))
+			row.add_child(arrow)
+		level_rows.add_child(row)
+
+func _on_level_toggled(on: bool, index: int) -> void:
+	var chosen = _playlist()
+	if on and not chosen.has(index):
+		chosen.append(index)
+	elif not on and chosen.size() > 1:
+		chosen.erase(index)
+	PlayersManager.set_playlist(chosen)
+	_refresh_level_rows()
+
+func _on_level_moved(index: int, step: int) -> void:
+	var chosen = _playlist()
+	var at = chosen.find(index)
+	var to = at + step
+	if at == -1 or to < 0 or to >= chosen.size():
+		return
+	chosen[at] = chosen[to]
+	chosen[to] = index
+	PlayersManager.set_playlist(chosen)
 
 func _style_color_button(button: Button, color: Color, selected: bool, taken: bool) -> void:
 	var style = StyleBoxFlat.new()

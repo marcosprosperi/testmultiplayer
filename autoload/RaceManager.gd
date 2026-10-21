@@ -70,6 +70,15 @@ func register_level(level: Node2D) -> void:
 		_sync_state.rpc(State.WAITING, 0)
 		_start_anyway_after_timeout(_race_token)
 
+## Server only: the championship ended, clear the race state everywhere
+func end_championship() -> void:
+	if multiplayer.is_server():
+		_end_championship.rpc()
+
+@rpc("authority", "call_local", "reliable")
+func _end_championship() -> void:
+	reset()
+
 func reset() -> void:
 	current_level = null
 	finish_order = []
@@ -297,8 +306,9 @@ func _check_everyone_finished() -> void:
 
 	await get_tree().create_timer(FINAL_RESULTS_TIME if final else RESULTS_TIME).timeout
 	if final:
-		PlayersManager.reset_points()
-	PlayersManager.finish_level.emit()
+		PlayersManager.championship_over.emit()
+	else:
+		PlayersManager.finish_level.emit()
 
 @rpc("authority", "call_local", "reliable")
 func _show_results(results: Array, final: bool) -> void:
