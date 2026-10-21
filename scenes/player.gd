@@ -13,6 +13,11 @@ const COYOTE_TIME = 0.1
 const JUMP_BUFFER = 0.12
 ## Bounce after stomping an enemy
 const STOMP_BOUNCE = -300.0
+## The camera looks this far ahead of where you're running
+const LOOK_AHEAD = 70.0
+## Seconds you stay "gone" (a poof) after losing, before coming back
+const DEATH_TIME = 0.45
+const COLORS_SHADER = preload("res://scenes/player_colors.gdshader")
 ## On ice you speed up and slow down slowly (pixels per second²)
 const ICE_ACCEL = 650.0
 const ICE_FRICTION = 260.0
@@ -30,6 +35,11 @@ var checkpoint = null
 # Bots (negative ids, run by the server) are driven by this instead of the keyboard
 var brain: BotBrain = null
 var _coyote_left := 0.0
+var _look_ahead := 0.0
+var _was_on_floor := true
+var _dying := false
+# Only on your own screen: darkens it for a moment when you lose
+var _fade: ColorRect
 # Can't be hurt for a moment after a shield saved you
 var _safe_left := 0.0
 # Slipped on a peel: can't move for a moment
@@ -55,6 +65,10 @@ func _ready() -> void:
 
 	camera_2d.zoom = Vector2.ONE * RaceManager.get_camera_zoom()
 	camera_2d.offset = RaceManager.get_camera_offset()
+	camera_2d.position_smoothing_enabled = true
+	camera_2d.position_smoothing_speed = 7.0
+	animated_sprite_2d.material = ShaderMaterial.new()
+	animated_sprite_2d.material.shader = COLORS_SHADER
 	_create_name_label()
 	PlayersManager.players_changed.connect(_update_name_label)
 
@@ -65,12 +79,20 @@ func _ready() -> void:
 		camera_2d.make_current()
 		RaceManager.grid_changed.connect(_on_grid_changed)
 		RaceManager.notify_local_ready()
+		var layer = CanvasLayer.new()
+		layer.layer = 4
+		add_child(layer)
+		_fade = ColorRect.new()
+		_fade.color = Color(0.08, 0.04, 0.12, 0.0)
+		_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
+		layer.add_child(_fade)
 	else:
 		camera_2d.enabled = false
 
 func _physics_process(delta: float) -> void:
 	# Only the player with authority processes input
-	if not is_multiplayer_authority():
+	if not is_multiplayer_authority() or _dying:
 		return
 		
 	if is_on_floor() && int(velocity.x) == 0:
@@ -135,10 +157,28 @@ func _physics_process(delta: float) -> void:
 
 	velocity.x += push.x
 	push = Vector2.ZERO
+	var rising = velocity.y < -100.0
 	move_and_slide()
+	# A puff of dust when jumping off the floor and when landing
+	if _was_on_floor and not is_on_floor() and rising:
+		_show_fx.rpc(Fx.DUST, global_position)
+	elif not _was_on_floor and is_on_floor():
+		_show_fx.rpc(Fx.DUST, global_position)
+	_was_on_floor = is_on_floor()
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	queue_redraw()
+	_update_name_visibility()
+	if is_local():
+		# Look ahead the way you're running (smoothly, so turning isn't jumpy)
+		var target = signf(velocity.x) * LOOK_AHEAD if absf(velocity.x) > 40.0 else _look_ahead
+		_look_ahead = move_toward(_look_ahead, target, 120.0 * delta)
+		camera_2d.offset = RaceManager.get_camera_offset() + Vector2(_look_ahead, 0)
+
+## Effects everyone sees (sent by whoever moves this player)
+@rpc("authority", "call_local", "unreliable")
+func _show_fx(kind: String, at: Vector2) -> void:
+	Fx.spawn(kind, at, PlayersManager.color_of(name.to_int()))
 
 func _is_in_slipstream(direction: float) -> bool:
 	# Bots don't get it (or they'd all run as one pack); people behind a bot do
@@ -165,22 +205,59 @@ func _draw() -> void:
 		var start = 8.0 + ((i + flicker) % 3) * 3.0
 		draw_line(Vector2(back * start, y), Vector2(back * (start + 12.0), y), Color(1, 1, 1, 0.7), 1.0)
 
-# Name in the player's color floating over their head
+# Name tag over the head, in the player's color on a dark pill. Yours is
+# a "VOS" arrow instead, so you always find yourself
 func _create_name_label() -> void:
 	name_label = Label.new()
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.size = Vector2(80, 12)
-	name_label.position = Vector2(-40, -40)
-	name_label.add_theme_font_size_override("font_size", 8)
-	name_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	name_label.add_theme_constant_override("outline_size", 3)
+	name_label.add_theme_font_size_override("font_size", 7)
+	var pill = StyleBoxFlat.new()
+	pill.bg_color = Color(0.1, 0.06, 0.15, 0.6)
+	pill.set_corner_radius_all(4)
+	pill.content_margin_left = 3
+	pill.content_margin_right = 3
+	name_label.add_theme_stylebox_override("normal", pill)
 	add_child(name_label)
 	_update_name_label()
 
 func _update_name_label() -> void:
 	var id = name.to_int()
-	name_label.text = PlayersManager.name_of(id)
-	name_label.add_theme_color_override("font_color", PlayersManager.color_of(id))
+	if is_local():
+		name_label.text = "▼ VOS"
+		name_label.add_theme_color_override("font_color", Color("#ffd23f"))
+		name_label.add_theme_color_override("font_outline_color", Color(0.17, 0.11, 0.23))
+		name_label.add_theme_constant_override("outline_size", 3)
+		name_label.get_theme_stylebox("normal").bg_color = Color(0, 0, 0, 0)
+	else:
+		name_label.text = PlayersManager.name_of(id)
+		name_label.add_theme_color_override("font_color", PlayersManager.color_of(id).lightened(0.25))
+	name_label.reset_size()
+	name_label.position = Vector2(-name_label.size.x / 2.0, -36)
+	var color = PlayersManager.color_of(id)
+	if animated_sprite_2d.material:
+		animated_sprite_2d.material.set_shader_parameter("main_color", color)
+		animated_sprite_2d.material.set_shader_parameter("light_color", color.lightened(0.45))
+
+# When players bunch up, only one name per bunch shows (yours always does)
+func _update_name_visibility() -> void:
+	if _dying or not animated_sprite_2d.visible:
+		return
+	if is_local():
+		name_label.visible = true
+		name_label.position.y = -38 + sin(Time.get_ticks_msec() / 200.0) * 1.5
+		return
+	var id = name.to_int()
+	var crowded = false
+	for other in get_tree().get_nodes_in_group("player"):
+		if other == self or not other.animated_sprite_2d.visible:
+			continue
+		var close = absf(other.global_position.x - global_position.x) < 30 \
+			and absf(other.global_position.y - global_position.y) < 12
+		# The local player's tag or the lower id wins the spot
+		if close and (other.is_local() or other.name.to_int() < id):
+			crowded = true
+			break
+	name_label.visible = not crowded
 
 ## Stepped on a banana peel: spin in place for a moment
 func slip() -> void:
@@ -210,9 +287,31 @@ func die(pit := false) -> void:
 			bounce()
 			Sfx.play_at("shield_break", global_position)
 			return
+	if _dying:
+		return
 	if is_local():
 		Sfx.play("death")
+	# Poof! Gone for a moment, then back at the flag (or the start)
+	_dying = true
+	velocity = Vector2.ZERO
+	_set_gone.rpc(true)
+	_show_fx.rpc(Fx.POOF, global_position + Vector2(0, -8))
+	if _fade:
+		create_tween().tween_property(_fade, "color:a", 0.55, DEATH_TIME)
+	await get_tree().create_timer(DEATH_TIME).timeout
+	if not is_inside_tree():
+		return
 	respawn()
+	_dying = false
+	_set_gone.rpc(false)
+	_show_fx.rpc(Fx.SPARKLE, global_position + Vector2(0, -8))
+	if _fade:
+		create_tween().tween_property(_fade, "color:a", 0.0, 0.25)
+
+@rpc("authority", "call_local", "reliable")
+func _set_gone(gone: bool) -> void:
+	animated_sprite_2d.visible = not gone
+	name_label.visible = not gone
 
 ## Before the start: your grid slot. During the race: the back of the grid.
 func respawn() -> void:
@@ -230,6 +329,13 @@ func respawn() -> void:
 		# A new level is starting
 		checkpoint = null
 		global_position = RaceManager.get_start_position(name.to_int())
+	snap_camera()
+
+## After a teleport: the camera jumps there instead of gliding across the level
+func snap_camera() -> void:
+	_look_ahead = 0.0
+	camera_2d.force_update_scroll()
+	camera_2d.reset_smoothing()
 
 # The grid can arrive after the level loads: move to your slot
 func _on_grid_changed() -> void:

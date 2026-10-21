@@ -28,6 +28,7 @@ func _on_body_entered(body: Node2D) -> void:
 		body.checkpoint = global_position + Vector2(0, -2)
 		if body.is_local() and not _reached:
 			_reached = true
+			Fx.spawn(Fx.SPARKLE, global_position + Vector2(0, -30), PlayersManager.color_of(body.name.to_int()))
 			Sfx.play("coin", -4.0)
 			queue_redraw()
 

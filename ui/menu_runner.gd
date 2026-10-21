@@ -18,7 +18,11 @@ func setup(frames: SpriteFrames, runner_color: Color) -> void:
 	_sprite = AnimatedSprite2D.new()
 	_sprite.sprite_frames = frames
 	_sprite.position = Vector2(0, -12)
-	_sprite.modulate = Color.WHITE.lerp(color, 0.35)
+	# Same colors as in the race (see player_colors.gdshader)
+	_sprite.material = ShaderMaterial.new()
+	_sprite.material.shader = preload("res://scenes/player_colors.gdshader")
+	_sprite.material.set_shader_parameter("main_color", color)
+	_sprite.material.set_shader_parameter("light_color", color.lightened(0.45))
 	_sprite.play("run")
 	add_child(_sprite)
 	speed = randf_range(70.0, 115.0)
