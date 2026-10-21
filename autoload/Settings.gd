@@ -19,7 +19,7 @@ var fullscreen := false
 var window_size := 1
 var vsync := true
 var show_fps := false
-var volumes = {"Master": 0.8, "Music": 0.6, "SFX": 0.8}
+var volumes = {"Master": 0.2, "Music": 0.6, "SFX": 0.8}
 var player_name := ""
 var player_color := -1
 ## True while a menu is open over the race: your player ignores the keyboard
