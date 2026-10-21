@@ -13,7 +13,7 @@
 
 [node name="Level_3" type="Node2D"]
 script = ExtResource("race_level")
-camera_zoom = 0.75
+camera_offset = Vector2(0, -60)
 background_color = Color(0.49, 0.75, 0.9, 1)
 
 [node name="Spawn" type="Marker2D" parent="." groups=["spawn"]]
