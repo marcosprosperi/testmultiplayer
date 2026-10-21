@@ -5,6 +5,8 @@ import base64, random, struct
 
 T = 16
 NATURE = 4      # nature tileset source in level_tileset.tres
+# Recolored copies of the nature tiles (tools/gen_tilesets.py), same layout
+GRASSY = {"grass": 4, "snow": 5, "volcano": 6}
 SUMMER = 0      # summer_.png source (grey stone blocks)
 CEILING_GAP = 9 # rows between floor and ceiling in cave levels
 
@@ -13,7 +15,9 @@ class LevelBuilder:
     def __init__(self, name, background, style="grass", uid=None, seed=1, start_row=40):
         self.name = name
         self.background = background
-        self.style = style          # "grass" or "stone" (stone has a ceiling)
+        self.style = style          # "grass", "snow", "volcano" or "stone" (stone has a ceiling)
+        self.grassy = style in GRASSY
+        self.src = GRASSY.get(style, NATURE)
         self.uid = uid
         self.rnd = random.Random(seed)
         self.x = 0                  # cursor column
@@ -28,6 +32,7 @@ class LevelBuilder:
         self.kill_zones = []        # (x_px, y_px, w_px)
         self.last_jump_hazard = -999  # column of the last thing you must jump over
         self.root_extra = ""
+        self.wide_spacing = False   # see enemies_run
 
     # --- helpers -------------------------------------------------------------
     def uname(self, prefix):
@@ -68,8 +73,8 @@ class LevelBuilder:
 
     def decor(self, col):
         kind = self.rnd.choice([(6, 6), (5, 6), (4, 6), (3, 6)])
-        if self.style == "grass":
-            self.extra_tiles[(col, self.surface[col] - 1)] = (NATURE, *kind)
+        if self.grassy:
+            self.extra_tiles[(col, self.surface[col] - 1)] = (self.src, *kind)
 
     # --- sections ------------------------------------------------------------
     def run(self, n, coins=False, decor=True):
@@ -119,6 +124,8 @@ class LevelBuilder:
         x1 = x0 + width - 1
         row = self.row
         self.kill_under(x0, x1, row)
+        if self.style == "volcano":
+            self.node("Lava", "lava", self.px(x0), row * T + 6, tiles=width, depth=64.0)
         if kind == "falling":
             # A falling platform in the middle
             length = min(8, width - 6)
@@ -220,20 +227,47 @@ class LevelBuilder:
         self.safe_margin(8)
         x0 = self.x
         slot = 18
-        length = max(length, 14 + slot * len(kinds) + 2)
-        self.run(length)
+        # wide_spacing: the next enemy starts 17 tiles after where this one's
+        # patrol ends (not just 18 after where it starts)
+        if not self.wide_spacing:
+            length = max(length, 14 + slot * len(kinds) + 2)
+            self.run(length)
+        cx = x0 + 14
         for i, kind in enumerate(kinds):
-            cx = x0 + 14 + i * slot
+            if not self.wide_spacing:
+                cx = x0 + 14 + i * slot
             patrol = self.rnd.randint(3, 6) * T
             if kind == "bat":
                 # High enough to run under; jumping under it is what hurts
                 self.node("Bat", "bat", self.px(cx), (self.row - 3) * T - 4, travel=f"Vector2({patrol}, 0)",
                           speed=50.0, phase=round(self.rnd.random(), 2), bob=8.0)
+            elif kind == "bee":
+                # Flies in a circle that comes down to the floor: pass when it's up
+                radius = self.rnd.randint(20, 28)
+                self.node("Bee", "bee", self.px(cx) + 8, self.row * T - 24, travel=f"Vector2({radius}, 0)",
+                          speed=round(self.rnd.uniform(70, 90)), phase=round(self.rnd.random(), 2))
+                patrol = radius
+            elif kind == "ghost":
+                # Floats at head height; goes see-through every few seconds
+                self.node("Ghost", "ghost", self.px(cx), self.row * T - 2, travel=f"Vector2({patrol}, 0)",
+                          speed=22.0, phase=round(self.rnd.random(), 2), bob=4.0)
+            elif kind == "frog":
+                patrol = self.rnd.randint(2, 4) * 32
+                self.node("Frog", "frog", self.px(cx), self.row * T, travel=f"Vector2({patrol}, 0)",
+                          phase=round(self.rnd.random(), 2))
+            elif kind == "penguin":
+                patrol = self.rnd.randint(6, 9) * T
+                self.node("Penguin", "penguin", self.px(cx), self.row * T, travel=f"Vector2({patrol}, 0)",
+                          speed=round(self.rnd.uniform(85, 100)), phase=round(self.rnd.random(), 2))
             else:
                 scene = "slime" if kind == "slime" else "spiky"
                 self.node(kind.capitalize(), scene, self.px(cx), self.row * T, travel=f"Vector2({patrol}, 0)",
                           speed=35.0 if kind == "slime" else 45.0, phase=round(self.rnd.random(), 2))
             self.mark_jump(cx + patrol // T)
+            if self.wide_spacing:
+                cx += max(slot, patrol // T + 17)
+        if self.wide_spacing:
+            self.run(max(length, cx - x0))
         self.run(6)
 
     def saw_run(self, length=24):
@@ -308,6 +342,44 @@ color = {colors[i]}''')
         self.row = top
         self.run(8)
 
+    def ice_run(self, length=30, enemies=()):
+        """Slippery ice over a flat stretch, maybe with penguins sliding on it"""
+        self.safe_margin(8)
+        self.run(4)
+        x0 = self.x
+        # Each penguin in its own 20-tile slot (a jump over one never lands
+        # where the next one slides)
+        length = max(length, 8 + 20 * len(enemies))
+        self.run(length, decor=False)
+        self.node("Ice", "ice", self.px(x0), self.row * T, tiles=length)
+        for i, kind in enumerate(enemies):
+            cx = x0 + 8 + i * 20
+            self.node("Penguin", "penguin", self.px(cx), self.row * T, travel=f"Vector2({6 * T}, 0)",
+                      speed=round(self.rnd.uniform(80, 95)), phase=round(self.rnd.random(), 2))
+        self.mark_jump(self.x)
+        # Room to stop sliding before whatever comes next
+        self.run(8)
+
+    def lava_gap(self, width=5, fireball=True):
+        """A pit of lava to jump over; a fireball may jump out of it"""
+        self.safe_margin()
+        self.run(3, decor=False)
+        x0 = self.x
+        row = self.row
+        self.kill_under(x0, x0 + width - 1, row)
+        self.node("Lava", "lava", self.px(x0), row * T + 6, tiles=width, depth=64.0)
+        if fireball:
+            self.node("Fireball", "fireball", self.px(x0) + width * 8, row * T + 8, travel="Vector2(0, -88)",
+                      period=round(self.rnd.uniform(2.2, 3.0), 1), phase=round(self.rnd.random(), 2))
+        self.x = x0 + width
+        self.run(3, decor=False)
+        self.mark_jump(self.x)
+
+    def lava_run(self, pits=3):
+        for i in range(pits):
+            self.lava_gap(self.rnd.choice([4, 5, 6]), fireball=i % 2 == 0)
+            self.run(12)
+
     def finish(self):
         self.safe_margin(10)
         self.run(14)
@@ -333,17 +405,17 @@ color = {colors[i]}''')
                 y = r + d
                 top = d == 0
                 bottom = d == depth
-                if self.style == "grass":
+                if self.grassy:
                     col = 0 if left_open else (2 if right_open else 1)
-                    tiles[(x, y)] = (NATURE, col, 0 if top else (2 if bottom else 1))
+                    tiles[(x, y)] = (self.src, col, 0 if top else (2 if bottom else 1))
                 else:
                     col = 6 if left_open else (8 if right_open else 7)
                     tiles[(x, y)] = (SUMMER, col, 7 if top else (9 if bottom else 8))
         # Floating platforms
         for x0, x1, row in self.platforms:
             for x in range(x0, x1 + 1):
-                if self.style == "grass":
-                    tiles[(x, row)] = (NATURE, 3 if x == x0 else (5 if x == x1 else 4), 0)
+                if self.grassy:
+                    tiles[(x, row)] = (self.src, 3 if x == x0 else (5 if x == x1 else 4), 0)
                 else:
                     tiles[(x, row)] = (SUMMER, 6 if x == x0 else (8 if x == x1 else 7), 5)
         # Ceiling for stone levels: lowest floor around minus CEILING_GAP, with
@@ -369,10 +441,10 @@ color = {colors[i]}''')
         for y in range(top_row, max(self.surface.values()) + 6):
             for x in (first - 1, first - 2):
                 if y <= r0 + 4:
-                    tiles[(x, y)] = (NATURE, 6, 1) if self.style == "grass" else (SUMMER, 7, 8)
+                    tiles[(x, y)] = (self.src, 6, 1) if self.grassy else (SUMMER, 7, 8)
             for x in (last + 1, last + 2):
                 if y <= r1 + 4:
-                    tiles[(x, y)] = (NATURE, 6, 1) if self.style == "grass" else (SUMMER, 7, 8)
+                    tiles[(x, y)] = (self.src, 6, 1) if self.grassy else (SUMMER, 7, 8)
         tiles.update({k: v for k, v in self.extra_tiles.items() if k not in tiles})
         return tiles
 
@@ -398,6 +470,13 @@ color = {colors[i]}''')
             "slime": "res://race/enemies/slime.tscn",
             "spiky": "res://race/enemies/spiky.tscn",
             "bat": "res://race/enemies/bat.tscn",
+            "frog": "res://race/enemies/frog.tscn",
+            "ghost": "res://race/enemies/ghost.tscn",
+            "bee": "res://race/enemies/bee.tscn",
+            "fireball": "res://race/enemies/fireball.tscn",
+            "penguin": "res://race/enemies/penguin.tscn",
+            "ice": "res://race/hazards/ice_zone.tscn",
+            "lava": "res://race/hazards/lava.tscn",
         }
         ext = [
             '[ext_resource type="Script" path="res://race/level.gd" id="race_level"]',
@@ -406,7 +485,8 @@ color = {colors[i]}''')
             '[ext_resource type="TileSet" path="res://resources/level_tileset.tres" id="level_tileset"]',
             '[ext_resource type="PackedScene" uid="uid://bfsx5wh40fsn8" path="res://Enemies/Cannon/cannon.tscn" id="cannon"]',
             '[ext_resource type="PackedScene" uid="uid://d2l5myn53o5qe" path="res://collectables/coin.tscn" id="coin"]',
-        ] + [f'[ext_resource type="PackedScene" path="{p}" id="{i}"]' for i, p in scenes.items()]
+        ] + [f'[ext_resource type="PackedScene" path="{p}" id="{i}"]' for i, p in scenes.items()
+             if i in ("background", "race_finish") or f'ExtResource("{i}")' in "".join(self.nodes)]
         # Kill zones: one under each gap, plus a big one under everything
         lowest = max(self.surface.values())
         cols = sorted(self.surface)

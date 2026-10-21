@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/enemies/penguin.gd" id="1_penguin"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_penguin"]
+size = Vector2(16, 7)
+
+[node name="Penguin" type="Area2D"]
+script = ExtResource("1_penguin")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -4)
+shape = SubResource("RectangleShape2D_penguin")

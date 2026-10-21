@@ -192,6 +192,121 @@ def clouds(name, color, shade, seed, height=90, count=5, size=(28, 60)):
                             img.putpixel((px, py), shade if y > r // 3 else color)
     img.save(f"{OUT}/{name}.png")
 
+def pines(name, color, shade, trunk, seed, height=200, base=110, sizes=(14, 30), spacing=(6, 20), snow=None):
+    """A row of pine trees standing on a ground line `base` px from the top;
+    the ground fills down to the bottom. snow: color for snowy branch tips"""
+    rnd = random.Random(seed)
+    img = Image.new("RGBA", (W, height), (0, 0, 0, 0))
+    ground = ridge(W, base=base, amplitude=12, roughness=0, seed=seed)
+    for x, top in enumerate(ground):
+        for y in range(top, height):
+            img.putpixel((x, y), shade if (x * 5 + y * 11) % 17 == 0 else color)
+    x = rnd.randint(0, 10)
+    while x < W + 20:
+        size = rnd.randint(*sizes)
+        cx = x % W
+        foot = ground[cx]
+        for d in range(size):
+            # Three stacked triangles
+            tier = d * 3 // size
+            in_tier = d - tier * size // 3
+            half = int((in_tier + 2) * (0.5 + tier * 0.18)) + 1
+            y = foot - 3 - size + d
+            for dx in range(-half, half + 1):
+                c = shade if dx > 0 else color
+                if snow and in_tier < 2:
+                    c = snow
+                img.putpixel(((cx + dx) % W, max(0, y)), c)
+        for y in range(foot - 3, foot + 1):
+            img.putpixel((cx, y), trunk)
+        x += rnd.randint(*spacing)
+    img.save(f"{OUT}/{name}.png")
+
+def specks(name, colors, seed, count, height=H, size=1):
+    """Snowflakes or embers scattered over a tile that repeats both ways"""
+    rnd = random.Random(seed)
+    img = Image.new("RGBA", (W, height), (0, 0, 0, 0))
+    for _ in range(count):
+        x, y = rnd.randrange(W), rnd.randrange(height)
+        c = rnd.choice(colors)
+        s = rnd.choice(range(1, size + 1))
+        for dy in range(s):
+            for dx in range(s):
+                img.putpixel(((x + dx) % W, (y + dy) % height), c)
+    img.save(f"{OUT}/{name}.png")
+
+def volcano(name, rock, shade, lava, seed, height=170):
+    """Big volcano with lava running down, on a jagged dark range"""
+    img = Image.new("RGBA", (W, height), (0, 0, 0, 0))
+    tops = ridge(W, base=height - 30, amplitude=60, roughness=0.5, seed=seed, smooth=0)
+    peak_x, crater = W // 2, 26
+    for x in range(W):
+        cone = 30 + abs(x - peak_x) * 0.9 if abs(x - peak_x) > crater // 2 else 34
+        top = int(min(tops[x], cone))
+        for y in range(top, height):
+            c = shade if (x > peak_x and y < top + 30) else rock
+            img.putpixel((x, y), c)
+    rnd = random.Random(seed + 1)
+    # Lava streams from the crater
+    for start in (-8, -2, 5, 10):
+        x = peak_x + start
+        y = 34
+        while y < height:
+            for dx in (0, 1):
+                if 0 <= x + dx < W:
+                    img.putpixel((x + dx, y), lava)
+            y += 1
+            if rnd.random() < 0.3:
+                x += -1 if start < 0 else 1
+    for x in range(peak_x - crater // 2 + 2, peak_x + crater // 2 - 1):
+        img.putpixel((x, 33), lava)
+        img.putpixel((x, 34), lava)
+    img.save(f"{OUT}/{name}.png")
+
+def castle(name, wall, shade, window, seed, height=200, base=120):
+    """Castle silhouette: towers with battlements and lit windows on a hill"""
+    rnd = random.Random(seed)
+    img = Image.new("RGBA", (W, height), (0, 0, 0, 0))
+    ground = ridge(W, base=base + 30, amplitude=14, roughness=0, seed=seed)
+    for x, top in enumerate(ground):
+        for y in range(top, height):
+            img.putpixel((x, y), shade)
+    x = 10
+    while x < W - 30:
+        tower_w = rnd.randint(16, 30)
+        tower_top = rnd.randint(base - 60, base)
+        foot = min(ground[x:x + tower_w])
+        for tx in range(x, x + tower_w):
+            for y in range(tower_top, foot + 2):
+                img.putpixel((tx, y), wall)
+            # Battlements
+            if (tx - x) % 6 < 3:
+                for y in range(tower_top - 4, tower_top):
+                    img.putpixel((tx, y), wall)
+        # Pointy roof on some
+        if rnd.random() < 0.4:
+            for d in range(tower_w // 2 + 2):
+                for tx in range(x - 1 + d, x + tower_w + 1 - d):
+                    img.putpixel((tx % W, tower_top - 4 - d), shade)
+        for _ in range(rnd.randint(1, 3)):
+            wx = x + rnd.randint(3, tower_w - 6)
+            wy = rnd.randint(tower_top + 6, foot - 10)
+            lit = window if rnd.random() < 0.7 else shade
+            for yy in range(wy, wy + 6):
+                for xx in range(wx, wx + 3):
+                    img.putpixel((xx, yy), lit)
+        # Wall between towers
+        gap = rnd.randint(14, 40)
+        wall_top = foot - rnd.randint(18, 30)
+        for tx in range(x + tower_w, min(W, x + tower_w + gap)):
+            for y in range(wall_top, ground[tx] + 1):
+                img.putpixel((tx, y), wall)
+            if (tx - x) % 6 < 3:
+                for y in range(wall_top - 3, wall_top):
+                    img.putpixel((tx, y), wall)
+        x += tower_w + gap
+    img.save(f"{OUT}/{name}.png")
+
 sky(0, "sky_day", skip_top=28)
 sky(1, "sky_sunset")
 # Taller sky for the climbing level: it scrolls down slowly as you go up
@@ -216,4 +331,21 @@ hills("hills_night", (26, 40, 52, 255), (20, 30, 40, 255), (18, 30, 36, 255), (1
 rock_wall("cave_wall", (58, 50, 52, 255), (46, 40, 42, 255), (70, 62, 62, 255), seed=51)
 stalactites("cave_ceiling", (40, 34, 36, 255), (30, 25, 27, 255), seed=53, crystals=(120, 220, 255, 255))
 stalactites("cave_floor", (34, 29, 31, 255), (26, 22, 24, 255), seed=57, height=110, from_top=False, crystals=(190, 120, 255, 255))
+# Forest
+pines("forest_far", (64, 120, 92, 255), (54, 104, 80, 255), (60, 50, 40, 255), seed=61, base=120, sizes=(16, 28), spacing=(5, 12))
+pines("forest_near", (38, 86, 58, 255), (30, 70, 48, 255), (70, 50, 36, 255), seed=63, height=230, base=120, sizes=(34, 60), spacing=(26, 60))
+# Snow
+gradient("sky_snow", (150, 190, 230), (226, 238, 248))
+mountains("mountains_snow", (190, 206, 228, 255), (164, 182, 210, 255), (250, 252, 255, 255), seed=71)
+pines("hills_snow", (236, 242, 250, 255), (206, 218, 236, 255), (110, 90, 80, 255), seed=73, height=230, base=110, sizes=(18, 34), spacing=(14, 40), snow=(250, 252, 255, 255))
+specks("snowflakes", [(255, 255, 255, 230), (235, 242, 255, 200)], seed=75, count=120, size=2)
+# Volcano
+gradient("sky_volcano", (34, 10, 14), (150, 54, 26))
+volcano("volcano", (52, 30, 34, 255), (40, 22, 26, 255), (255, 120, 30, 255), seed=81)
+clouds("smoke", (70, 54, 58, 200), (52, 40, 44, 200), seed=83, count=4)
+pines("hills_volcano", (44, 26, 28, 255), (34, 20, 22, 255), (30, 18, 20, 255), seed=85, height=210, base=120, sizes=(10, 18), spacing=(40, 90))
+specks("embers", [(255, 160, 40, 230), (255, 90, 30, 200), (255, 220, 120, 220)], seed=87, count=50, size=2)
+# Haunted castle
+gradient("sky_castle", (26, 14, 44), (92, 52, 104))
+castle("castle", (40, 30, 56, 255), (30, 22, 42, 255), (255, 210, 110, 255), seed=91)
 print("ok")

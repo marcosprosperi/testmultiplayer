@@ -82,6 +82,9 @@ func update(delta: float) -> Dictionary:
 		var riding = player.get_slide_collision_count() > 0 and player.get_last_slide_collision().get_collider() is AnimatableBody2D
 		if _crusher_blocking(look):
 			move = 0
+		elif _enemy_on_path(look):
+			# Wait for it to go by; step back if it would reach us here
+			move = 0.0 if _standing_is_safe(0.8) else -look
 		elif riding and dy < -16 and absf(dx) < 80:
 			move = 0  # on an elevator going up: wait
 		elif dir != 0 and not _floor_ahead(dir) and dy >= -16:
@@ -115,8 +118,15 @@ func update(delta: float) -> Dictionary:
 					move = 0
 			elif stuck:
 				jump = true
-		elif (dir != 0 and player.is_on_wall()) or _hazard_ahead(look) or stuck:
+		elif (dir != 0 and player.is_on_wall()) or stuck:
 			jump = true
+		elif _hazard_ahead(look):
+			# Enemies move: only jump if the jump (and landing) won't run into
+			# one; otherwise wait for a better moment, unless waiting is worse
+			if _jump_is_safe(look) or not _standing_is_safe():
+				jump = true
+			else:
+				move = 0
 	else:
 		if is_instance_valid(_target_body):
 			var middle = _target_body.global_position.x + (_target_body.tiles * 8 if "tiles" in _target_body else 0)
@@ -170,8 +180,11 @@ func _landing(dir: float, max_dist := 190) -> Dictionary:
 		var hit = _ray(player.global_position + Vector2(dir * d, -60), player.global_position + Vector2(dir * d, 140))
 		if hit.is_empty():
 			continue
-		# Never jump onto an elevator going up or down: wait until it's level
+		# Never jump onto an elevator going up or down (wait until it's level)
+		# or a platform that's already giving way (wait until it comes back)
 		if hit.collider is MovingPlatform and hit.collider.travel.y != 0:
+			return {}
+		if hit.collider is FallingPlatform and not hit.collider.is_steady():
 			return {}
 		return {"x": hit.position.x + dir * 14, "body": hit.collider}
 	return {}
@@ -223,20 +236,88 @@ func _hazard_ahead(dir: float) -> bool:
 		var d = (b.global_position.x - pos.x) * dir
 		if d > 0 and d < 110 and absf(b.global_position.y - pos.y) < 40: return true
 	for e in player.get_tree().get_nodes_in_group("enemy"):
-		if not e.is_alive(): continue
+		# Ghosts and bees: wait for them (_enemy_on_path); fireballs: timed gap jumps
+		if not e.is_alive() or e is Ghost or e is Bee or e is Fireball: continue
 		if e is Bat and pos.y - e.global_position.y > 30: continue
+		var reach = e.warning_distance if e.warning_distance > 0 else (60.0 if not e.stompable else 44.0)
 		var d = (e.global_position.x - pos.x) * dir
-		if d > 0 and d < (60 if not e.stompable else 44) and absf(e.global_position.y - pos.y) < 36: return true
+		if d > 0 and d < reach and absf(e.global_position.y - pos.y) < 36: return true
+	return false
+
+# Follows a jump forward (and running on after landing) through time against
+# where every enemy will be. Landing on top of a stompable one is fine
+func _jump_is_safe(dir: float) -> bool:
+	var pos = player.global_position
+	var now = RaceManager.race_time()
+	var speed = Player.SPEED * RaceManager.speed_factor(player.name.to_int())
+	var gravity = player.get_gravity().y
+	var enemies = _enemies_near(320.0)
+	var t := 0.0
+	while t < 0.9:
+		var x = pos.x + dir * speed * t
+		var vy = Player.JUMP_VELOCITY + gravity * t
+		# Back on the floor (about the same height) once the arc comes down
+		var y = minf(pos.y + Player.JUMP_VELOCITY * t + 0.5 * gravity * t * t, pos.y)
+		for e in enemies:
+			if not e.harmful_at(now + t):
+				continue
+			var at = e.global_position_at(now + t)
+			if absf(at.x - x) < 13 and y > at.y - e.body_height - 2 and y - 14 < at.y:
+				if e.stompable and vy > 50 and y < at.y - 1:
+					continue
+				return false
+		t += 1.0 / 30.0
+	return true
+
+# Standing still for a moment, would an enemy run into us?
+func _standing_is_safe(duration := 0.6) -> bool:
+	var pos = player.global_position
+	var now = RaceManager.race_time()
+	for e in _enemies_near(200.0):
+		var t := 0.0
+		while t < duration:
+			var at = e.global_position_at(now + t)
+			if e.harmful_at(now + t) and absf(at.x - pos.x) < 14 and at.y > pos.y - 16 and at.y - e.body_height < pos.y:
+				return false
+			t += 0.05
+	return true
+
+func _enemies_near(distance: float) -> Array:
+	var pos = player.global_position
+	return player.get_tree().get_nodes_in_group("enemy").filter(func(e): return e.is_alive() \
+		and not e is Fireball and absf(e.global_position.x - pos.x) < distance and absf(e.global_position.y - pos.y) < 120)
+
+# A ghost or a bee will be where we're about to run: wait until it isn't
+func _enemy_on_path(dir: float) -> bool:
+	var pos = player.global_position
+	var now = RaceManager.race_time()
+	var speed = Player.SPEED * _pace
+	for e in player.get_tree().get_nodes_in_group("enemy"):
+		if not (e is Ghost or e is Bee):
+			continue
+		var d = (e.global_position.x - pos.x) * dir
+		if d < -24 or d > 110:
+			continue
+		var t := 0.0
+		while t < 0.7:
+			var at = e.global_position_at(now + t)
+			var x = pos.x + dir * speed * t
+			if e.harmful_at(now + t) and absf(at.x - x) < 16 and at.y > pos.y - 30 and at.y < pos.y + 12:
+				return true
+			t += 0.05
 	return false
 
 # A saw going up and down in the gap ahead: follow the jump through time and
 # only go if the saw won't be where we'll be
 func _saw_in_gap_blocking(dir: float, landing_x: float) -> bool:
 	var pos = player.global_position
-	var saws = _cache.get("Saw", []).filter(func(h): return h.travel.y != 0 \
-		and (h.global_position.x - pos.x) * dir > -20 and (landing_x - h.global_position.x) * dir > -20)
-	if saws.is_empty():
+	var in_gap = func(x: float): return (x - pos.x) * dir > -20 and (landing_x - x) * dir > -20
+	var saws = _cache.get("Saw", []).filter(func(h): return h.travel.y != 0 and in_gap.call(h.global_position.x))
+	var fireballs = player.get_tree().get_nodes_in_group("enemy").filter(
+		func(e): return e is Fireball and in_gap.call(e.global_position.x))
+	if saws.is_empty() and fireballs.is_empty():
 		return false
+	var now = RaceManager.race_time()
 	_careful_jump = true
 	var speed = Player.SPEED * RaceManager.speed_factor(player.name.to_int())
 	var gravity = player.get_gravity().y
@@ -251,6 +332,10 @@ func _saw_in_gap_blocking(dir: float, landing_x: float) -> bool:
 			for body_y in [y - 3.0, y - 12.0]:
 				if Vector2(x, body_y).distance_to(at) < h.radius + 8.0:
 					return true
+		for f in fireballs:
+			var at = f.global_position_at(now + t) + Vector2(0, -6)
+			if f.harmful_at(now + t) and absf(at.x - x) < 14 and at.y > y - 26 and at.y < y + 8:
+				return true
 		t += 1.0 / 60.0
 	return false
 

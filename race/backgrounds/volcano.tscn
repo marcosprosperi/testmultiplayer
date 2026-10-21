@@ -1,0 +1,61 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://resources/backgrounds/embers.png" id="embers"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/hills_volcano.png" id="hills_volcano"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/sky_volcano.png" id="sky_volcano"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/smoke.png" id="smoke"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/volcano.png" id="volcano"]
+
+[node name="Background" type="Node2D"]
+z_index = -10
+editor_description = "Parallax layers for a sideways level. scroll_scale x: how fast each layer follows the camera (0 = fixed like the sky, 1 = moves with the level). Vertically they stay put on screen."
+
+[node name="Sky" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="Sky"]
+position = Vector2(0, 0)
+texture = ExtResource("sky_volcano")
+centered = false
+
+[node name="Volcano" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.08, 0)
+repeat_size = Vector2(480, 0)
+repeat_times = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="Volcano"]
+position = Vector2(0, 20)
+texture = ExtResource("volcano")
+centered = false
+
+[node name="Smoke" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.1, 0)
+repeat_size = Vector2(480, 0)
+repeat_times = 3
+autoscroll = Vector2(-5, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="Smoke"]
+position = Vector2(0, 0)
+texture = ExtResource("smoke")
+centered = false
+
+[node name="Hills" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.35, 0)
+repeat_size = Vector2(480, 0)
+repeat_times = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="Hills"]
+position = Vector2(0, 25)
+texture = ExtResource("hills_volcano")
+centered = false
+
+[node name="Embers" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.5, 0)
+repeat_size = Vector2(480, 270)
+repeat_times = 3
+autoscroll = Vector2(5, -22)
+
+[node name="Sprite2D" type="Sprite2D" parent="Embers"]
+position = Vector2(0, 0)
+texture = ExtResource("embers")
+centered = false

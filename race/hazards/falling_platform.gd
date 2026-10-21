@@ -45,6 +45,10 @@ func _update_shape() -> void:
 	$Trigger/CollisionShape2D.shape = trigger_shape
 	$Trigger/CollisionShape2D.position = Vector2(width / 2.0, -3)
 
+## Still in its place (not shaking, falling or gone)
+func is_steady() -> bool:
+	return _state == State.IDLE
+
 func _on_trigger_body_entered(body: Node2D) -> void:
 	# The server sees every player, so it decides when the platform falls
 	if multiplayer.is_server() and body is Player and _state == State.IDLE:

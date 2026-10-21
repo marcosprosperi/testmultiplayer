@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/enemies/fireball.gd" id="1_fireball"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fireball"]
+size = Vector2(10, 10)
+
+[node name="Fireball" type="Area2D"]
+script = ExtResource("1_fireball")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -6)
+shape = SubResource("RectangleShape2D_fireball")

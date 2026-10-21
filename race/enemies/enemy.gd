@@ -23,6 +23,11 @@ var stompable := true
 var body_height := 10.0
 ## 1 = facing right, -1 = left
 var facing := 1
+## Bots jump over it when it's this close (0: the usual distance)
+var warning_distance := 0.0
+## For enemies that turn harmless now and then (ghosts, fireballs): also
+## catch players already inside when it turns dangerous again
+var poll_overlaps := false
 
 var _origin: Vector2
 var _dead := false
@@ -52,6 +57,9 @@ func _physics_process(delta: float) -> void:
 		if _reviving_left <= 0.0:
 			set_deferred("monitoring", true)
 	position = _origin + patrol_offset(RaceManager.race_time())
+	if poll_overlaps and is_alive() and monitoring:
+		for body in get_overlapping_bodies():
+			_on_body_entered(body)
 
 ## Where it is along its patrol at race time t (also sets facing)
 func patrol_offset(t: float) -> Vector2:
@@ -66,7 +74,18 @@ func patrol_offset(t: float) -> Vector2:
 	return travel.normalized() * along
 
 func is_alive() -> bool:
-	return not _dead and _reviving_left <= 0.0
+	return not _dead and _reviving_left <= 0.0 and harmful_at(RaceManager.race_time())
+
+## Whether it can hurt at race time t (ghosts fade out, fireballs dive into the lava)
+func harmful_at(_t: float) -> bool:
+	return true
+
+## Where it will be at race time t (bots use it to time their jumps)
+func global_position_at(t: float) -> Vector2:
+	var keep = facing
+	var at = get_parent().to_global(_origin + patrol_offset(t))
+	facing = keep
+	return at
 
 func _on_body_entered(body: Node2D) -> void:
 	if not is_alive() or not body is Player or not body.is_multiplayer_authority():
