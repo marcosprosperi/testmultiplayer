@@ -16,7 +16,7 @@ var joined_players = {}
 var game_started := false
 # Chosen by the host in the lobby
 # levels: indices into Main.levels in play order ([] = all, easiest first)
-var settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": [], "bots": false}
+var settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": [], "bots": false, "items": true}
 # Server only: how good each bot is (0..1)
 var _bot_skills = {}
 
@@ -35,7 +35,7 @@ signal profile_result(ok: bool, message: String)
 func reset() -> void:
 	joined_players = {}
 	game_started = false
-	settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": [], "bots": false}
+	settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": [], "bots": false, "items": true}
 	_bot_skills.clear()
 	players_changed.emit()
 	settings_changed.emit()
@@ -112,6 +112,15 @@ func is_color_taken(color_index: int, except_id := 0) -> bool:
 
 func is_bot(id: int) -> bool:
 	return id < 0
+
+func items_enabled() -> bool:
+	return settings.get("items", true)
+
+## Host only: power-up boxes on or off
+func set_items_enabled(enabled: bool) -> void:
+	if multiplayer.is_server():
+		settings["items"] = enabled
+		_sync_settings.rpc(settings)
 
 func bots_enabled() -> bool:
 	return settings.get("bots", false)

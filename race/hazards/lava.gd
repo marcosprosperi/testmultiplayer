@@ -16,6 +16,7 @@ const HOT = Color("#ff8a1e")
 const DEEP = Color("#c8361a")
 
 func _ready() -> void:
+	pit = true
 	_update_shape()
 	super()
 

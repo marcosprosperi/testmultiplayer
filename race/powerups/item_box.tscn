@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/powerups/item_box.gd" id="1_box"]
+
+[node name="ItemBox" type="Area2D"]
+script = ExtResource("1_box")

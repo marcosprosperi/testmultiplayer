@@ -11,7 +11,7 @@ const WINDOW_SIZES = [Vector2i(960, 540), Vector2i(1440, 810), Vector2i(1920, 10
 const VOLUMES = {"Master": "General", "Music": "Música", "SFX": "Efectos"}
 ## Actions whose main key can be changed, with their names in the menu.
 ## The arrows and the gamepad always work too
-const KEY_ACTIONS = {"left": "Izquierda", "right": "Derecha", "jump": "Saltar"}
+const KEY_ACTIONS = {"left": "Izquierda", "right": "Derecha", "jump": "Saltar", "use_item": "Usar poder"}
 const KEY_NAMES = {"Space": "Espacio", "Left": "←", "Right": "→", "Up": "↑", "Down": "↓",
 	"Enter": "Enter", "Shift": "Shift", "Ctrl": "Ctrl", "Alt": "Alt", "Tab": "Tab", "BackSpace": "Borrar"}
 

@@ -30,6 +30,10 @@ var checkpoint = null
 # Bots (negative ids, run by the server) are driven by this instead of the keyboard
 var brain: BotBrain = null
 var _coyote_left := 0.0
+# Can't be hurt for a moment after a shield saved you
+var _safe_left := 0.0
+# Slipped on a peel: can't move for a moment
+var _stun_left := 0.0
 var _jump_buffer_left := 0.0
 
 func _enter_tree():
@@ -78,11 +82,15 @@ func _physics_process(delta: float) -> void:
 
 	# Frozen until the countdown ends; after the finish line the controls
 	# are used to switch spectator cameras
-	var frozen := RaceManager.has_finished(name.to_int()) or not RaceManager.can_move()
+	var frozen := RaceManager.has_finished(name.to_int()) or not RaceManager.can_move() or _stun_left > 0.0
+	_safe_left = maxf(_safe_left - delta, 0.0)
+	_stun_left = maxf(_stun_left - delta, 0.0)
 
 	var bot_input = brain.update(delta) if brain else {}
 	# Your keys don't move you while a menu is open over the race
 	var keys = brain == null and not Settings.menu_open
+	if keys and Input.is_action_just_pressed("use_item") and RaceManager.item_of(name.to_int()) != "":
+		RaceManager.request_use_item.rpc_id(1)
 	if is_on_floor():
 		_coyote_left = COYOTE_TIME
 	else:
@@ -147,6 +155,7 @@ func _is_in_slipstream(direction: float) -> bool:
 
 # Speed lines behind the player while in the slipstream
 func _draw() -> void:
+	_draw_effects()
 	if not slipstream:
 		return
 	var back = -signf(animated_sprite_2d.scale.x)
@@ -173,15 +182,34 @@ func _update_name_label() -> void:
 	name_label.text = PlayersManager.name_of(id)
 	name_label.add_theme_color_override("font_color", PlayersManager.color_of(id))
 
+## Stepped on a banana peel: spin in place for a moment
+func slip() -> void:
+	if RaceManager.has_effect(name.to_int(), "star"):
+		return
+	_stun_left = PowerUps.STUN_TIME
+	velocity.x = 0.0
+	Sfx.play_at("slip", global_position)
+
 ## Called when you land on an enemy you can squash
 func bounce() -> void:
 	velocity.y = STOMP_BOUNCE
 	_coyote_left = 0.0
 
-## Losing sends the player back to the start of the level
-func die() -> void:
+## Losing sends the player back to the start of the level. A star or a
+## shield saves you from traps and enemies, but not from falling (pit)
+func die(pit := false) -> void:
 	if not is_multiplayer_authority():
 		return
+	var id = name.to_int()
+	if not pit:
+		if _safe_left > 0.0 or RaceManager.has_effect(id, "star"):
+			return
+		if RaceManager.has_effect(id, "shield"):
+			RaceManager.break_shield(id)
+			_safe_left = 1.2
+			bounce()
+			Sfx.play_at("shield_break", global_position)
+			return
 	if is_local():
 		Sfx.play("death")
 	respawn()
@@ -207,3 +235,37 @@ func respawn() -> void:
 func _on_grid_changed() -> void:
 	if not RaceManager.can_move():
 		respawn()
+
+# Power-up effects everyone sees: shield bubble, star colors, turbo flames,
+# the lightning's little storm cloud, and stars spinning after a slip
+func _draw_effects() -> void:
+	var id = name.to_int()
+	var t = Time.get_ticks_msec() / 1000.0
+	var tint = Color.WHITE
+	if RaceManager.has_effect(id, "star"):
+		tint = Color.from_hsv(fposmod(t * 2.0, 1.0), 0.5, 1.0)
+	elif RaceManager.has_effect(id, "slow"):
+		tint = Color(0.6, 0.7, 1.0)
+	if _safe_left > 0.0 and int(_safe_left * 12) % 2 == 0:
+		tint.a = 0.35
+	animated_sprite_2d.modulate = tint
+	if RaceManager.has_effect(id, "shield"):
+		draw_circle(Vector2(0, -8), 13.0, Color(0.45, 0.8, 1.0, 0.18))
+		draw_arc(Vector2(0, -8), 13.0, 0, TAU, 24, Color(0.5, 0.85, 1.0, 0.8), 1.0)
+	if RaceManager.has_effect(id, "turbo"):
+		var back = -signf(animated_sprite_2d.scale.x)
+		for i in 3:
+			var length = 6.0 + fposmod(t * 30.0 + i * 3.0, 6.0)
+			draw_line(Vector2(back * 7, -4 - i * 3), Vector2(back * (7 + length), -4 - i * 3),
+				[Color("#ffd23f"), Color("#ff9f1c"), Color("#ff5e5b")][i], 2.0)
+	if RaceManager.has_effect(id, "slow"):
+		var cloud = Vector2(0, -34)
+		for x in [-5.0, 0.0, 5.0]:
+			draw_circle(cloud + Vector2(x, absf(x) * 0.3), 4.0, Color(0.45, 0.47, 0.55))
+		if fposmod(t, 0.5) < 0.12:
+			draw_polyline(PackedVector2Array([cloud + Vector2(1, 3), cloud + Vector2(-2, 8), cloud + Vector2(1, 8),
+				cloud + Vector2(-1, 13)]), Color("#fff36b"), 1.0)
+	if _stun_left > 0.0:
+		for i in 3:
+			var a = t * 8.0 + i * TAU / 3.0
+			PowerUps.draw_icon(self, PowerUps.STAR, Vector2(cos(a) * 8, -30 + sin(a) * 3), 5.0)

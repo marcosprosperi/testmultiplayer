@@ -18,6 +18,7 @@ class_name Lobby extends CanvasLayer
 @onready var coins_check: CheckButton = %CoinsCheck
 @onready var checkpoints_check: CheckButton = %CheckpointsCheck
 @onready var bots_check: CheckButton = %BotsCheck
+@onready var items_check: CheckButton = %ItemsCheck
 @onready var levels_button: Button = %LevelsButton
 @onready var playlist_label: Label = %PlaylistLabel
 @onready var levels_panel: PanelContainer = %LevelsPanel
@@ -57,6 +58,7 @@ func _ready() -> void:
 	coins_check.toggled.connect(func(on): PlayersManager.set_coins_enabled(on))
 	checkpoints_check.toggled.connect(func(on): PlayersManager.set_checkpoints_enabled(on))
 	bots_check.toggled.connect(func(on): PlayersManager.set_bots_enabled(on))
+	items_check.toggled.connect(func(on): PlayersManager.set_items_enabled(on))
 	PlayersManager.settings_changed.connect(_refresh)
 	PlayersManager.settings_changed.connect(_refresh_level_rows)
 	levels_button.visible = NetworkManager.is_hosting
@@ -139,6 +141,8 @@ func _refresh() -> void:
 	checkpoints_check.set_pressed_no_signal(PlayersManager.checkpoints_enabled())
 	bots_check.disabled = not NetworkManager.is_hosting
 	bots_check.set_pressed_no_signal(PlayersManager.bots_enabled())
+	items_check.disabled = not NetworkManager.is_hosting
+	items_check.set_pressed_no_signal(PlayersManager.items_enabled())
 
 	_refresh_players(my_id)
 	var names = _playlist().map(func(i): return main.levels[i].title)

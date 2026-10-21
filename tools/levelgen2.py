@@ -96,6 +96,16 @@ class LevelBuilder:
     def checkpoint(self):
         self.run(2, decor=False)
         self.node("Checkpoint", "checkpoint", self.px(self.x - 1), self.row * T)
+        self.item_boxes()
+
+    def item_boxes(self):
+        """A row of power-up boxes at head height: you get one running through"""
+        self.run(3, decor=False)
+        for i in range(3):
+            self.node("ItemBox", "item_box", self.px(self.x + i * 2) + 8, self.row * T - 12)
+        self.run(7, decor=False)
+        # Someone may drop a peel here: room before the next thing to jump
+        self.mark_jump(self.x)
 
     def spikes_run(self, groups=2, length=3):
         # 16+ tiles between groups: a full jump over one never lands on the next
@@ -476,6 +486,7 @@ color = {colors[i]}''')
             "fireball": "res://race/enemies/fireball.tscn",
             "penguin": "res://race/enemies/penguin.tscn",
             "ice": "res://race/hazards/ice_zone.tscn",
+            "item_box": "res://race/powerups/item_box.tscn",
             "lava": "res://race/hazards/lava.tscn",
         }
         ext = [
@@ -498,6 +509,7 @@ size = Vector2({w}, 32)''' for i, (_, _, w) in enumerate(kills)]
 position = Vector2({x}, {y})
 collision_layer = 0
 script = ExtResource("race_kill")
+pit = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KillZones/Kill{i}"]
 shape = SubResource("Kill{i}")''' for i, (x, y, _) in enumerate(kills)]

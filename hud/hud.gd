@@ -7,9 +7,38 @@ class_name Hud extends CanvasLayer
 const TOAST_TIME = 2.5
 var _toast_left := 0.0
 
+var _flash: ColorRect
+
 func _ready() -> void:
 	RaceManager.trap_triggered.connect(_on_trap_triggered)
+	RaceManager.item_used.connect(_on_item_used)
 	toast.text = ""
+	add_child(ItemSlot.new())
+	# White flash when someone's lightning hits you
+	_flash = ColorRect.new()
+	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash.color = Color(1, 1, 0.85, 0)
+	add_child(_flash)
+
+func _on_item_used(id: int, item: String) -> void:
+	var me = multiplayer.get_unique_id()
+	var sounds = {PowerUps.TURBO: "turbo", PowerUps.STAR: "star", PowerUps.SHIELD: "item_box",
+		PowerUps.LIGHTNING: "zap", PowerUps.PORTAL: "portal", PowerUps.PEEL: "click"}
+	if item == PowerUps.LIGHTNING:
+		# Everyone hears the thunder; the ones it hit see the flash
+		Sfx.play(sounds[item])
+		if RaceManager.has_effect(me, "slow"):
+			_flash.color.a = 0.7
+			create_tween().tween_property(_flash, "color:a", 0.0, 0.5)
+	elif id == me:
+		Sfx.play(sounds[item])
+	# Only the big ones are announced to everybody
+	if id == me or item in [PowerUps.LIGHTNING, PowerUps.STAR, PowerUps.PORTAL]:
+		var who = "¡Usaste" if id == me else "¡%s usó" % PlayersManager.name_of(id)
+		toast.text = "%s %s! (%s)" % [who, PowerUps.NAMES[item], PowerUps.HINTS[item]]
+		toast.add_theme_color_override("font_color", PlayersManager.color_of(id))
+		_toast_left = TOAST_TIME
 
 func _on_trap_triggered(id: int) -> void:
 	var who = "Activaste" if id == multiplayer.get_unique_id() else "%s activó" % PlayersManager.name_of(id)

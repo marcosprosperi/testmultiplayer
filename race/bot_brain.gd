@@ -24,6 +24,9 @@ var _hesitate_left := 0.0
 var _late_jump_left := 0.0
 # Jumping past a saw is timed to the frame: no late jumps then
 var _careful_jump := false
+# Wait a moment before using a power-up, like a person would
+var _item_wait := 0.0
+var _held_item := ""
 var _pace := 1.0
 
 func _init(bot_player: Player, bot_skill: float) -> void:
@@ -63,6 +66,7 @@ func update(delta: float) -> Dictionary:
 		player.die()
 		return {"dir": 0.0, "jump": false}
 	_careful_jump = false
+	_use_power_up(delta)
 
 	var target = _course_target(64.0)
 	var dx = target.x - pos.x
@@ -120,9 +124,10 @@ func update(delta: float) -> Dictionary:
 				jump = true
 		elif (dir != 0 and player.is_on_wall()) or stuck:
 			jump = true
-		elif _hazard_ahead(look):
+		elif _hazard_ahead(look) and [90.0, 150.0, 210.0, 260.0].all(func(d): return _floor_ahead(look, d)):
 			# Enemies move: only jump if the jump (and landing) won't run into
-			# one; otherwise wait for a better moment, unless waiting is worse
+			# one; otherwise wait for a better moment, unless waiting is worse.
+			# (With a pit right after it, the jump over the pit takes care of it)
 			if _jump_is_safe(look) or not _standing_is_safe():
 				jump = true
 			else:
@@ -151,6 +156,32 @@ func update(delta: float) -> Dictionary:
 		move *= _pace
 	return {"dir": move, "jump": jump}
 
+# Most power-ups right away (after a little pause); a peel when someone's
+# right behind (or after a while)
+func _use_power_up(delta: float) -> void:
+	var id = player.name.to_int()
+	var item = RaceManager.item_of(id)
+	if item != _held_item:
+		_held_item = item
+		_item_wait = randf_range(0.4, 1.5) if item != PowerUps.PEEL else 8.0
+	if item == "":
+		return
+	_item_wait -= delta
+	if item == PowerUps.PEEL and _someone_right_behind():
+		_item_wait = minf(_item_wait, 0.0)
+	if _item_wait <= 0.0:
+		RaceManager.use_item(id)
+
+func _someone_right_behind() -> bool:
+	var back = -signf(player.animated_sprite_2d.scale.x)
+	for other in player.get_tree().get_nodes_in_group("player"):
+		if other == player:
+			continue
+		var d = (other.global_position.x - player.global_position.x) * back
+		if d > 10 and d < 150 and absf(other.global_position.y - player.global_position.y) < 20:
+			return true
+	return false
+
 func _enter_level(level: Node) -> void:
 	_level = level
 	_course = level.get_node_or_null("Course") as Path2D
@@ -176,6 +207,8 @@ func _floor_ahead(dir: float, dist := 12.0) -> bool:
 
 # Somewhere to land going forward at about the same height or lower
 func _landing(dir: float, max_dist := 190) -> Dictionary:
+	# Slower (lightning, coins) means shorter jumps, faster (turbo) longer ones
+	max_dist = int(max_dist * RaceManager.speed_factor(player.name.to_int()))
 	for d in range(30, max_dist, 6):
 		var hit = _ray(player.global_position + Vector2(dir * d, -60), player.global_position + Vector2(dir * d, 140))
 		if hit.is_empty():
@@ -226,7 +259,8 @@ func _balloon_above() -> Node:
 
 func _hazard_ahead(dir: float) -> bool:
 	var pos = player.global_position
-	for s in _cache.get("Spikes", []) + _cache.get("RetractableSpikes", []) + _cache.get("TrapButton", []):
+	for s in _cache.get("Spikes", []) + _cache.get("RetractableSpikes", []) + _cache.get("TrapButton", []) \
+			+ player.get_tree().get_nodes_in_group("peel"):
 		var d = (s.global_position.x - pos.x) * dir
 		if d > -4 and d < 30 and absf(s.global_position.y - pos.y) < 20: return true
 	for h in _cache.get("Saw", []):
