@@ -38,7 +38,7 @@ func start_game() -> void:
 		PlayersManager.add_bots()
 	PlayersManager.start_game()
 	current_round = 0
-	RaceManager.set_round(current_round, playlist.size())
+	_announce_round()
 	change_level(levels[playlist[current_round]].scene)
 	for id in PlayersManager.joined_players:
 		create_player(id)
@@ -102,6 +102,11 @@ func change_level(level_scene: PackedScene):
 func _on_level_finished():
 	if multiplayer.is_server():
 		current_round = mini(current_round + 1, playlist.size() - 1)
-		RaceManager.set_round(current_round, playlist.size())
+		_announce_round()
 		# Using call_deferred is safer for physics/scene tree changes
 		call_deferred("change_level", levels[playlist[current_round]].scene)
+
+# Server: which race of the championship is next (and its level's name)
+func _announce_round() -> void:
+	var info = levels[playlist[current_round]]
+	RaceManager.set_round(current_round, playlist.size(), info.title, info.difficulty)

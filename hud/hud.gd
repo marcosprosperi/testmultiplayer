@@ -16,6 +16,7 @@ func _ready() -> void:
 	RaceManager.item_used.connect(_on_item_used)
 	toast.text = ""
 	add_child(ItemSlot.new())
+	add_child(RaceBanner.new())
 	_badge = PlaceBadge.new()
 	_badge.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	_badge.position = Vector2(10, get_viewport().get_visible_rect().size.y - 58)

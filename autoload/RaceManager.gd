@@ -30,6 +30,8 @@ signal trap_triggered(id: int)
 signal results_shown(results: Array, final: bool)
 # Power-ups: who holds what changed / someone used one (on every screen)
 signal items_changed
+# Someone crossed the finish line (place: 1 = first), on every screen
+signal player_finished(id: int, place: int)
 signal item_used(id: int, item: String)
 
 var state := State.WAITING
@@ -43,6 +45,9 @@ var _peels := 0
 var race_coins = {}
 # Which race of the championship this is (0-based) and how many there are
 var round_index := 0
+# Name and difficulty (1-3) of the level being raced
+var level_title := ""
+var level_difficulty := 0
 var rounds_total := 1
 # 3, 2, 1 during the countdown
 var countdown_value := 0
@@ -59,6 +64,8 @@ var _last_finish_order: Array = []
 var current_level: Node2D
 # Peer ids in the order they crossed the finish line (synced by the server)
 var finish_order: Array = []
+# Who we already celebrated crossing the line this race (see player_finished)
+var _announced_finishes: Array = []
 var _changing_level := false
 
 func _ready() -> void:
@@ -67,6 +74,7 @@ func _ready() -> void:
 
 func register_level(level: Node2D) -> void:
 	current_level = level
+	Transition.pop_in()
 	if multiplayer.is_server():
 		if not finish_order.is_empty():
 			_last_finish_order = finish_order.duplicate()
@@ -91,6 +99,7 @@ func end_championship() -> void:
 @rpc("authority", "call_local", "reliable")
 func _end_championship() -> void:
 	reset()
+	Transition.pop_in()
 
 func reset() -> void:
 	current_level = null
@@ -102,6 +111,7 @@ func reset() -> void:
 	grid_order = []
 	_last_finish_order = []
 	race_coins = {}
+	_announced_finishes = []
 	items = {}
 	effects = {}
 	finish_order_changed.emit()
@@ -112,7 +122,7 @@ func send_state_to(id: int) -> void:
 	_sync_finish_order.rpc_id(id, finish_order)
 	_sync_state.rpc_id(id, state, countdown_value, race_time())
 	_sync_grid.rpc_id(id, grid_order)
-	_sync_round.rpc_id(id, round_index, rounds_total)
+	_sync_round.rpc_id(id, round_index, rounds_total, level_title, level_difficulty)
 	_sync_coins.rpc_id(id, race_coins)
 	_sync_items.rpc_id(id, items)
 	_sync_effects.rpc_id(id, effects)
@@ -146,17 +156,19 @@ func _sync_coins(coins: Dictionary) -> void:
 	coins_changed.emit()
 
 ## Server only: called by Main before loading each level
-func set_round(index: int, total: int) -> void:
+func set_round(index: int, total: int, title := "", difficulty := 0) -> void:
 	if multiplayer.is_server():
-		_sync_round.rpc(index, total)
+		_sync_round.rpc(index, total, title, difficulty)
 
 func is_last_round() -> bool:
 	return round_index >= rounds_total - 1
 
 @rpc("authority", "call_local", "reliable")
-func _sync_round(index: int, total: int) -> void:
+func _sync_round(index: int, total: int, title := "", difficulty := 0) -> void:
 	round_index = index
 	rounds_total = total
+	level_title = title
+	level_difficulty = difficulty
 	round_changed.emit()
 
 ## Players can only move once the countdown is over
@@ -378,6 +390,13 @@ func _show_results(results: Array, final: bool) -> void:
 @rpc("authority", "call_local", "reliable")
 func _sync_finish_order(order: Array) -> void:
 	finish_order = order
+	for i in order.size():
+		if not _announced_finishes.has(order[i]):
+			_announced_finishes.append(order[i])
+			player_finished.emit(order[i], i + 1)
+	# A new race starts with an empty order
+	if order.is_empty():
+		_announced_finishes.clear()
 	finish_order_changed.emit()
 
 func _find_in_level(group: String) -> Node2D:

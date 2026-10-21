@@ -22,12 +22,12 @@ func _ready() -> void:
 ## so the spawners can replicate everything to the new peer
 func host_game() -> void:
 	is_hosting = true
-	get_tree().change_scene_to_file(game_scene_path)
+	Transition.change_scene(game_scene_path)
 
 func join_game(address: String) -> void:
 	is_hosting = false
 	join_address = address
-	get_tree().change_scene_to_file(game_scene_path)
+	Transition.change_scene(game_scene_path)
 
 ## Called by Main when the game scene is ready
 func start() -> void:
@@ -58,7 +58,7 @@ func leave(error_message := "") -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	PlayersManager.reset()
 	RaceManager.reset()
-	get_tree().change_scene_to_file.call_deferred(menu_scene_path)
+	Transition.change_scene.call_deferred(menu_scene_path)
 
 ## IPv4 addresses of this machine that other players can use to join
 func get_local_ips() -> Array:

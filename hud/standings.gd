@@ -12,22 +12,29 @@ const TITLE_COLOR = Color(1, 0.82, 0.25)
 
 var _time_left := 0.0
 var _final := false
+var _podium: Podium
 
 func _ready() -> void:
 	visible = false
 	RaceManager.results_shown.connect(_on_results_shown)
+	_podium = Podium.new()
+	add_child(_podium)
 
 func _process(delta: float) -> void:
 	if _time_left > 0.0:
 		_time_left -= delta
 		var next = "Volviendo a la sala en %d..." if _final else "Próxima carrera en %d..."
 		footer.text = next % ceili(maxf(_time_left, 0.0))
+		_podium.footer_text = footer.text
 		visible = _time_left > 0.0
 		return
 	# Hold Tab during the race to peek at the championship
 	var peek = Input.is_key_pressed(KEY_TAB) and PlayersManager.game_started \
 		and Hud.is_connected_to_game(multiplayer)
 	if peek and not visible:
+		$Panel.visible = true
+		$Dim.visible = true
+		_podium.visible = false
 		_show_current()
 	visible = peek
 
@@ -38,7 +45,12 @@ func _on_results_shown(results: Array, final: bool) -> void:
 	var race = "Carrera %d de %d" % [RaceManager.round_index + 1, RaceManager.rounds_total]
 	results.sort_custom(func(a, b): return PlayersManager.is_ahead(
 		{"points": a.total, "finishes": a.finishes}, {"points": b.total, "finishes": b.finishes}))
+	# The last race ends on the podium instead of the table
+	$Panel.visible = not final
+	$Dim.visible = not final
+	_podium.visible = false
 	if final and not results.is_empty():
+		_podium.show_results(results)
 		title.text = "¡%s gana el campeonato!" % results[0].name
 		title.add_theme_color_override("font_color", results[0].color)
 		subtitle.text = "Campeonato terminado · " + race

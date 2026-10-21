@@ -8,6 +8,10 @@ const DUST = "dust"        # jumping / landing
 const STOMP = "stomp"      # squashing an enemy
 const SPARKLE = "sparkle"  # coins, flags, coming back
 const PLUS_ONE = "plus_one"
+const CONFETTI = "confetti"  # finish line, podium
+
+const CONFETTI_COLORS = [Color("#ff5e5b"), Color("#ffd23f"), Color("#3bceac"), Color("#41a6f6"),
+	Color("#a86cf5"), Color("#ff9f1c"), Color("#ff6fb5"), Color.WHITE]
 
 var _particles: Array = []
 var _text := ""
@@ -15,17 +19,21 @@ var _text_color := Color.WHITE
 var _life := 0.0
 var _duration := 0.5
 
-## Adds the effect to the level (or the current scene) at a world position
-static func spawn(kind: String, at: Vector2, color := Color.WHITE) -> void:
-	var parent = RaceManager.current_level if is_instance_valid(RaceManager.current_level) \
-		else Engine.get_main_loop().current_scene
+## Adds the effect to the level (or the current scene) at a world position,
+## or to `parent` (a screen overlay, say) at a position inside it
+static func spawn(kind: String, at: Vector2, color := Color.WHITE, parent: Node = null) -> void:
+	if parent == null:
+		parent = RaceManager.current_level if is_instance_valid(RaceManager.current_level) \
+			else Engine.get_main_loop().current_scene
 	if parent == null:
 		return
 	var fx = Fx.new()
 	fx.z_index = 20
 	fx._setup(kind, color)
 	parent.add_child(fx)
-	fx.global_position = at
+	fx.position = at
+	if parent is Node2D and parent == RaceManager.current_level:
+		fx.global_position = at
 
 func _setup(kind: String, color: Color) -> void:
 	match kind:
@@ -52,6 +60,12 @@ func _setup(kind: String, color: Color) -> void:
 			for i in 6:
 				var a = i * TAU / 6.0
 				_add(Vector2(cos(a), sin(a)) * randf_range(35, 55), 3.5, color, "star")
+		CONFETTI:
+			_duration = 1.8
+			for i in 46:
+				var a = randf_range(-PI * 0.85, -PI * 0.15)
+				_add(Vector2(cos(a), sin(a)) * randf_range(120, 260), randf_range(1.5, 2.5),
+					CONFETTI_COLORS[i % CONFETTI_COLORS.size()], "paper")
 		PLUS_ONE:
 			_duration = 0.7
 			_text = "+1"
@@ -67,6 +81,12 @@ func _process(delta: float) -> void:
 		return
 	for p in _particles:
 		p.pos += p.vel * delta
+		if p.shape == "paper":
+			# Paper flutters down slowly, swaying
+			p.vel.x *= 0.97
+			p.vel.y = minf(p.vel.y + 260.0 * delta, 45.0)
+			p.pos.x += sin(_life * 8.0 + p.size * 7.0) * 0.6
+			continue
 		p.vel *= 0.9
 		p.vel.y += 30.0 * delta if p.shape == "puff" else 60.0 * delta
 	queue_redraw()
@@ -76,7 +96,11 @@ func _draw() -> void:
 	for p in _particles:
 		var c = Color(p.color, p.color.a * (1.0 - t))
 		var size = p.size * (1.0 - t * 0.5)
-		if p.shape == "star":
+		if p.shape == "paper":
+			var flip = absf(sin(_life * 10.0 + p.size * 5.0))
+			draw_rect(Rect2(p.pos.round() - Vector2(p.size, p.size * flip), Vector2(p.size * 2, maxf(p.size * 2 * flip, 1))),
+				Color(p.color, 1.0 - maxf(t - 0.7, 0.0) / 0.3))
+		elif p.shape == "star":
 			# Four-pointed twinkle with a white heart
 			var r = size * 1.6
 			var w = size * 0.45
