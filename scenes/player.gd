@@ -7,6 +7,12 @@ const JUMP_VELOCITY = -400.0
 const SLIPSTREAM_RANGE = 140.0
 const SLIPSTREAM_HEIGHT = 20.0
 const SLIPSTREAM_BOOST = 1.2
+## Coyote time: you can still jump this long after running off an edge
+const COYOTE_TIME = 0.1
+## Jump buffer: pressing jump this long before landing still jumps
+const JUMP_BUFFER = 0.12
+## Bounce after stomping an enemy
+const STOMP_BOUNCE = -300.0
 
 @onready var camera_2d: Camera2D = $Camera2D
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
@@ -16,6 +22,8 @@ var name_label: Label
 var slipstream := false
 # Added to the velocity for one frame by things like fans
 var push := Vector2.ZERO
+var _coyote_left := 0.0
+var _jump_buffer_left := 0.0
 
 func _enter_tree():
 	# Set authority based on the node name (which is now just the ID)
@@ -54,8 +62,19 @@ func _physics_process(delta: float) -> void:
 	# are used to switch spectator cameras
 	var frozen := RaceManager.has_finished(name.to_int()) or not RaceManager.can_move()
 
-	if Input.is_action_just_pressed("jump") and is_on_floor() and not frozen:
+	if is_on_floor():
+		_coyote_left = COYOTE_TIME
+	else:
+		_coyote_left -= delta
+	if Input.is_action_just_pressed("jump"):
+		_jump_buffer_left = JUMP_BUFFER
+	else:
+		_jump_buffer_left -= delta
+
+	if _jump_buffer_left > 0.0 and _coyote_left > 0.0 and not frozen:
 		velocity.y = JUMP_VELOCITY
+		_jump_buffer_left = 0.0
+		_coyote_left = 0.0
 		Sfx.play("jump", -6.0)
 
 	var direction := 0.0 if frozen else Input.get_axis("left", "right")
@@ -124,6 +143,11 @@ func _update_name_label() -> void:
 	var id = name.to_int()
 	name_label.text = PlayersManager.name_of(id)
 	name_label.add_theme_color_override("font_color", PlayersManager.color_of(id))
+
+## Called when you land on an enemy you can squash
+func bounce() -> void:
+	velocity.y = STOMP_BOUNCE
+	_coyote_left = 0.0
 
 ## Losing sends the player back to the start of the level
 func die() -> void:
