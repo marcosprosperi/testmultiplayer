@@ -24,8 +24,8 @@ class_name Lobby extends CanvasLayer
 @onready var levels_panel: PanelContainer = %LevelsPanel
 @onready var level_cards: GridContainer = %LevelCards
 
-const DIFFICULTY_TEXT = ["", "Fácil", "Medio", "Difícil"]
-const DIFFICULTY_COLOR = [Color.WHITE, Color("#55efc4"), Color("#fdcb6e"), Color("#ff7675")]
+const DIFFICULTY_TEXT = ["", "Fácil", "Medio", "Difícil", "¡Extremo!"]
+const DIFFICULTY_COLOR = [Color.WHITE, Color("#55efc4"), Color("#fdcb6e"), Color("#ff7675"), Color("#e056fd")]
 @onready var game_name_edit: LineEdit = %GameNameEdit
 
 const NAME_TAKEN_MESSAGE = "Ese nombre ya está en uso"
@@ -222,7 +222,7 @@ func _refresh_level_rows() -> void:
 func _make_level_card(index: int) -> Button:
 	var info = main.levels[index]
 	var card = Button.new()
-	card.custom_minimum_size = Vector2(134, 54)
+	card.custom_minimum_size = Vector2(100, 54)
 	card.focus_mode = Control.FOCUS_NONE
 	card.tooltip_text = "%s · %s" % [info.title, DIFFICULTY_TEXT[info.difficulty]]
 	card.pressed.connect(_on_level_card_pressed.bind(index))
@@ -243,6 +243,7 @@ func _make_level_card(index: int) -> Button:
 	var title = Label.new()
 	title.text = info.title
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_size_override("font_size", 9)
 	title.add_theme_color_override("font_color", Color.WHITE)
 	row.add_child(title)
 	var difficulty = Label.new()

@@ -403,6 +403,56 @@ def level9():
     return b
 
 
-LEVELS = {1: level1, 2: level2, 3: level3, 4: level4, 5: level5, 6: level6, 7: level7, 8: level8, 9: level9}
+def level10():
+    """Infierno (extreme, ~30 s): islands over lava, fast crushers, wide jumps"""
+    b = LevelBuilder("Level_10", "volcano", "volcano", seed=1010)
+    b.margin = 0.5
+    b.flag_every = 2400
+    b.root_extra = "background_color = Color(0.2, 0.07, 0.07, 1)\nmusic = \"dark\"\n"
+    b.run(14)
+    b.item_boxes()
+    b.lava_gap(8)
+    b.pillars(count=5, width=2, gaps=(4, 6))
+    b.crusher_hall(count=4, spacing=6, period=2.4, active=0.6, offset=0.6)
+    b.lava_gap(9)
+    b.gap(13, "mover")
+    b.spikes_run(groups=3, length=4, space=9)
+    b.flag()
+    b.pillars(count=6, width=1, gaps=(4, 7))
+    b.enemies_run(["spiky", "frog", "spiky"], length=30)
+    b.gap(12, "falling")
+    b.lava_gap(9)
+    b.pillars(count=4, width=1, gaps=(5, 7), rises=(-3, 3))
+    b.finish()
+    return b
+
+
+def level11():
+    """Glaciar (extreme, ~30 s): ice, tiny islands, saws, crushers, penguins"""
+    b = LevelBuilder("Level_11", "snow", "snow", seed=1111)
+    b.margin = 0.5
+    b.flag_every = 2400
+    b.root_extra = "background_color = Color(0.75, 0.85, 0.95, 1)\n"
+    b.run(14)
+    b.item_boxes()
+    b.ice_run(24, ["penguin"])
+    b.gap(12)
+    b.pillars(count=5, width=2, gaps=(4, 6))
+    b.gap(7, "saw")
+    b.retractable_run(auto=True)
+    b.ice_run(20, ["penguin"])
+    b.flag()
+    b.gap(13, "falling")
+    b.pillars(count=6, width=1, gaps=(4, 6))
+    b.crusher_hall(count=3, spacing=6, period=2.4, active=0.6, offset=0.8)
+    b.enemies_run(["bat", "penguin", "spiky"], length=30)
+    b.gap(12, "mover")
+    b.saw_run(20)
+    b.finish()
+    return b
+
+
+LEVELS = {1: level1, 2: level2, 3: level3, 4: level4, 5: level5, 6: level6, 7: level7, 8: level8, 9: level9,
+          10: level10, 11: level11}
 for n in [int(a) for a in sys.argv[2:]] or list(LEVELS):
     LEVELS[n]().write(f"{OUT}/level_{n}.tscn")

@@ -37,6 +37,8 @@ class LevelBuilder:
         self.wide_spacing = False   # see enemies_run
         self.last_flag = 0.0        # route length at the last checkpoint flag
         self.stone_row = 7          # summer_.png stone band: 7 grey (dungeon), 12 light (castle)
+        self.margin = 1.0           # scales the flat runs between hazards (extreme levels: less)
+        self.flag_every = FLAG_EVERY
 
     # --- helpers -------------------------------------------------------------
     def uname(self, prefix):
@@ -104,8 +106,9 @@ class LevelBuilder:
     def safe_margin(self, n=12):
         """Flat run so nothing that makes you jump is right before what comes
         next. It's also where flags go when it's been a while since the last"""
-        if self.course and self.route_length() - self.last_flag > FLAG_EVERY:
+        if self.course and self.route_length() - self.last_flag > self.flag_every:
             self.flag()
+        n = int(n * self.margin)
         if self.x - self.last_jump_hazard < n:
             self.run(n - (self.x - self.last_jump_hazard))
 
@@ -124,10 +127,10 @@ class LevelBuilder:
         # Someone may drop a peel here: room before the next thing to jump
         self.mark_jump(self.x)
 
-    def spikes_run(self, groups=2, length=3):
+    def spikes_run(self, groups=2, length=3, space=14):
         # 16+ tiles between groups: a full jump over one never lands on the next
         for _ in range(groups):
-            self.run(14)
+            self.run(space)
             self.node("Spikes", "spikes", self.px(self.x), self.row * T, tiles=length)
             if self.rnd.random() < 0.6:
                 self.coin(self.px(self.x) + length * 8, self.row * T - 34)
@@ -236,14 +239,14 @@ class LevelBuilder:
         self.point(self.x + 1, self.row)
         self.run(8)
 
-    def crusher_hall(self, count=3, spacing=10, name=None):
+    def crusher_hall(self, count=3, spacing=10, name=None, period=3.6, active=0.8, offset=1.2):
         self.safe_margin(8)
         self.run(6)
         chain = 16.0 if self.style == "stone" else 120.0
         for i in range(count):
             self.run(spacing - 1, decor=False)
             self.node("Crusher", "crusher", self.px(self.x) + 8, self.row * T, height=80.0, chain_length=chain,
-                      auto_period=3.6, auto_offset=round(i * 1.2, 1), active_time=0.8)
+                      auto_period=period, auto_offset=round(i * offset, 1), active_time=active)
             self.coin(self.px(self.x) + 8, self.row * T - 12)
             self.run(1, decor=False)
         self.run(8)
@@ -401,6 +404,27 @@ color = {colors[i]}''')
         self.x = x0 + width
         self.run(3, decor=False)
         self.mark_jump(self.x)
+
+    def pillars(self, count=5, width=2, gaps=(4, 6), rises=(-2, -1, 0, 1, 2), lava=False):
+        """Narrow islands over a pit (or lava), each at its own height: one
+        exact jump after another"""
+        self.safe_margin(8)
+        self.run(3, decor=False)
+        start = self.row
+        for _ in range(count):
+            gap = self.rnd.randint(*gaps)
+            x0 = self.x
+            before = self.row
+            # Never far from where the section started
+            self.row = min(max(self.row - self.rnd.choice(rises), start - 4), start + 4)
+            low = max(before, self.row)
+            self.kill_under(x0, x0 + gap - 1, low)
+            if lava or self.style == "volcano":
+                self.node("Lava", "lava", self.px(x0), low * T + 6, tiles=gap, depth=64.0)
+            self.x += gap
+            self.run(width, decor=False)
+        self.mark_jump(self.x)
+        self.run(3, decor=False)
 
     def lava_run(self, pits=3):
         for i in range(pits):
