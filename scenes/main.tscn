@@ -7,10 +7,12 @@
 [ext_resource type="PackedScene" uid="uid://cibp8iksdlty" path="res://scenes/level_2.tscn" id="5_level2"]
 [ext_resource type="PackedScene" path="res://scenes/level_3.tscn" id="6_level3"]
 [ext_resource type="PackedScene" path="res://hud/standings.tscn" id="7_standings"]
+[ext_resource type="PackedScene" path="res://scenes/level_4.tscn" id="8_level4"]
+[ext_resource type="PackedScene" path="res://scenes/level_5.tscn" id="9_level5"]
 
 [node name="Main" type="Node" unique_id=1346978070]
 script = ExtResource("1_o5qli")
-levels = Array[PackedScene]([ExtResource("4_level1"), ExtResource("5_level2"), ExtResource("6_level3")])
+levels = Array[PackedScene]([ExtResource("4_level1"), ExtResource("5_level2"), ExtResource("6_level3"), ExtResource("8_level4"), ExtResource("9_level5")])
 
 [node name="PlayersSpawner" type="MultiplayerSpawner" parent="." unique_id=1942581705]
 _spawnable_scenes = PackedStringArray("uid://g03n8e1oanp3")

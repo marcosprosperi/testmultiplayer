@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/hazards/moving_platform.gd" id="1_moving"]
+
+[node name="MovingPlatform" type="AnimatableBody2D"]
+collision_layer = 512
+collision_mask = 0
+script = ExtResource("1_moving")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]

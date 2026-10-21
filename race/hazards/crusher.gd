@@ -12,6 +12,8 @@ const STONE = Color("#7d8494")
 @export var height := 64.0
 @export var slam_time := 0.15
 @export var rise_time := 1.2
+## Length of the chain above the block when resting (shorter under a ceiling)
+@export var chain_length := 200.0
 
 @onready var block: AnimatableBody2D = $Block
 @onready var kill: KillZone = $Block/Kill
@@ -41,7 +43,7 @@ func _on_phase_changed(new_phase: Phase) -> void:
 
 func _draw() -> void:
 	# Chain from the ceiling
-	var top = -height - SIZE.y - 200.0
+	var top = -height - SIZE.y - chain_length
 	draw_line(Vector2(0, top), block.position - Vector2(0, SIZE.y / 2.0), Color(0.3, 0.3, 0.35), 2.0)
 	var rect = Rect2(block.position - SIZE / 2.0, SIZE)
 	var color = Color("#c0392b") if is_warning_blink_on() else STONE
