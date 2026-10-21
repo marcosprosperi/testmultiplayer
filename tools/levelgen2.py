@@ -27,6 +27,7 @@ class LevelBuilder:
         self.platforms = []         # (x0, x1, row) one-tile floating platforms
         self.ceiling_open = set()   # columns with no ceiling (balloon shafts)
         self.extra_tiles = {}       # (x, y) -> (source, ax, ay) decorations
+        self.decor_nodes = []       # torches, banners (see decorate_stone)
         self.nodes = []
         self.course = []
         self.counters = {}
@@ -35,6 +36,7 @@ class LevelBuilder:
         self.root_extra = ""
         self.wide_spacing = False   # see enemies_run
         self.last_flag = 0.0        # route length at the last checkpoint flag
+        self.stone_row = 7          # summer_.png stone band: 7 grey (dungeon), 12 light (castle)
 
     # --- helpers -------------------------------------------------------------
     def uname(self, prefix):
@@ -437,16 +439,18 @@ color = {colors[i]}''')
                     tiles[(x, y)] = (self.src, col, 0 if top else (2 if bottom else 1))
                 else:
                     col = 6 if left_open else (8 if right_open else 7)
-                    tiles[(x, y)] = (SUMMER, col, 7 if top else (9 if bottom else 8))
+                    sr = self.stone_row
+                    tiles[(x, y)] = (SUMMER, col, sr if top else (sr + 2 if bottom else sr + 1))
         # Floating platforms
         for x0, x1, row in self.platforms:
             for x in range(x0, x1 + 1):
                 if self.grassy:
                     tiles[(x, row)] = (self.src, 3 if x == x0 else (5 if x == x1 else 4), 0)
                 else:
-                    tiles[(x, row)] = (SUMMER, 6 if x == x0 else (8 if x == x1 else 7), 5)
+                    tiles[(x, row)] = (SUMMER, 6 if x == x0 else (8 if x == x1 else 7), self.stone_row - 2)
         # Ceiling for stone levels: lowest floor around minus CEILING_GAP, with
         # side walls where its height changes
+        self.ceiling = {}
         if self.style == "stone":
             ceiling = {}
             for x in range(first - 2, last + 3):
@@ -459,23 +463,50 @@ color = {colors[i]}''')
                 if x in self.ceiling_open:
                     continue
                 top = min(ceiling.get(x - 1, c), ceiling.get(x + 1, c), c) - 4
+                self.ceiling[x] = c
                 for y in range(top, c + 1):
-                    tiles[(x, y)] = (SUMMER, 7, 9 if y == c else 8)
-        # Walls at both ends
+                    tiles[(x, y)] = (SUMMER, 7, self.stone_row + (2 if y == c else 1))
+        # Walls at both ends: just taller than anyone can jump (or up to the
+        # ceiling in stone levels)
         r0 = self.surface[first]
         r1 = self.surface[last]
-        top_row = min(self.surface.values()) - 20
-        for y in range(top_row, max(self.surface.values()) + 6):
-            for x in (first - 1, first - 2):
-                if y <= r0 + 4:
-                    tiles[(x, y)] = (self.src, 6, 1) if self.grassy else (SUMMER, 7, 8)
-            for x in (last + 1, last + 2):
-                if y <= r1 + 4:
-                    tiles[(x, y)] = (self.src, 6, 1) if self.grassy else (SUMMER, 7, 8)
+        wall = (self.src, 6, 1) if self.grassy else (SUMMER, 7, self.stone_row + 1)
+        for (cols, r) in (((first - 1, first - 2), r0), ((last + 1, last + 2), r1)):
+            height = 7 if self.grassy else 20
+            for y in range(r - height, r + 5):
+                for x in cols:
+                    tiles[(x, y)] = wall
         tiles.update({k: v for k, v in self.extra_tiles.items() if k not in tiles})
         if self.grassy:
             self.decorate(tiles)
+        else:
+            self.decorate_stone()
         return tiles
+
+    def decorate_stone(self):
+        """Torches on the back wall and, in the castle, banners hanging from
+        the ceiling (nodes, not tiles, so they flicker and sway)"""
+        rnd = random.Random(zlib.crc32(self.name.encode()) + 1)
+        busy = set()
+        for n in self.nodes:
+            if 'parent="Hazards"' in n:
+                for x_px in [float(v) for v in re.findall(r"position = Vector2\(([-\d.]+),", n)]:
+                    busy.update(range(int(x_px // T) - 1, int(x_px // T) + 4))
+        colors = ["Color(0.66, 0.2, 0.29, 1)", "Color(0.24, 0.35, 0.68, 1)", "Color(0.45, 0.25, 0.6, 1)"]
+        x = min(self.surface) + 6
+        while x < max(self.surface) - 6:
+            r = self.surface.get(x)
+            if r is None or x in busy or self.surface.get(x + 1) != r:
+                x += 1
+                continue
+            self.decor_nodes.append(f'''[node name="Torch{x}" parent="Decor" instance=ExtResource("torch")]
+position = Vector2({x * T + 8}, {(r - 3) * T})''')
+            c = self.ceiling.get(x + 4)
+            if self.stone_row == 12 and c is not None and r - c > 6:
+                self.decor_nodes.append(f'''[node name="Banner{x}" parent="Decor" instance=ExtResource("banner")]
+position = Vector2({(x + 4) * T + 8}, {(c + 1) * T})
+color = {rnd.choice(colors)}''')
+            x += rnd.randint(10, 16)
 
     def decorate(self, tiles):
         """Trees, bushes, flowers, rocks, stumps and vines on the flat floor,
@@ -568,10 +599,16 @@ color = {colors[i]}''')
             "penguin": "res://race/enemies/penguin.tscn",
             "ice": "res://race/hazards/ice_zone.tscn",
             "item_box": "res://race/powerups/item_box.tscn",
+            "torch": "res://race/decor/torch.tscn",
+            "banner": "res://race/decor/banner.tscn",
             "lava": "res://race/hazards/lava.tscn",
         }
         tile_textures = {"snow": "nature_snow.png", "volcano": "nature_volcano.png"}
-        root_extra = self.root_extra
+        # The ground takes the light of its sky (night is bluish, sunset warm...)
+        tints = {"night": "Color(0.62, 0.68, 0.95, 1)", "sunset": "Color(1, 0.86, 0.8, 1)",
+                 "cave": "Color(0.8, 0.76, 0.82, 1)", "castle": "Color(0.78, 0.72, 0.92, 1)",
+                 "volcano": "Color(1, 0.9, 0.86, 1)"}
+        root_extra = self.root_extra + (f"ground_tint = {tints[self.background]}\n" if self.background in tints else "")
         ext = [
             '[ext_resource type="Script" path="res://race/level.gd" id="race_level"]',
         ] + ([f'[ext_resource type="Texture2D" path="res://resources/{tile_textures[self.style]}" id="platform_tex"]']
@@ -582,7 +619,7 @@ color = {colors[i]}''')
             '[ext_resource type="PackedScene" uid="uid://bfsx5wh40fsn8" path="res://Enemies/Cannon/cannon.tscn" id="cannon"]',
             '[ext_resource type="PackedScene" uid="uid://d2l5myn53o5qe" path="res://collectables/coin.tscn" id="coin"]',
         ] + [f'[ext_resource type="PackedScene" path="{p}" id="{i}"]' for i, p in scenes.items()
-             if i in ("background", "race_finish") or f'ExtResource("{i}")' in "".join(self.nodes)]
+             if i in ("background", "race_finish") or f'ExtResource("{i}")' in "".join(self.nodes + self.decor_nodes)]
         # Kill zones: one under each gap, plus a big one under everything
         lowest = max(self.surface.values())
         cols = sorted(self.surface)
@@ -650,7 +687,9 @@ tile_set = ExtResource("level_tileset")
 
 [node name="KillZones" type="Node2D" parent="."]
 
-{chr(10).join(n + chr(10) for n in hazards + coins + others)}
+[node name="Decor" type="Node2D" parent="."]
+
+{chr(10).join(n + chr(10) for n in hazards + coins + others + self.decor_nodes)}
 {chr(10).join(k + chr(10) for k in kill_nodes)}
 [node name="FinishLine" parent="." instance=ExtResource("race_finish")]
 position = Vector2({finish[0]}, {finish[1]})

@@ -10,9 +10,13 @@ class_name Level extends Node2D
 @export_enum("race", "dark") var music := "race"
 ## Texture for moving / falling platforms (the nature tiles if empty)
 @export var platform_texture: Texture2D
+## Tints the ground tiles to match the sky (bluish at night...)
+@export var ground_tint := Color.WHITE
 
 # Runs on every peer when the level is spawned
 func _ready() -> void:
+	for layer in find_children("*", "TileMapLayer", false, false):
+		layer.modulate *= ground_tint
 	RaceManager.register_level(self)
 	RenderingServer.set_default_clear_color(background_color)
 	for player in get_tree().get_nodes_in_group("player"):

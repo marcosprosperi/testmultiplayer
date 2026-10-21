@@ -56,7 +56,7 @@ func _draw_card() -> void:
 	var width = maxf(TITLE_FONT.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x, 120) + 40
 	# Slides in from the left with a little overshoot
 	var t = ease(_card, -2.2)
-	var center = Vector2(lerpf(-width, size.x / 2.0, t), size.y * 0.62)
+	var center = Vector2(lerpf(-width, size.x / 2.0, t), size.y * 0.8)
 	var rect = Rect2(center - Vector2(width / 2.0, 30), Vector2(width, 60))
 	var style = StyleBoxFlat.new()
 	style.bg_color = Color(0.24, 0.17, 0.37, 0.95)

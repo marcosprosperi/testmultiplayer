@@ -31,6 +31,7 @@ const DIFFICULTY_COLOR = [Color.WHITE, Color("#55efc4"), Color("#fdcb6e"), Color
 const NAME_TAKEN_MESSAGE = "Ese nombre ya está en uso"
 
 var selected_color := -1
+var _preview_knight: AnimatedSprite2D
 var color_buttons: Array[Button] = []
 
 func _ready() -> void:
@@ -46,6 +47,13 @@ func _ready() -> void:
 		button.pressed.connect(_on_color_pressed.bind(i))
 		colors_box.add_child(button)
 		color_buttons.append(button)
+	# How you'll look: a knight in the color you picked
+	var preview = Control.new()
+	preview.custom_minimum_size = Vector2(28, 18)
+	colors_box.add_child(preview)
+	_preview_knight = PlayerLook.knight(Color.WHITE)
+	_preview_knight.position = Vector2(16, 3)
+	preview.add_child(_preview_knight)
 
 	confirm_button.pressed.connect(_on_confirm_pressed)
 	name_edit.text_submitted.connect(func(_text): _on_confirm_pressed())
@@ -125,6 +133,11 @@ func _refresh() -> void:
 		_style_color_button(button, PlayersManager.COLORS[i], i == selected_color, taken)
 	if selected_color != -1 and PlayersManager.is_color_taken(selected_color, my_id):
 		selected_color = -1
+	if _preview_knight:
+		var picked = selected_color != -1
+		PlayerLook.paint(_preview_knight, PlayersManager.COLORS[selected_color] if picked else Color(0.6, 0.6, 0.65))
+		_preview_knight.modulate.a = 1.0 if picked else 0.4
+		_preview_knight.play("run" if picked else "idle")
 
 	var name_taken = PlayersManager.is_name_taken(name_edit.text, my_id)
 	confirm_button.disabled = not connected or name_edit.text.strip_edges().is_empty() \
@@ -164,7 +177,7 @@ func _refresh_players(my_id: int) -> void:
 	ids.sort_custom(func(a, b): return a < b if (a < 0) == (b < 0) else b < 0)
 	for id in ids:
 		var row = Label.new()
-		row.text = "● %s%s%s" % [PlayersManager.name_of(id), " (host)" if id == 1 else "", " ← vos" if id == my_id else ""]
+		row.text = "● %s%s%s" % [PlayersManager.label_of(id), " (host)" if id == 1 else "", " ← vos" if id == my_id else ""]
 		row.add_theme_color_override("font_color", PlayersManager.color_of(id))
 		players_list.add_child(row)
 	var people = ids.filter(func(id): return id >= 0).size()
