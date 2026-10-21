@@ -1,0 +1,61 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://resources/backgrounds/hills_snow.png" id="hills_snow"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/mountains_snow.png" id="mountains_snow"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/sky_snow.png" id="sky_snow"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/snowflakes.png" id="snowflakes"]
+
+[node name="Background" type="Node2D"]
+z_index = -10
+editor_description = "Parallax layers for a sideways level. scroll_scale x: how fast each layer follows the camera (0 = fixed like the sky, 1 = moves with the level). Vertically they stay put on screen."
+
+[node name="Sky" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="Sky"]
+position = Vector2(0, 0)
+texture = ExtResource("sky_snow")
+centered = false
+
+[node name="Mountains" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.15, 0)
+repeat_size = Vector2(480, 0)
+repeat_times = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="Mountains"]
+position = Vector2(0, -5)
+texture = ExtResource("mountains_snow")
+centered = false
+
+[node name="SnowFar" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.25, 0)
+repeat_size = Vector2(480, 270)
+repeat_times = 3
+autoscroll = Vector2(-6, 16)
+modulate = Color(1, 1, 1, 0.6)
+
+[node name="Sprite2D" type="Sprite2D" parent="SnowFar"]
+position = Vector2(0, 0)
+texture = ExtResource("snowflakes")
+centered = false
+
+[node name="Hills" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.35, 0)
+repeat_size = Vector2(480, 0)
+repeat_times = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="Hills"]
+position = Vector2(0, 60)
+texture = ExtResource("hills_snow")
+centered = false
+
+[node name="SnowNear" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.6, 0)
+repeat_size = Vector2(480, 270)
+repeat_times = 3
+autoscroll = Vector2(-14, 34)
+
+[node name="Sprite2D" type="Sprite2D" parent="SnowNear"]
+position = Vector2(0, 100)
+texture = ExtResource("snowflakes")
+centered = false

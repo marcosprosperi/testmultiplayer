@@ -13,6 +13,9 @@ const COYOTE_TIME = 0.1
 const JUMP_BUFFER = 0.12
 ## Bounce after stomping an enemy
 const STOMP_BOUNCE = -300.0
+## On ice you speed up and slow down slowly (pixels per second²)
+const ICE_ACCEL = 650.0
+const ICE_FRICTION = 260.0
 
 @onready var camera_2d: Camera2D = $Camera2D
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
@@ -112,11 +115,15 @@ func _physics_process(delta: float) -> void:
 	if slipstream:
 		speed *= SLIPSTREAM_BOOST
 
+	var on_ice = is_on_floor() and get_tree().get_nodes_in_group("ice").any(func(ice): return ice.overlaps_body(self))
 	if direction:
-		velocity.x = direction * speed
+		if on_ice:
+			velocity.x = move_toward(velocity.x, direction * speed, ICE_ACCEL * delta)
+		else:
+			velocity.x = direction * speed
 		animated_sprite_2d.play("run")
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
+		velocity.x = move_toward(velocity.x, 0, ICE_FRICTION * delta if on_ice else SPEED)
 
 	velocity.x += push.x
 	push = Vector2.ZERO

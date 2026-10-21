@@ -21,7 +21,7 @@ class_name Lobby extends CanvasLayer
 @onready var levels_button: Button = %LevelsButton
 @onready var playlist_label: Label = %PlaylistLabel
 @onready var levels_panel: PanelContainer = %LevelsPanel
-@onready var level_rows: VBoxContainer = %LevelRows
+@onready var level_cards: GridContainer = %LevelCards
 
 const DIFFICULTY_TEXT = ["", "Fácil", "Medio", "Difícil"]
 const DIFFICULTY_COLOR = [Color.WHITE, Color("#55efc4"), Color("#fdcb6e"), Color("#ff7675")]
@@ -68,6 +68,11 @@ func _ready() -> void:
 		levels_panel.visible = false
 		%LevelsDim.visible = false)
 	%SortButton.pressed.connect(func(): PlayersManager.set_playlist(_sorted_by_difficulty(_playlist())))
+	%AllButton.pressed.connect(func(): PlayersManager.set_playlist(main.default_playlist()))
+	%ShuffleButton.pressed.connect(func():
+		var shuffled = _playlist().duplicate()
+		shuffled.shuffle()
+		PlayersManager.set_playlist(shuffled))
 	if NetworkManager.is_hosting and PlayersManager.get_playlist().is_empty():
 		PlayersManager.set_playlist(main.default_playlist())
 	PlayersManager.players_changed.connect(_refresh)
@@ -137,7 +142,9 @@ func _refresh() -> void:
 
 	_refresh_players(my_id)
 	var names = _playlist().map(func(i): return main.levels[i].title)
-	playlist_label.text = "Carreras (%d): %s" % [names.size(), " → ".join(names)]
+	# Long lists: the first few and how many more
+	var shown = names.slice(0, 4) + (["+%d más" % (names.size() - 4)] if names.size() > 5 else names.slice(4))
+	playlist_label.text = "Carreras (%d): %s" % [names.size(), " → ".join(shown)]
 	levels_button.text = "Niveles (%d)…" % names.size()
 	start_button.disabled = not PlayersManager.has_player(1)
 	start_button.tooltip_text = "" if PlayersManager.has_player(1) else "Primero elegí tu nombre y color"
@@ -184,54 +191,89 @@ func _sorted_by_difficulty(order: Array) -> Array:
 func _refresh_level_rows() -> void:
 	if not levels_panel.visible:
 		return
-	for child in level_rows.get_children():
-		level_rows.remove_child(child)
-		child.queue_free()
+	if level_cards.get_child_count() != main.levels.size():
+		for child in level_cards.get_children():
+			child.queue_free()
+		for i in main.levels.size():
+			level_cards.add_child(_make_level_card(i))
 	var chosen = _playlist()
-	# Chosen ones in play order first, then the rest
-	var rows = chosen + range(main.levels.size()).filter(func(i): return not chosen.has(i))
-	for i in rows:
-		var info = main.levels[i]
-		var row = HBoxContainer.new()
-		var check = CheckBox.new()
-		check.text = info.title
-		check.button_pressed = chosen.has(i)
-		check.focus_mode = Control.FOCUS_NONE
-		check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		check.toggled.connect(_on_level_toggled.bind(i))
-		row.add_child(check)
-		var difficulty = Label.new()
-		difficulty.text = DIFFICULTY_TEXT[info.difficulty]
-		difficulty.add_theme_color_override("font_color", DIFFICULTY_COLOR[info.difficulty])
-		difficulty.custom_minimum_size = Vector2(50, 0)
-		row.add_child(difficulty)
-		for step in [-1, 1]:
-			var arrow = Button.new()
-			arrow.text = "↑" if step < 0 else "↓"
-			arrow.focus_mode = Control.FOCUS_NONE
-			arrow.disabled = not chosen.has(i)
-			arrow.pressed.connect(_on_level_moved.bind(i, step))
-			row.add_child(arrow)
-		level_rows.add_child(row)
+	for i in level_cards.get_child_count():
+		_update_level_card(level_cards.get_child(i), chosen.find(i))
 
-func _on_level_toggled(on: bool, index: int) -> void:
-	var chosen = _playlist()
-	if on and not chosen.has(index):
+# A card: tiny map of the level, its name and difficulty, and its number in
+# the play order (if it's chosen)
+func _make_level_card(index: int) -> Button:
+	var info = main.levels[index]
+	var card = Button.new()
+	card.custom_minimum_size = Vector2(134, 54)
+	card.focus_mode = Control.FOCUS_NONE
+	card.tooltip_text = "%s · %s" % [info.title, DIFFICULTY_TEXT[info.difficulty]]
+	card.pressed.connect(_on_level_card_pressed.bind(index))
+	var box = VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 5)
+	box.add_theme_constant_override("separation", 1)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(box)
+	var preview = LevelPreview.new()
+	preview.custom_minimum_size = Vector2(0, 24)
+	preview.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	preview.show_level(info.scene)
+	box.add_child(preview)
+	var row = HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(row)
+	var title = Label.new()
+	title.text = info.title
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_color_override("font_color", Color.WHITE)
+	row.add_child(title)
+	var difficulty = Label.new()
+	difficulty.text = DIFFICULTY_TEXT[info.difficulty]
+	difficulty.add_theme_font_size_override("font_size", 8)
+	difficulty.add_theme_color_override("font_color", DIFFICULTY_COLOR[info.difficulty])
+	row.add_child(difficulty)
+	var badge = Label.new()
+	badge.name = "Badge"
+	badge.position = Vector2(-5, -6)
+	badge.custom_minimum_size = Vector2(15, 15)
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge.add_theme_color_override("font_color", Color(0.17, 0.11, 0.23))
+	var circle = StyleBoxFlat.new()
+	circle.bg_color = Color("#ffd23f")
+	circle.border_color = Color(0.17, 0.11, 0.23)
+	circle.set_border_width_all(2)
+	circle.set_corner_radius_all(8)
+	badge.add_theme_stylebox_override("normal", circle)
+	card.add_child(badge)
+	return card
+
+func _update_level_card(card: Button, order: int) -> void:
+	var chosen = order != -1
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.33, 0.24, 0.5) if chosen else Color(0.15, 0.1, 0.24)
+	style.border_color = Color("#ffd23f") if chosen else Color(0.17, 0.11, 0.23)
+	style.set_border_width_all(3 if chosen else 2)
+	style.set_corner_radius_all(7)
+	var hover = style.duplicate()
+	hover.bg_color = style.bg_color.lightened(0.12)
+	for state in ["normal", "pressed", "focus", "disabled"]:
+		card.add_theme_stylebox_override(state, style)
+	card.add_theme_stylebox_override("hover", hover)
+	card.modulate = Color.WHITE if chosen else Color(1, 1, 1, 0.55)
+	var badge: Label = card.get_node("Badge")
+	badge.visible = chosen
+	badge.text = str(order + 1)
+
+func _on_level_card_pressed(index: int) -> void:
+	var chosen = _playlist().duplicate()
+	if not chosen.has(index):
 		chosen.append(index)
-	elif not on and chosen.size() > 1:
+	elif chosen.size() > 1:
 		chosen.erase(index)
 	PlayersManager.set_playlist(chosen)
 	_refresh_level_rows()
-
-func _on_level_moved(index: int, step: int) -> void:
-	var chosen = _playlist()
-	var at = chosen.find(index)
-	var to = at + step
-	if at == -1 or to < 0 or to >= chosen.size():
-		return
-	chosen[at] = chosen[to]
-	chosen[to] = index
-	PlayersManager.set_playlist(chosen)
 
 func _style_color_button(button: Button, color: Color, selected: bool, taken: bool) -> void:
 	var style = StyleBoxFlat.new()

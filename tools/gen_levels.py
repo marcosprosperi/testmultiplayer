@@ -1,9 +1,8 @@
-# Builds the five race levels with levelgen2. Usage: gen_levels.py <scenes dir> [level numbers]
+# Builds the race levels with levelgen2. Usage: gen_levels.py <scenes dir> [level numbers]
 import sys
 from levelgen2 import LevelBuilder
 
 OUT = sys.argv[1]
-WHICH = [int(a) for a in sys.argv[2:]] or [1, 2, 3, 4, 5]
 
 
 def level1():
@@ -224,6 +223,176 @@ def level5():
     return b
 
 
-LEVELS = {1: level1, 2: level2, 3: level3, 4: level4, 5: level5}
-for n in WHICH:
+def level6():
+    """Bosque (easy): frogs that hop, bees flying in circles, slimes"""
+    b = LevelBuilder("Level_6", "forest", "grass", seed=66)
+    b.wide_spacing = True
+    b.root_extra = "background_color = Color(0.45, 0.68, 0.85, 1)\n"
+    b.run(20)
+    b.enemies_run(["frog", "slime"], length=36)
+    b.gap(6)
+    b.stairs(3, up=True)
+    b.enemies_run(["bee", "frog"], length=36)
+    b.run(10, coins=True)
+    b.checkpoint()
+    b.gap(12, "falling")
+    b.spikes_run(groups=2, length=2)
+    b.climb(levels=3)
+    b.enemies_run(["frog", "bee", "frog"], length=44)
+    b.run(12, coins=True)
+    b.drop(rows=10)
+    b.checkpoint()
+    b.saw_run(24)
+    b.gap(12, "mover")
+    b.enemies_run(["bee", "slime", "bee"], length=44)
+    b.stairs(3, up=False)
+    pop = b.uname("PopSpikes")
+    b.button([pop])
+    b.run(18, coins=True)
+    b.retractable_run(auto=False, name=pop)
+    b.gap(7)
+    b.checkpoint()
+    b.climb(levels=2)
+    b.enemies_run(["frog", "frog", "bee"], length=44)
+    b.gap(12, "falling")
+    b.spikes_run(groups=2, length=3)
+    b.fan_run(auto=True)
+    b.drop(rows=8)
+    b.enemies_run(["slime", "bee"], length=36)
+    b.checkpoint()
+    b.gap(12, "mover")
+    b.stairs(3, up=True)
+    b.enemies_run(["frog", "bee", "slime"], length=44)
+    b.saw_run(24)
+    b.gap(6)
+    b.climb(levels=2)
+    b.enemies_run(["bee", "frog"], length=36)
+    b.finish()
+    return b
+
+
+def level7():
+    """Nieve (medium): slippery ice with penguins sliding on it"""
+    b = LevelBuilder("Level_7", "snow", "snow", seed=77)
+    b.wide_spacing = True
+    b.root_extra = "background_color = Color(0.75, 0.85, 0.95, 1)\n"
+    b.run(20)
+    b.ice_run(30, ["penguin"])
+    b.gap(6)
+    b.enemies_run(["penguin", "spiky"], length=40)
+    b.stairs(3, up=True)
+    b.ice_run(36, ["penguin", "penguin"])
+    b.checkpoint()
+    b.gap(12, "falling")
+    b.retractable_run(auto=True)
+    b.climb(levels=3)
+    b.ice_run(28)
+    b.gap(12, "mover")
+    b.checkpoint()
+    b.enemies_run(["bat", "penguin", "spiky"], length=44)
+    b.drop(rows=10)
+    b.ice_run(34, ["penguin"])
+    b.crusher_hall(count=3)
+    b.checkpoint()
+    b.gap(7, "saw")
+    b.stairs(3, up=False)
+    b.ice_run(30, ["penguin", "penguin"])
+    b.spikes_run(groups=2, length=3)
+    b.climb(levels=2, elevator=True)
+    b.enemies_run(["penguin", "bat"], length=36)
+    b.gap(12, "falling")
+    b.ice_run(24)
+    b.checkpoint()
+    b.retractable_run(auto=True)
+    b.gap(12, "mover")
+    b.ice_run(44, ["penguin", "penguin"])
+    b.stairs(3, up=True)
+    b.enemies_run(["spiky", "bat", "penguin"], length=44)
+    b.drop(rows=8)
+    b.ice_run(30)
+    b.finish()
+    return b
+
+
+def level8():
+    """Volcán (hard): lava pits with fireballs jumping out, crushers, saws"""
+    b = LevelBuilder("Level_8", "volcano", "volcano", seed=88)
+    b.wide_spacing = True
+    b.root_extra = "background_color = Color(0.2, 0.07, 0.07, 1)\nmusic = \"dark\"\n"
+    b.run(20)
+    b.lava_run(pits=3)
+    b.enemies_run(["spiky", "frog"], length=36)
+    b.climb(levels=3)
+    b.lava_gap(6)
+    b.crusher_hall(count=3)
+    b.checkpoint()
+    b.lava_run(pits=3)
+    b.gap(12, "falling")
+    b.enemies_run(["spiky", "bat", "spiky"], length=44)
+    b.drop(rows=10)
+    b.saw_run(26)
+    b.checkpoint()
+    b.lava_run(pits=4)
+    b.stairs(3, up=True)
+    b.gap(14, "mover")
+    b.crusher_hall(count=4)
+    b.checkpoint()
+    b.lava_gap(5)
+    b.retractable_run(auto=True)
+    b.climb(levels=3)
+    b.lava_run(pits=3)
+    b.enemies_run(["frog", "spiky", "bat"], length=44)
+    b.checkpoint()
+    b.lava_run(pits=3)
+    b.cannon_run()
+    b.finish()
+    return b
+
+
+def level9():
+    """Castillo (hard): ghosts that fade in and out, bats, trap doors, crushers"""
+    b = LevelBuilder("Level_9", "castle", "stone", seed=99)
+    b.wide_spacing = True
+    b.root_extra = "background_color = Color(0.1, 0.06, 0.16, 1)\nmusic = \"dark\"\n"
+    b.run(20)
+    b.enemies_run(["ghost", "bat"], length=36)
+    door = b.uname("TrapDoor")
+    b.button([door])
+    b.run(18)
+    b.gap(8, "trapdoor", name=door)
+    b.crusher_hall(count=3)
+    b.checkpoint()
+    b.enemies_run(["ghost", "spiky", "ghost"], length=44)
+    b.drop(rows=10)
+    b.retractable_run(auto=True)
+    b.climb(levels=3)
+    b.gap(12, "mover")
+    b.checkpoint()
+    b.enemies_run(["bat", "ghost", "bat"], length=44)
+    b.crusher_hall(count=4)
+    b.gap(7, "saw")
+    b.stairs(3, up=True)
+    b.checkpoint()
+    b.enemies_run(["ghost", "ghost", "spiky"], length=44)
+    b.gap(12, "falling")
+    b.drop(rows=10)
+    b.fan_run(auto=True)
+    b.climb(levels=2)
+    b.enemies_run(["ghost", "bat", "ghost"], length=44)
+    b.retractable_run(auto=True)
+    b.checkpoint()
+    door2 = b.uname("TrapDoor")
+    b.button([door2])
+    b.enemies_run(["ghost", "spiky"], length=36)
+    b.gap(8, "trapdoor", name=door2)
+    b.crusher_hall(count=3)
+    b.climb(levels=3)
+    b.enemies_run(["bat", "ghost", "ghost"], length=44)
+    b.gap(12, "falling")
+    b.finish()
+    return b
+
+
+LEVELS = {1: level1, 2: level2, 3: level3, 4: level4, 5: level5, 6: level6, 7: level7, 8: level8, 9: level9}
+for n in [int(a) for a in sys.argv[2:]] or list(LEVELS):
     LEVELS[n]().write(f"{OUT}/level_{n}.tscn")

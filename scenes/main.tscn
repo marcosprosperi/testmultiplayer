@@ -11,6 +11,10 @@
 [ext_resource type="PackedScene" path="res://scenes/level_5.tscn" id="9_level5"]
 [ext_resource type="Script" path="res://race/level_info.gd" id="10_level_info"]
 [ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="11_pause_menu"]
+[ext_resource type="PackedScene" path="res://scenes/level_6.tscn" id="16_level6"]
+[ext_resource type="PackedScene" path="res://scenes/level_7.tscn" id="17_level7"]
+[ext_resource type="PackedScene" path="res://scenes/level_8.tscn" id="18_level8"]
+[ext_resource type="PackedScene" path="res://scenes/level_9.tscn" id="19_level9"]
 
 [sub_resource type="Resource" id="LevelInfo_1"]
 script = ExtResource("10_level_info")
@@ -42,9 +46,33 @@ title = "Noche"
 difficulty = 3
 scene = ExtResource("9_level5")
 
+[sub_resource type="Resource" id="LevelInfo_6"]
+script = ExtResource("10_level_info")
+title = "Bosque"
+difficulty = 1
+scene = ExtResource("16_level6")
+
+[sub_resource type="Resource" id="LevelInfo_7"]
+script = ExtResource("10_level_info")
+title = "Nieve"
+difficulty = 2
+scene = ExtResource("17_level7")
+
+[sub_resource type="Resource" id="LevelInfo_8"]
+script = ExtResource("10_level_info")
+title = "Volcán"
+difficulty = 3
+scene = ExtResource("18_level8")
+
+[sub_resource type="Resource" id="LevelInfo_9"]
+script = ExtResource("10_level_info")
+title = "Castillo"
+difficulty = 3
+scene = ExtResource("19_level9")
+
 [node name="Main" type="Node" unique_id=1346978070]
 script = ExtResource("1_o5qli")
-levels = Array[Resource]([SubResource("LevelInfo_1"), SubResource("LevelInfo_2"), SubResource("LevelInfo_3"), SubResource("LevelInfo_4"), SubResource("LevelInfo_5")])
+levels = Array[Resource]([SubResource("LevelInfo_1"), SubResource("LevelInfo_2"), SubResource("LevelInfo_3"), SubResource("LevelInfo_4"), SubResource("LevelInfo_5"), SubResource("LevelInfo_6"), SubResource("LevelInfo_7"), SubResource("LevelInfo_8"), SubResource("LevelInfo_9")])
 
 [node name="PlayersSpawner" type="MultiplayerSpawner" parent="." unique_id=1942581705]
 _spawnable_scenes = PackedStringArray("uid://g03n8e1oanp3")

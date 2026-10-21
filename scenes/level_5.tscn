@@ -14,7 +14,6 @@
 [ext_resource type="PackedScene" path="res://race/hazards/falling_platform.tscn" id="falling"]
 [ext_resource type="PackedScene" path="res://race/hazards/moving_platform.tscn" id="moving"]
 [ext_resource type="PackedScene" path="res://race/hazards/retractable_spikes.tscn" id="retractable"]
-[ext_resource type="PackedScene" path="res://race/hazards/trap_door.tscn" id="trap_door"]
 [ext_resource type="PackedScene" path="res://race/hazards/crusher.tscn" id="crusher"]
 [ext_resource type="PackedScene" path="res://race/hazards/fan.tscn" id="fan"]
 [ext_resource type="PackedScene" path="res://race/hazards/trap_button.tscn" id="button"]
