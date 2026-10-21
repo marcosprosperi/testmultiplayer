@@ -9,6 +9,7 @@ NATURE = 4      # nature tileset source in level_tileset.tres
 GRASSY = {"grass": 4, "snow": 5, "volcano": 6}
 SUMMER = 0      # summer_.png source (grey stone blocks)
 CEILING_GAP = 9 # rows between floor and ceiling in cave levels
+FLAG_EVERY = 1800  # px of route between checkpoint flags (at most, about)
 
 
 class LevelBuilder:
@@ -33,6 +34,7 @@ class LevelBuilder:
         self.last_jump_hazard = -999  # column of the last thing you must jump over
         self.root_extra = ""
         self.wide_spacing = False   # see enemies_run
+        self.last_flag = 0.0        # route length at the last checkpoint flag
 
     # --- helpers -------------------------------------------------------------
     def uname(self, prefix):
@@ -88,14 +90,27 @@ class LevelBuilder:
         self.x += n
         self.point(self.x - 1, self.row)
 
+    def route_length(self):
+        return sum(((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5 for (ax, ay), (bx, by) in zip(self.course, self.course[1:]))
+
+    def flag(self):
+        """Checkpoint flag on the floor here (losing brings you back to it)"""
+        self.run(2, decor=False)
+        self.node("Checkpoint", "checkpoint", self.px(self.x - 1), self.row * T)
+        self.last_flag = self.route_length()
+
     def safe_margin(self, n=12):
-        """Flat run so nothing that makes you jump is right before what comes next"""
+        """Flat run so nothing that makes you jump is right before what comes
+        next. It's also where flags go when it's been a while since the last"""
+        if self.course and self.route_length() - self.last_flag > FLAG_EVERY:
+            self.flag()
         if self.x - self.last_jump_hazard < n:
             self.run(n - (self.x - self.last_jump_hazard))
 
     def checkpoint(self):
-        self.run(2, decor=False)
-        self.node("Checkpoint", "checkpoint", self.px(self.x - 1), self.row * T)
+        """Flag (unless there's one just behind) plus a row of power-up boxes"""
+        if self.route_length() - self.last_flag > FLAG_EVERY / 3:
+            self.flag()
         self.item_boxes()
 
     def item_boxes(self):
