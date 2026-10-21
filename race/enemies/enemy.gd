@@ -114,6 +114,7 @@ func _squashed() -> void:
 		_squash()
 
 func _squash() -> void:
+	Fx.spawn(Fx.STOMP, global_position + Vector2(0, -4))
 	_dead = true
 	_dead_left = respawn_time
 	_reviving_left = 0.0

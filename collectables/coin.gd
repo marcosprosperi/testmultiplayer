@@ -32,4 +32,6 @@ func _on_body_entered(body: Node2D) -> void:
 func _take(id: int) -> void:
 	if id == multiplayer.get_unique_id():
 		Sfx.play("coin")
+	Fx.spawn(Fx.SPARKLE, global_position, Color("#ffd23f"))
+	Fx.spawn(Fx.PLUS_ONE, global_position, Color("#ffd23f"))
 	queue_free()

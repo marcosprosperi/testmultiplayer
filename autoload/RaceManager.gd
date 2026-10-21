@@ -530,8 +530,10 @@ func _spawn_peel(peel_name: String, at: Vector2, owner_id: int) -> void:
 func _teleport(id: int, at: Vector2) -> void:
 	var player = _player_node(id)
 	if player and player.is_multiplayer_authority():
+		Fx.spawn(Fx.SPARKLE, player.global_position + Vector2(0, -8), PlayersManager.color_of(id))
 		player.global_position = at
 		player.velocity = Vector2.ZERO
+		player.snap_camera()
 
 @rpc("authority", "call_local", "reliable")
 func _sync_items(server_items: Dictionary) -> void:
