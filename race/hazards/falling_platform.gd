@@ -86,6 +86,8 @@ func _draw() -> void:
 		var column = 3 if i == 0 else (5 if i == tiles - 1 else 4)
 		draw_texture_rect_region(_tiles(), Rect2(i * TILE, 0, TILE, TILE), Rect2(column * TILE, 0, TILE, TILE))
 
-# The level's own look (snow, volcano...) if it has one
+# The level's own look (snow, volcano...) if it has one, in its light
 func _tiles() -> Texture2D:
+	if owner is Level:
+		self_modulate = owner.ground_tint
 	return owner.platform_texture if owner is Level and owner.platform_texture else TILESET

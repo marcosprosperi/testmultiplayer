@@ -3,7 +3,7 @@ extends Node
 const MAX_NAME_LENGTH = 12
 const MAX_GAME_NAME_LENGTH = 24
 const MAX_PLAYERS = 8
-const BOT_NAMES = ["Bot Turbo", "Bot Chispa", "Bot Tuerca", "Bot Pixel", "Bot Rayo", "Bot Byte", "Bot Cohete", "Bot Rulo"]
+const BOT_NAMES = ["Turbo", "Chispa", "Tuerca", "Pixel", "Rayo", "Byte", "Cohete", "Rulo"]
 const COLORS = [
 	Color("#e74c3c"), Color("#3498db"), Color("#2ecc71"), Color("#f1c40f"),
 	Color("#9b59b6"), Color("#e67e22"), Color("#1abc9c"), Color("#ecf0f1"),
@@ -92,6 +92,10 @@ func has_player(id: int) -> bool:
 
 func name_of(id: int) -> String:
 	return joined_players[id]["name"] if joined_players.has(id) else "?"
+
+## The name for lists (lobby, tables): bots say so
+func label_of(id: int) -> String:
+	return name_of(id) + (" (bot)" if is_bot(id) else "")
 
 func color_of(id: int) -> Color:
 	return COLORS[joined_players[id]["color"]] if joined_players.has(id) else Color.GRAY

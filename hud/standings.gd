@@ -10,6 +10,9 @@ const TITLE_COLOR = Color(1, 0.82, 0.25)
 @onready var table: GridContainer = %Table
 @onready var footer: Label = %Footer
 
+## True while the table or the podium is on screen (the HUD hides then)
+static var showing := false
+
 var _time_left := 0.0
 var _final := false
 var _podium: Podium
@@ -27,7 +30,9 @@ func _process(delta: float) -> void:
 		footer.text = next % ceili(maxf(_time_left, 0.0))
 		_podium.footer_text = footer.text
 		visible = _time_left > 0.0
+		showing = visible
 		return
+	showing = false
 	# Hold Tab during the race to peek at the championship
 	var peek = Input.is_key_pressed(KEY_TAB) and PlayersManager.game_started \
 		and Hud.is_connected_to_game(multiplayer)
@@ -63,7 +68,7 @@ func _on_results_shown(results: Array, final: bool) -> void:
 		var race_text = "%dº  +%d" % [result.position, result.gained]
 		if PlayersManager.coins_enabled():
 			race_text += "   +%d mon." % result.coins
-		rows.append([result.name, result.color, race_text, result.total])
+		rows.append([result.name + (" (bot)" if result.id < 0 else ""), result.color, race_text, result.total])
 	_fill(rows)
 	visible = true
 
@@ -74,7 +79,7 @@ func _show_current() -> void:
 	footer.text = "Soltá Tab para volver"
 	var rows = []
 	for id in PlayersManager.standings():
-		rows.append([PlayersManager.name_of(id), PlayersManager.color_of(id), "", PlayersManager.points_of(id)])
+		rows.append([PlayersManager.label_of(id), PlayersManager.color_of(id), "", PlayersManager.points_of(id)])
 	_fill(rows)
 
 # rows: [name, color, race column, total points], already in standing order

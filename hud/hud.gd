@@ -15,6 +15,8 @@ func _ready() -> void:
 	RaceManager.trap_triggered.connect(_on_trap_triggered)
 	RaceManager.item_used.connect(_on_item_used)
 	toast.text = ""
+	toast.add_theme_stylebox_override("normal", pill())
+	toast.add_theme_color_override("font_outline_color", Color(0.17, 0.11, 0.23))
 	add_child(ItemSlot.new())
 	add_child(RaceBanner.new())
 	_badge = PlaceBadge.new()
@@ -59,15 +61,34 @@ func _process(delta: float) -> void:
 	if _toast_left > 0.0:
 		_toast_left -= delta
 		toast.modulate.a = clampf(_toast_left / 0.5, 0.0, 1.0)
+	toast.visible = _toast_left > 0.0 and toast.text != ""
+	fit_centered(toast)
 	# Only shown while the local player is racing (not in the lobby)
-	visible = is_connected_to_game(multiplayer) and get_tree().get_nodes_in_group("player").any(
-		func(p): return p.is_local())
+	visible = is_connected_to_game(multiplayer) and not Standings.showing \
+		and get_tree().get_nodes_in_group("player").any(func(p): return p.is_local())
 	if !visible:
 		return
 	var ranking = get_ranking()
 	_update_track_flags()
 	race_track.entries = _track_entries()
 	_update_position_label(ranking)
+
+## Dark rounded tag behind on-screen messages, so they read on any background
+static func pill() -> StyleBoxFlat:
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.06, 0.15, 0.75)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 1
+	style.content_margin_bottom = 2
+	return style
+
+## A label only as wide as its text, centered on the screen
+static func fit_centered(label: Label) -> void:
+	label.size.x = 0
+	label.reset_size()
+	label.position.x = (label.get_viewport_rect().size.x - label.size.x) / 2.0
 
 static func is_connected_to_game(api: MultiplayerAPI) -> bool:
 	return api.has_multiplayer_peer() \

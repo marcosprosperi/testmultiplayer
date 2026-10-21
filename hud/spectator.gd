@@ -50,6 +50,11 @@ func _watch(player: Player) -> void:
 func _set_text(value: String, color: Color) -> void:
 	text = value
 	add_theme_color_override("font_color", color)
+	if not get_theme_stylebox("normal") is StyleBoxFlat:
+		add_theme_stylebox_override("normal", Hud.pill())
+		add_theme_color_override("font_outline_color", Color(0.17, 0.11, 0.23))
+	visible = value != ""
+	Hud.fit_centered(self)
 
 func _local_player() -> Player:
 	for player in get_tree().get_nodes_in_group("player"):

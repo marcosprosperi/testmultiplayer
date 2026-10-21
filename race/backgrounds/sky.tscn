@@ -8,13 +8,13 @@
 
 [node name="Background" type="Node2D"]
 z_index = -10
-editor_description = "Parallax layers for the vertical balloon level: they also move up and down at different speeds while you climb."
+editor_description = "Parallax layers for the vertical balloon level: they also move up and down at different speeds while you climb. Placed for a level whose floor starts around y = 640 (the layers sink out of sight as you go up)."
 
 [node name="Sky" type="Parallax2D" parent="."]
 scroll_scale = Vector2(0, 0.1)
 
 [node name="Sprite2D" type="Sprite2D" parent="Sky"]
-position = Vector2(0, -250)
+position = Vector2(0, -180)
 texture = ExtResource("sky_day")
 centered = false
 
@@ -35,7 +35,7 @@ repeat_size = Vector2(480, 0)
 repeat_times = 3
 
 [node name="Sprite2D" type="Sprite2D" parent="Mountains"]
-position = Vector2(0, 61)
+position = Vector2(0, 194)
 texture = ExtResource("mountains_day")
 centered = false
 
@@ -45,7 +45,7 @@ repeat_size = Vector2(480, 0)
 repeat_times = 3
 
 [node name="Sprite2D" type="Sprite2D" parent="Hills"]
-position = Vector2(0, 52)
+position = Vector2(0, 300)
 texture = ExtResource("hills_day")
 centered = false
 

@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/decor/banner.gd" id="1_banner"]
+
+[node name="Banner" type="Node2D"]
+z_index = -1
+script = ExtResource("1_banner")

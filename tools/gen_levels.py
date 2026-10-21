@@ -360,6 +360,7 @@ def level8():
 def level9():
     """Castillo (hard): ghosts that fade in and out, bats, trap doors, crushers"""
     b = LevelBuilder("Level_9", "castle", "stone", seed=99)
+    b.stone_row = 12
     b.wide_spacing = True
     b.root_extra = "background_color = Color(0.1, 0.06, 0.16, 1)\nmusic = \"dark\"\n"
     b.run(20)
