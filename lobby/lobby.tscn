@@ -153,7 +153,7 @@ layout_mode = 2
 focus_mode = 0
 tooltip_text = "Cada moneda suma 1 punto al terminar la carrera, pero te hace más lento"
 button_pressed = true
-text = "Monedas (+1 pt, más lento)"
+text = "Monedas"
 
 [node name="CheckpointsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
 unique_name_in_owner = true
@@ -161,6 +161,13 @@ layout_mode = 2
 focus_mode = 0
 tooltip_text = "Al perder volvés a la última bandera que tocaste en vez de al principio"
 text = "Checkpoints"
+
+[node name="BotsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Completa la carrera con bots hasta 8 jugadores. Si entra alguien, un bot le deja su lugar"
+text = "Bots"
 
 [node name="LevelsButton" type="Button" parent="Panel/Margin/VBox/Options"]
 unique_name_in_owner = true

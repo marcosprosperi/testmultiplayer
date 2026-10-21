@@ -17,6 +17,7 @@ class_name Lobby extends CanvasLayer
 @onready var start_button: Button = %StartButton
 @onready var coins_check: CheckButton = %CoinsCheck
 @onready var checkpoints_check: CheckButton = %CheckpointsCheck
+@onready var bots_check: CheckButton = %BotsCheck
 @onready var levels_button: Button = %LevelsButton
 @onready var playlist_label: Label = %PlaylistLabel
 @onready var levels_panel: PanelContainer = %LevelsPanel
@@ -54,6 +55,7 @@ func _ready() -> void:
 	# Only the host can change the rules; everyone else sees them
 	coins_check.toggled.connect(func(on): PlayersManager.set_coins_enabled(on))
 	checkpoints_check.toggled.connect(func(on): PlayersManager.set_checkpoints_enabled(on))
+	bots_check.toggled.connect(func(on): PlayersManager.set_bots_enabled(on))
 	PlayersManager.settings_changed.connect(_refresh)
 	PlayersManager.settings_changed.connect(_refresh_level_rows)
 	levels_button.visible = NetworkManager.is_hosting
@@ -126,6 +128,8 @@ func _refresh() -> void:
 	coins_check.set_pressed_no_signal(PlayersManager.coins_enabled())
 	checkpoints_check.disabled = not NetworkManager.is_hosting
 	checkpoints_check.set_pressed_no_signal(PlayersManager.checkpoints_enabled())
+	bots_check.disabled = not NetworkManager.is_hosting
+	bots_check.set_pressed_no_signal(PlayersManager.bots_enabled())
 
 	_refresh_players(my_id)
 	var names = _playlist().map(func(i): return main.levels[i].title)
@@ -140,19 +144,26 @@ func _refresh_players(my_id: int) -> void:
 	var connected_count = multiplayer.get_peers().size() + 1 if Hud.is_connected_to_game(multiplayer) else 0
 	players_title.text = "Jugadores (%d/%d)" % [connected_count, NetworkManager.MAX_PLAYERS]
 
+	# People first, then the bots (if a race is on)
 	var ids = PlayersManager.joined_players.keys()
-	ids.sort()
+	ids.sort_custom(func(a, b): return a < b if (a < 0) == (b < 0) else b < 0)
 	for id in ids:
 		var row = Label.new()
 		row.text = "● %s%s%s" % [PlayersManager.name_of(id), " (host)" if id == 1 else "", " ← vos" if id == my_id else ""]
 		row.add_theme_color_override("font_color", PlayersManager.color_of(id))
 		players_list.add_child(row)
-	var choosing = connected_count - ids.size()
+	var people = ids.filter(func(id): return id >= 0).size()
+	var choosing = connected_count - people
 	if choosing > 0:
-		var row = Label.new()
-		row.text = "%d eligiendo nombre..." % choosing
-		row.modulate = Color(1, 1, 1, 0.6)
-		players_list.add_child(row)
+		_add_faded_row("%d eligiendo nombre..." % choosing)
+	if PlayersManager.bots_enabled() and not PlayersManager.game_started and connected_count < PlayersManager.MAX_PLAYERS:
+		_add_faded_row("+ %d bots al empezar" % (PlayersManager.MAX_PLAYERS - connected_count))
+
+func _add_faded_row(text: String) -> void:
+	var row = Label.new()
+	row.text = text
+	row.modulate = Color(1, 1, 1, 0.6)
+	players_list.add_child(row)
 
 # --- Levels ------------------------------------------------------------------
 

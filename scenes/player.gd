@@ -24,12 +24,23 @@ var slipstream := false
 var push := Vector2.ZERO
 # Last checkpoint flag touched in this level (if the host turned them on)
 var checkpoint = null
+# Bots (negative ids, run by the server) are driven by this instead of the keyboard
+var brain: BotBrain = null
 var _coyote_left := 0.0
 var _jump_buffer_left := 0.0
 
 func _enter_tree():
-	# Set authority based on the node name (which is now just the ID)
-	set_multiplayer_authority(name.to_int())
+	# Set authority based on the node name (which is now just the ID); bots
+	# have negative ids and belong to the server
+	set_multiplayer_authority(1 if is_bot() else name.to_int())
+
+## Bots fill the race up to 8 players; the server moves them
+func is_bot() -> bool:
+	return name.to_int() < 0
+
+## The player this computer controls (not a bot, not someone else)
+func is_local() -> bool:
+	return is_multiplayer_authority() and not is_bot()
 
 func _ready() -> void:
 	if RaceManager.has_spawn():
@@ -41,7 +52,9 @@ func _ready() -> void:
 	PlayersManager.players_changed.connect(_update_name_label)
 
 	animated_sprite_2d.scale.x = 1
-	if is_multiplayer_authority():
+	if is_bot() and multiplayer.is_server():
+		brain = BotBrain.new(self, PlayersManager.bot_skill(name.to_int()))
+	if is_local():
 		camera_2d.make_current()
 		RaceManager.grid_changed.connect(_on_grid_changed)
 		RaceManager.notify_local_ready()
@@ -64,11 +77,12 @@ func _physics_process(delta: float) -> void:
 	# are used to switch spectator cameras
 	var frozen := RaceManager.has_finished(name.to_int()) or not RaceManager.can_move()
 
+	var bot_input = brain.update(delta) if brain else {}
 	if is_on_floor():
 		_coyote_left = COYOTE_TIME
 	else:
 		_coyote_left -= delta
-	if Input.is_action_just_pressed("jump"):
+	if bot_input.get("jump", false) if brain else Input.is_action_just_pressed("jump"):
 		_jump_buffer_left = JUMP_BUFFER
 	else:
 		_jump_buffer_left -= delta
@@ -77,9 +91,12 @@ func _physics_process(delta: float) -> void:
 		velocity.y = JUMP_VELOCITY
 		_jump_buffer_left = 0.0
 		_coyote_left = 0.0
-		Sfx.play("jump", -6.0)
+		if is_local():
+			Sfx.play("jump", -6.0)
 
-	var direction := 0.0 if frozen else Input.get_axis("left", "right")
+	var direction := 0.0
+	if not frozen:
+		direction = bot_input.get("dir", 0.0) if brain else Input.get_axis("left", "right")
 	if velocity.x > 0:
 		animated_sprite_2d.scale.x = 1 
 	elif velocity.x < 0:
@@ -107,7 +124,8 @@ func _process(_delta: float) -> void:
 	queue_redraw()
 
 func _is_in_slipstream(direction: float) -> bool:
-	if direction == 0:
+	# Bots don't get it (or they'd all run as one pack); people behind a bot do
+	if direction == 0 or is_bot():
 		return false
 	for other in get_tree().get_nodes_in_group("player"):
 		if other == self:
@@ -155,7 +173,8 @@ func bounce() -> void:
 func die() -> void:
 	if not is_multiplayer_authority():
 		return
-	Sfx.play("death")
+	if is_local():
+		Sfx.play("death")
 	respawn()
 
 ## Before the start: your grid slot. During the race: the back of the grid.

@@ -7,6 +7,7 @@ var damage: int = 1
 @onready var sprite_2d: Sprite2D = $Sprite2D
 
 func _ready() -> void:
+	add_to_group("ball")
 	life_timer.timeout.connect(_on_life_timer_timeout)
 	body_entered.connect(_on_body_entered)
 	life_timer.start()

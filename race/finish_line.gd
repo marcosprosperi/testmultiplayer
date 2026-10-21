@@ -12,8 +12,11 @@ func _ready() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if body is Player and body.is_multiplayer_authority() \
 			and not RaceManager.has_finished(body.name.to_int()):
-		Sfx.play("finish")
-		RaceManager.report_finish.rpc_id(1)
+		if body.is_bot():
+			RaceManager.report_bot_finish(body.name.to_int())
+		else:
+			Sfx.play("finish")
+			RaceManager.report_finish.rpc_id(1)
 
 # Checkered flag on a pole, drawn so it doesn't need a texture
 func _draw() -> void:

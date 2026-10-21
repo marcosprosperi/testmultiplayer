@@ -34,6 +34,8 @@ func start_game() -> void:
 	if playlist.is_empty():
 		playlist = default_playlist()
 	PlayersManager.reset_points()
+	if PlayersManager.bots_enabled():
+		PlayersManager.add_bots()
 	PlayersManager.start_game()
 	current_round = 0
 	RaceManager.set_round(current_round, playlist.size())
@@ -59,6 +61,7 @@ func _return_to_lobby() -> void:
 	for player in players.get_children():
 		player.queue_free()
 	RaceManager.end_championship()
+	PlayersManager.remove_bots()
 	PlayersManager.stop_game()
 
 func create_player(id: int) -> void:

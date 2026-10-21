@@ -26,7 +26,7 @@ func _apply_setting() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if body is Player and body.is_multiplayer_authority():
 		body.checkpoint = global_position + Vector2(0, -2)
-		if not _reached:
+		if body.is_local() and not _reached:
 			_reached = true
 			Sfx.play("coin", -4.0)
 			queue_redraw()

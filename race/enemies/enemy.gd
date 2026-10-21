@@ -77,7 +77,8 @@ func _on_body_entered(body: Node2D) -> void:
 	var landing_on_top = body.velocity.y > 50.0 and body.global_position.y < global_position.y - 1.0
 	if stompable and landing_on_top:
 		body.bounce()
-		Sfx.play("stomp")
+		if body.is_local():
+			Sfx.play("stomp")
 		_squash()
 		_request_stomp.rpc_id(1)
 	else:

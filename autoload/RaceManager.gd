@@ -9,6 +9,8 @@ const MAX_SLOWDOWN = 0.3
 const RESULTS_TIME = 6.0
 ## Seconds the champion is shown before a new championship starts
 const FINAL_RESULTS_TIME = 10.0
+## Once every person crossed the line, bots get this long to finish too
+const BOT_GRACE_TIME = 25.0
 const COUNTDOWN_FROM = 3
 ## Start anyway if someone takes longer than this to load the level
 const MAX_WAIT_FOR_PLAYERS = 10.0
@@ -142,7 +144,7 @@ func can_move() -> bool:
 func notify_local_ready() -> void:
 	if not is_instance_valid(current_level):
 		return
-	if not get_tree().get_nodes_in_group("player").any(func(p): return p.is_multiplayer_authority()):
+	if not get_tree().get_nodes_in_group("player").any(func(p): return p.is_local()):
 		return
 	report_ready.rpc_id(1, current_level.name)
 
@@ -162,8 +164,9 @@ func report_ready(level_name: String) -> void:
 func _check_everyone_ready() -> void:
 	if not multiplayer.is_server() or state != State.WAITING or not is_instance_valid(current_level):
 		return
+	# Bots are always ready
 	var players = PlayersManager.joined_players.keys()
-	if not players.is_empty() and players.all(func(id): return _ready_players.has(id)):
+	if not players.is_empty() and players.all(func(id): return id < 0 or _ready_players.has(id)):
 		_run_countdown()
 
 # First race: random order. Then a reversed grid: whoever won starts last,
@@ -263,6 +266,11 @@ func get_camera_offset() -> Vector2:
 func has_finished(id: int) -> bool:
 	return finish_order.has(id)
 
+## Server only: a bot crossed the finish line
+func report_bot_finish(id: int) -> void:
+	if multiplayer.is_server() and id < 0:
+		_finish(id)
+
 @rpc("any_peer", "call_local", "reliable")
 func report_finish() -> void:
 	if !multiplayer.is_server():
@@ -270,6 +278,9 @@ func report_finish() -> void:
 	var id = multiplayer.get_remote_sender_id()
 	if id == 0:
 		id = multiplayer.get_unique_id()
+	_finish(id)
+
+func _finish(id: int) -> void:
 	if finish_order.has(id) or !PlayersManager.joined_players.has(id):
 		return
 
@@ -283,7 +294,12 @@ func _check_everyone_finished() -> void:
 	if not multiplayer.is_server() or _changing_level or not is_instance_valid(current_level):
 		return
 	var players = PlayersManager.joined_players.keys()
-	if players.is_empty() or not players.all(func(id): return finish_order.has(id)):
+	if players.is_empty():
+		return
+	if not players.all(func(id): return finish_order.has(id)):
+		# Only bots left on the course: give them a little time, then end
+		if players.all(func(id): return id < 0 or finish_order.has(id)):
+			_wait_for_bots(_race_token)
 		return
 	_changing_level = true
 
@@ -309,6 +325,26 @@ func _check_everyone_finished() -> void:
 		PlayersManager.championship_over.emit()
 	else:
 		PlayersManager.finish_level.emit()
+
+var _bots_wait_token := -1
+
+func _wait_for_bots(token: int) -> void:
+	if _bots_wait_token == token:
+		return
+	_bots_wait_token = token
+	await get_tree().create_timer(BOT_GRACE_TIME).timeout
+	if token != _race_token or _changing_level:
+		return
+	# Bots still running finish behind, in order of how far they got
+	var left = PlayersManager.joined_players.keys().filter(func(id): return not finish_order.has(id))
+	var nodes = {}
+	for player in get_tree().get_nodes_in_group("player"):
+		nodes[player.name.to_int()] = player
+	left.sort_custom(func(a, b): return get_progress(nodes[a]) > get_progress(nodes[b]) if nodes.has(a) and nodes.has(b) else a < b)
+	for id in left:
+		finish_order.append(id)
+	_sync_finish_order.rpc(finish_order)
+	_check_everyone_finished()
 
 @rpc("authority", "call_local", "reliable")
 func _show_results(results: Array, final: bool) -> void:

@@ -35,6 +35,11 @@ func _physics_process(delta: float) -> void:
 	var t = 0.5 - 0.5 * cos(TAU * _time / period)
 	position = _origin + travel * t
 
+## Server: where the saw will be in `seconds` (bots use it to time their jumps)
+func global_position_in(seconds: float) -> Vector2:
+	var t = 0.5 - 0.5 * cos(TAU * (_time + seconds) / period)
+	return get_parent().to_global(_origin + travel * t)
+
 func _draw() -> void:
 	if Engine.is_editor_hint():
 		# Path preview in the editor
