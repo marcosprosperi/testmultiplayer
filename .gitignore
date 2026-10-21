@@ -16,3 +16,7 @@ data_*/
 mono_crash.*.json
 
 /android/
+
+# Python caches (tools/)
+__pycache__/
+*.pyc
