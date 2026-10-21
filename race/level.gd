@@ -8,6 +8,8 @@ class_name Level extends Node2D
 @export var background_color := Color(0.3, 0.3, 0.3)
 ## Background music (see the Music autoload)
 @export_enum("race", "dark") var music := "race"
+## Texture for moving / falling platforms (the nature tiles if empty)
+@export var platform_texture: Texture2D
 
 # Runs on every peer when the level is spawned
 func _ready() -> void:

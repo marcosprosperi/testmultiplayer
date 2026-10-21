@@ -8,12 +8,20 @@ const TOAST_TIME = 2.5
 var _toast_left := 0.0
 
 var _flash: ColorRect
+var _badge: PlaceBadge
+var _flags_level: Node
 
 func _ready() -> void:
 	RaceManager.trap_triggered.connect(_on_trap_triggered)
 	RaceManager.item_used.connect(_on_item_used)
 	toast.text = ""
 	add_child(ItemSlot.new())
+	_badge = PlaceBadge.new()
+	_badge.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_badge.position = Vector2(10, get_viewport().get_visible_rect().size.y - 58)
+	_badge.size = Vector2(200, 50)
+	add_child(_badge)
+	position_label.visible = false
 	# White flash when someone's lightning hits you
 	_flash = ColorRect.new()
 	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -56,6 +64,7 @@ func _process(delta: float) -> void:
 	if !visible:
 		return
 	var ranking = get_ranking()
+	_update_track_flags()
 	race_track.entries = _track_entries()
 	_update_position_label(ranking)
 
@@ -100,16 +109,24 @@ func _track_entries() -> Array:
 func _update_position_label(ranking: Array) -> void:
 	var local_index = ranking.find_custom(func(p): return p.is_local())
 	if local_index == -1:
-		position_label.text = ""
+		_badge.show_state(0, 0, 0, -1, 0, false)
 		return
 	var local_id = ranking[local_index].name.to_int()
-	var points = PlayersManager.points_of(local_id)
-	var place = "%dº / %d  ·  %d pts" % [local_index + 1, ranking.size(), points]
-	if PlayersManager.coins_enabled():
-		var coins = RaceManager.coins_of(local_id)
-		var slowdown = roundi((1.0 - RaceManager.speed_factor(local_id)) * 100)
-		place += "\nMonedas: %d" % coins + ("  (-%d%% velocidad)" % slowdown if coins > 0 else "")
-	if RaceManager.has_finished(local_id):
-		position_label.text = "¡Meta! " + place
-	else:
-		position_label.text = place
+	var coins = RaceManager.coins_of(local_id) if PlayersManager.coins_enabled() else -1
+	# Only what the coins weigh (not turbos or lightning)
+	var slowdown = roundi(minf(maxi(coins, 0) * RaceManager.COIN_SLOWDOWN, RaceManager.MAX_SLOWDOWN) * 100)
+	_badge.position.y = get_viewport().get_visible_rect().size.y - 58
+	_badge.show_state(local_index + 1, ranking.size(), PlayersManager.points_of(local_id), coins, slowdown,
+		RaceManager.has_finished(local_id))
+
+# Where the flags are along the course, worked out once per level
+func _update_track_flags() -> void:
+	var level = RaceManager.current_level
+	if level == _flags_level:
+		return
+	_flags_level = level
+	var flags = []
+	if is_instance_valid(level) and PlayersManager.checkpoints_enabled():
+		for flag in level.find_children("*", "Checkpoint", true, false):
+			flags.append(RaceManager.get_progress(flag))
+	race_track.flags = flags

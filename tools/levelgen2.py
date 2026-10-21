@@ -1,7 +1,7 @@
 # Section-based generator for long race levels that go up and down.
 # A cursor walks to the right; each section adds floor, nodes and points of
 # the route ("Course" Path2D, used for the race progress and by the test bot).
-import base64, random, struct
+import base64, random, re, struct, zlib
 
 T = 16
 NATURE = 4      # nature tileset source in level_tileset.tres
@@ -415,6 +415,7 @@ color = {colors[i]}''')
     # --- output --------------------------------------------------------------
     def render_tiles(self):
         tiles = {}
+        self.depth = {}             # (x, y) -> rows below the surface (ground only)
         cols = sorted(self.surface)
         first, last = cols[0], cols[-1]
         def solid(src, ax, ay):
@@ -430,6 +431,7 @@ color = {colors[i]}''')
                 y = r + d
                 top = d == 0
                 bottom = d == depth
+                self.depth[(x, y)] = d
                 if self.grassy:
                     col = 0 if left_open else (2 if right_open else 1)
                     tiles[(x, y)] = (self.src, col, 0 if top else (2 if bottom else 1))
@@ -471,13 +473,77 @@ color = {colors[i]}''')
                 if y <= r1 + 4:
                     tiles[(x, y)] = (self.src, 6, 1) if self.grassy else (SUMMER, 7, 8)
         tiles.update({k: v for k, v in self.extra_tiles.items() if k not in tiles})
+        if self.grassy:
+            self.decorate(tiles)
         return tiles
+
+    def decorate(self, tiles):
+        """Trees, bushes, flowers, rocks, stumps and vines on the flat floor,
+        away from hazards, platforms and the route's important spots. Uses its
+        own random numbers so the level itself stays the same"""
+        rnd = random.Random(zlib.crc32(self.name.encode()))
+        busy = set()
+        for n in self.nodes:
+            if 'parent="Hazards"' not in n:
+                continue
+            for x_px in [float(v) for v in re.findall(r"position = Vector2\(([-\d.]+),", n)]:
+                c = int(x_px // T)
+                busy.update(range(c - 1, c + 4))
+        platform_cols = {}
+        for x0, x1, row in self.platforms:
+            for c in range(x0 - 1, x1 + 2):
+                platform_cols[c] = max(platform_cols.get(c, -999), row)
+        src = self.src
+        x = min(self.surface) + 4
+        last = max(self.surface) - 4
+        while x < last:
+            r = self.surface.get(x)
+            flat = r is not None and all(self.surface.get(c) == r for c in (x - 1, x, x + 1))
+            # Row of the nearest platform above (far away if none)
+            room = platform_cols.get(x, -999)
+            free = flat and x not in busy and (x, r - 1) not in tiles
+            if not free:
+                x += 1
+                continue
+            roll = rnd.random()
+            if roll < 0.14 and r - room > 5 and all((x, r - k) not in tiles for k in (1, 2, 3)):
+                # Tall tree: trunk, then two of leaves
+                tiles[(x, r - 1)] = (src, 2, 5)
+                tiles[(x, r - 2)] = (src, 2, 4)
+                tiles[(x, r - 3)] = (src, 2, 3)
+                x += rnd.randint(4, 9)
+            elif roll < 0.24 and r - room > 2:
+                tiles[(x, r - 1)] = (src, 3, 5)  # small tree
+                x += rnd.randint(3, 6)
+            elif roll < 0.55:
+                tiles[(x, r - 1)] = (src, rnd.choice([3, 3, 6, 6, 4, 5]), 6)  # flowers, bush, pebble, rock
+                x += rnd.randint(2, 5)
+            elif roll < 0.61:
+                tiles[(x, r - 1)] = (src, 4, 5)  # stump
+                x += rnd.randint(3, 6)
+            else:
+                x += 1
+        # Vines hanging under floating platforms now and then
+        for x0, x1, row in self.platforms:
+            if rnd.random() < 0.35:
+                vx = rnd.randint(x0, x1)
+                if (vx, row + 1) not in tiles and (vx, row + 2) not in tiles:
+                    tiles[(vx, row + 1)] = (src, 1, 3)
+                    tiles[(vx, row + 2)] = (src, 1, 5)
 
     def write(self, path):
         tiles = self.render_tiles()
-        data = bytearray(struct.pack("<H", 0))
-        for (x, y), (src, ax, ay) in sorted(tiles.items()):
-            data += struct.pack("<hhHHHH", x, y, src, ax, ay, 0)
+        # The ground gets darker the deeper it goes: deeper rows go in their
+        # own (tinted) layers
+        layers = {"TileMapLayer": {}, "Deep": {}, "Deeper": {}}
+        for pos, tile in tiles.items():
+            d = self.depth.get(pos, 0)
+            layers["TileMapLayer" if d < 2 else ("Deep" if d < 5 else "Deeper")][pos] = tile
+        def encode(layer_tiles):
+            data = bytearray(struct.pack("<H", 0))
+            for (x, y), (src, ax, ay) in sorted(layer_tiles.items()):
+                data += struct.pack("<hhHHHH", x, y, src, ax, ay, 0)
+            return base64.b64encode(bytes(data)).decode()
         uid = f' uid="{self.uid}"' if self.uid else ""
         scenes = {
             "background": f"res://race/backgrounds/{self.background}.tscn",
@@ -504,8 +570,12 @@ color = {colors[i]}''')
             "item_box": "res://race/powerups/item_box.tscn",
             "lava": "res://race/hazards/lava.tscn",
         }
+        tile_textures = {"snow": "nature_snow.png", "volcano": "nature_volcano.png"}
+        root_extra = self.root_extra
         ext = [
             '[ext_resource type="Script" path="res://race/level.gd" id="race_level"]',
+        ] + ([f'[ext_resource type="Texture2D" path="res://resources/{tile_textures[self.style]}" id="platform_tex"]']
+             if self.style in tile_textures else []) + [
             '[ext_resource type="Script" path="res://race/kill_zone.gd" id="race_kill"]',
             '[ext_resource type="Script" path="res://race/hazards/balloon_column.gd" id="column"]',
             '[ext_resource type="TileSet" path="res://resources/level_tileset.tres" id="level_tileset"]',
@@ -550,7 +620,7 @@ point_count = {len(self.course)}
 
 [node name="{self.name}" type="Node2D"]
 script = ExtResource("race_level")
-{self.root_extra}
+{root_extra}{'platform_texture = ExtResource("platform_tex")' + chr(10) if self.style in tile_textures else ''}
 [node name="Background" parent="." instance=ExtResource("background")]
 
 [node name="Spawn" type="Marker2D" parent="." groups=["spawn"]]
@@ -560,8 +630,18 @@ position = Vector2({spawn[0]}, {spawn[1]})
 visible = false
 curve = SubResource("Curve2D_course")
 
+[node name="Deeper" type="TileMapLayer" parent="."]
+modulate = Color(0.62, 0.6, 0.68, 1)
+tile_map_data = PackedByteArray("{encode(layers["Deeper"])}")
+tile_set = ExtResource("level_tileset")
+
+[node name="Deep" type="TileMapLayer" parent="."]
+modulate = Color(0.8, 0.78, 0.84, 1)
+tile_map_data = PackedByteArray("{encode(layers["Deep"])}")
+tile_set = ExtResource("level_tileset")
+
 [node name="TileMapLayer" type="TileMapLayer" parent="."]
-tile_map_data = PackedByteArray("{base64.b64encode(bytes(data)).decode()}")
+tile_map_data = PackedByteArray("{encode(layers["TileMapLayer"])}")
 tile_set = ExtResource("level_tileset")
 
 [node name="Hazards" type="Node2D" parent="."]
