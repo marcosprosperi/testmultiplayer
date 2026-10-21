@@ -13,6 +13,8 @@ const COYOTE_TIME = 0.1
 const JUMP_BUFFER = 0.12
 ## Bounce after stomping an enemy
 const STOMP_BOUNCE = -300.0
+## Width of your feet: what's under the outer pixel of each side doesn't hold you
+const UNSNAG_WIDTH = 9.0
 ## The camera looks this far ahead of where you're running
 const LOOK_AHEAD = 70.0
 ## Seconds you stay "gone" (a poof) after losing, before coming back
@@ -23,6 +25,7 @@ const ICE_FRICTION = 260.0
 
 @onready var camera_2d: Camera2D = $Camera2D
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
+@onready var collision_shape: CollisionShape2D = $CollisionShape2D
 
 var name_label: Label
 # Synced so everyone sees the speed lines
@@ -163,6 +166,7 @@ func _physics_process(delta: float) -> void:
 	elif not _was_on_floor and is_on_floor():
 		_show_fx.rpc(Fx.DUST, global_position)
 	_was_on_floor = is_on_floor()
+	_unsnag()
 
 func _process(delta: float) -> void:
 	queue_redraw()
@@ -261,6 +265,33 @@ func slip() -> void:
 	_stun_left = PowerUps.STUN_TIME
 	velocity.x = 0.0
 	Sfx.play_at("slip", global_position)
+
+# Sliding down a wall, the box can catch on the corner where two blocks
+# meet and take it for floor. With nothing really under your feet, step a
+# little away from the wall and below the corner, and keep falling.
+func _unsnag() -> void:
+	if not is_on_floor():
+		return
+	var feet = RectangleShape2D.new()
+	feet.size = Vector2(UNSNAG_WIDTH, 2)
+	var query = PhysicsShapeQueryParameters2D.new()
+	query.shape = feet
+	query.transform = Transform2D(0, global_position + Vector2(collision_shape.position.x, 1))
+	query.collision_mask = collision_mask
+	if not get_world_2d().direct_space_state.intersect_shape(query, 1).is_empty():
+		return
+	var corner = null
+	for i in get_slide_collision_count():
+		var hit = get_slide_collision(i)
+		if hit.get_normal().y < -0.5:
+			corner = hit.get_position()
+	if corner == null:
+		return
+	var away = Vector2(signf(global_position.x + collision_shape.position.x - corner.x) * 1.5, 0)
+	var moved = global_transform
+	moved.origin += away
+	if not test_move(moved, Vector2(0, 1)):
+		global_position += away + Vector2(0, 1)
 
 ## Called when you land on an enemy you can squash
 func bounce() -> void:
