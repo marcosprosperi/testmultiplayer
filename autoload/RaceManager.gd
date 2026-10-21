@@ -242,6 +242,9 @@ func race_time() -> float:
 func get_camera_zoom() -> float:
 	return current_level.camera_zoom if is_instance_valid(current_level) and "camera_zoom" in current_level else 1.0
 
+func get_camera_offset() -> Vector2:
+	return current_level.camera_offset if is_instance_valid(current_level) and "camera_offset" in current_level else Vector2.ZERO
+
 func has_finished(id: int) -> bool:
 	return finish_order.has(id)
 

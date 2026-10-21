@@ -1,6 +1,7 @@
 [gd_scene format=4 uid="uid://cibp8iksdlty"]
 
 [ext_resource type="Script" path="res://race/level.gd" id="race_level"]
+[ext_resource type="PackedScene" path="res://race/backgrounds/sunset.tscn" id="background"]
 [ext_resource type="TileSet" path="res://resources/level_tileset.tres" id="level_tileset"]
 [ext_resource type="PackedScene" path="res://race/finish_line.tscn" id="race_finish"]
 [ext_resource type="Script" path="res://race/kill_zone.gd" id="race_kill"]
@@ -20,6 +21,8 @@ size = Vector2(3600, 32)
 
 [node name="Level_2" type="Node2D"]
 script = ExtResource("race_level")
+
+[node name="Background" parent="." instance=ExtResource("background")]
 
 [node name="Spawn" type="Marker2D" parent="." groups=["spawn"]]
 position = Vector2(40, 638)

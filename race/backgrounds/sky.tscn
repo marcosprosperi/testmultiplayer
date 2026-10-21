@@ -1,0 +1,61 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://resources/backgrounds/sky_climb.png" id="sky_day"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/clouds_far.png" id="clouds_far"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/mountains_day.png" id="mountains_day"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/hills_day.png" id="hills_day"]
+[ext_resource type="Texture2D" path="res://resources/backgrounds/clouds_near.png" id="clouds_near"]
+
+[node name="Background" type="Node2D"]
+z_index = -10
+editor_description = "Parallax layers for the vertical balloon level: they also move up and down at different speeds while you climb."
+
+[node name="Sky" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0, 0.1)
+
+[node name="Sprite2D" type="Sprite2D" parent="Sky"]
+position = Vector2(0, -250)
+texture = ExtResource("sky_day")
+centered = false
+
+[node name="FarClouds" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.1, 0.25)
+repeat_size = Vector2(480, 300)
+repeat_times = 3
+autoscroll = Vector2(-4, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="FarClouds"]
+position = Vector2(0, 0)
+texture = ExtResource("clouds_far")
+centered = false
+
+[node name="Mountains" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.15, 0.3)
+repeat_size = Vector2(480, 0)
+repeat_times = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="Mountains"]
+position = Vector2(0, 61)
+texture = ExtResource("mountains_day")
+centered = false
+
+[node name="Hills" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.3, 0.5)
+repeat_size = Vector2(480, 0)
+repeat_times = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="Hills"]
+position = Vector2(0, 52)
+texture = ExtResource("hills_day")
+centered = false
+
+[node name="NearClouds" type="Parallax2D" parent="."]
+scroll_scale = Vector2(0.5, 0.7)
+repeat_size = Vector2(480, 300)
+repeat_times = 3
+autoscroll = Vector2(-10, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="NearClouds"]
+position = Vector2(0, 0)
+texture = ExtResource("clouds_near")
+centered = false
