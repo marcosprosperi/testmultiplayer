@@ -16,6 +16,7 @@ class_name Lobby extends CanvasLayer
 @onready var leave_button: Button = %LeaveButton
 @onready var start_button: Button = %StartButton
 @onready var coins_check: CheckButton = %CoinsCheck
+@onready var checkpoints_check: CheckButton = %CheckpointsCheck
 @onready var game_name_edit: LineEdit = %GameNameEdit
 
 const NAME_TAKEN_MESSAGE = "Ese nombre ya está en uso"
@@ -45,6 +46,7 @@ func _ready() -> void:
 	copy_button.pressed.connect(_on_copy_pressed)
 	# Only the host can change the rules; everyone else sees them
 	coins_check.toggled.connect(func(on): PlayersManager.set_coins_enabled(on))
+	checkpoints_check.toggled.connect(func(on): PlayersManager.set_checkpoints_enabled(on))
 	PlayersManager.settings_changed.connect(_refresh)
 	PlayersManager.players_changed.connect(_refresh)
 	PlayersManager.profile_result.connect(_on_profile_result)
@@ -103,6 +105,8 @@ func _refresh() -> void:
 
 	coins_check.disabled = not NetworkManager.is_hosting
 	coins_check.set_pressed_no_signal(PlayersManager.coins_enabled())
+	checkpoints_check.disabled = not NetworkManager.is_hosting
+	checkpoints_check.set_pressed_no_signal(PlayersManager.checkpoints_enabled())
 
 	_refresh_players(my_id)
 	start_button.disabled = not PlayersManager.has_player(1)

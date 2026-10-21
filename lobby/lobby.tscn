@@ -123,13 +123,24 @@ text = "Jugadores"
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="CoinsCheck" type="CheckButton" parent="Panel/Margin/VBox"]
+[node name="Options" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="CoinsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 0
 focus_mode = 0
+tooltip_text = "Cada moneda suma 1 punto al terminar la carrera, pero te hace más lento"
 button_pressed = true
-text = "Monedas: +1 punto cada una, pero te hacen más lento"
+text = "Monedas (+1 pt, más lento)"
+
+[node name="CheckpointsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Al perder volvés a la última bandera que tocaste en vez de al principio"
+text = "Checkpoints"
 
 [node name="Buttons" type="HBoxContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2

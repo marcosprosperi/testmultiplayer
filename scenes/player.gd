@@ -22,6 +22,8 @@ var name_label: Label
 var slipstream := false
 # Added to the velocity for one frame by things like fans
 var push := Vector2.ZERO
+# Last checkpoint flag touched in this level (if the host turned them on)
+var checkpoint = null
 var _coyote_left := 0.0
 var _jump_buffer_left := 0.0
 
@@ -164,8 +166,13 @@ func respawn() -> void:
 	if not RaceManager.has_spawn():
 		return
 	if RaceManager.can_move():
-		global_position = RaceManager.get_spawn_position()
+		if checkpoint != null and PlayersManager.checkpoints_enabled():
+			global_position = checkpoint
+		else:
+			global_position = RaceManager.get_spawn_position()
 	else:
+		# A new level is starting
+		checkpoint = null
 		global_position = RaceManager.get_start_position(name.to_int())
 
 # The grid can arrive after the level loads: move to your slot

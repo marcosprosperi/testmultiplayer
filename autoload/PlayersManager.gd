@@ -13,7 +13,7 @@ const COLORS = [
 var joined_players = {}
 var game_started := false
 # Chosen by the host in the lobby
-var settings = {"coins": true, "game_name": ""}
+var settings = {"coins": true, "game_name": "", "checkpoints": false}
 
 signal finish_level
 signal players_changed
@@ -28,7 +28,7 @@ signal profile_result(ok: bool, message: String)
 func reset() -> void:
 	joined_players = {}
 	game_started = false
-	settings = {"coins": true, "game_name": ""}
+	settings = {"coins": true, "game_name": "", "checkpoints": false}
 	players_changed.emit()
 	settings_changed.emit()
 
@@ -47,6 +47,16 @@ func game_display_name() -> String:
 func set_game_name(game_name: String) -> void:
 	if multiplayer.is_server():
 		settings["game_name"] = game_name.strip_edges().left(MAX_GAME_NAME_LENGTH)
+		_sync_settings.rpc(settings)
+
+## Losing sends you back to the last flag you touched instead of the start
+func checkpoints_enabled() -> bool:
+	return settings.get("checkpoints", false)
+
+## Host only
+func set_checkpoints_enabled(enabled: bool) -> void:
+	if multiplayer.is_server():
+		settings["checkpoints"] = enabled
 		_sync_settings.rpc(settings)
 
 ## Host only

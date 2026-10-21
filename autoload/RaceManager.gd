@@ -220,9 +220,15 @@ func has_spawn() -> bool:
 func get_finish() -> Node2D:
 	return _find_in_level("finish")
 
-## 0.0 at the start, 1.0 at the finish line, measured along the straight
-## line from the spawn to the finish (works for sideways and vertical levels)
+## 0.0 at the start, 1.0 at the finish line. Measured along the level's
+## "Course" (a Path2D following the route, for levels that go up and down),
+## or else along the straight line from the spawn to the finish
 func get_progress(player: Node2D) -> float:
+	var path = current_level.get_node_or_null("Course") as Path2D if is_instance_valid(current_level) else null
+	if path and path.curve and path.curve.point_count >= 2:
+		var curve = path.curve
+		var offset = curve.get_closest_offset(path.to_local(player.global_position))
+		return clampf(offset / curve.get_baked_length(), 0.0, 1.0)
 	var finish = get_finish()
 	if finish == null or !has_spawn():
 		return 0.0
