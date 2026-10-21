@@ -84,4 +84,8 @@ func _fall() -> void:
 func _draw() -> void:
 	for i in tiles:
 		var column = 3 if i == 0 else (5 if i == tiles - 1 else 4)
-		draw_texture_rect_region(TILESET, Rect2(i * TILE, 0, TILE, TILE), Rect2(column * TILE, 0, TILE, TILE))
+		draw_texture_rect_region(_tiles(), Rect2(i * TILE, 0, TILE, TILE), Rect2(column * TILE, 0, TILE, TILE))
+
+# The level's own look (snow, volcano...) if it has one
+func _tiles() -> Texture2D:
+	return owner.platform_texture if owner is Level and owner.platform_texture else TILESET
