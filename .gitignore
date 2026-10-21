@@ -20,3 +20,7 @@ mono_crash.*.json
 # Python caches (tools/)
 __pycache__/
 *.pyc
+
+# Exported game (export_presets.cfg puts it here)
+build/*
+!build/.gdignore
