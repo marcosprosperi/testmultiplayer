@@ -16,7 +16,7 @@ var joined_players = {}
 var game_started := false
 # Chosen by the host in the lobby
 # levels: indices into Main.levels in play order ([] = all, easiest first)
-var settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": [], "bots": false, "items": true}
+var settings = {"coins": true, "game_name": "", "checkpoints": true, "levels": [], "bots": false, "items": true}
 # Server only: how good each bot is (0..1)
 var _bot_skills = {}
 
@@ -35,7 +35,7 @@ signal profile_result(ok: bool, message: String)
 func reset() -> void:
 	joined_players = {}
 	game_started = false
-	settings = {"coins": true, "game_name": "", "checkpoints": false, "levels": [], "bots": false, "items": true}
+	settings = {"coins": true, "game_name": "", "checkpoints": true, "levels": [], "bots": false, "items": true}
 	_bot_skills.clear()
 	players_changed.emit()
 	settings_changed.emit()
@@ -59,7 +59,7 @@ func set_game_name(game_name: String) -> void:
 
 ## Losing sends you back to the last flag you touched instead of the start
 func checkpoints_enabled() -> bool:
-	return settings.get("checkpoints", false)
+	return settings.get("checkpoints", true)
 
 func get_playlist() -> Array:
 	return settings.get("levels", [])
