@@ -22,7 +22,9 @@ func _process(_delta: float) -> void:
 		return
 
 	var index = max(racing.find(watched), 0)
-	if Input.is_action_just_pressed("right"):
+	if Settings.menu_open:
+		pass
+	elif Input.is_action_just_pressed("right"):
 		index += 1
 	elif Input.is_action_just_pressed("left"):
 		index -= 1
@@ -31,7 +33,7 @@ func _process(_delta: float) -> void:
 
 	var id = watched.name.to_int()
 	var missing = "falta 1" if racing.size() == 1 else "faltan %d" % racing.size()
-	var arrows = "◀ A   D ▶  " if racing.size() > 1 else ""
+	var arrows = "◀ %s   %s ▶  " % [Settings.key_name("left"), Settings.key_name("right")] if racing.size() > 1 else ""
 	_set_text("%sViendo a %s (%s)" % [arrows, Hud.name_for(id), missing], Hud.color_for(id))
 
 func _watch(player: Player) -> void:

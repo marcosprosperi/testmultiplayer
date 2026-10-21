@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/level_4.tscn" id="8_level4"]
 [ext_resource type="PackedScene" path="res://scenes/level_5.tscn" id="9_level5"]
 [ext_resource type="Script" path="res://race/level_info.gd" id="10_level_info"]
+[ext_resource type="PackedScene" path="res://ui/pause_menu.tscn" id="11_pause_menu"]
 
 [sub_resource type="Resource" id="LevelInfo_1"]
 script = ExtResource("10_level_info")
@@ -61,3 +62,5 @@ spawn_path = NodePath("../LevelContainer")
 [node name="Standings" parent="." instance=ExtResource("7_standings")]
 
 [node name="Lobby" parent="." instance=ExtResource("3_lobby")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("11_pause_menu")]

@@ -1,0 +1,314 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/settings_menu.gd" id="script"]
+[ext_resource type="Script" path="res://ui/cartoon_button.gd" id="cartoon_button"]
+[ext_resource type="FontFile" path="res://ui/fonts/LilitaOne-Regular.ttf" id="title_font"]
+
+[sub_resource type="ButtonGroup" id="tabs_group"]
+
+[sub_resource type="StyleBoxFlat" id="page_style"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.15, 0.1, 0.24, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="SettingsMenu" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("script")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.04, 0.12, 0.6)
+
+[node name="Panel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(320, 0)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -110.0
+offset_right = 160.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_colors/font_outline_color = Color(0.17, 0.11, 0.23, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("title_font")
+theme_override_font_sizes/font_size = 22
+text = "Opciones"
+horizontal_alignment = 1
+
+[node name="Tabs" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="ScreenTab" type="Button" parent="Panel/Margin/VBox/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+button_group = SubResource("tabs_group")
+text = "Pantalla"
+script = ExtResource("cartoon_button")
+color = Color(0.35, 0.78, 0.98, 1)
+
+[node name="SoundTab" type="Button" parent="Panel/Margin/VBox/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+button_group = SubResource("tabs_group")
+text = "Sonido"
+script = ExtResource("cartoon_button")
+color = Color(0.45, 0.88, 0.5, 1)
+
+[node name="KeysTab" type="Button" parent="Panel/Margin/VBox/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+button_group = SubResource("tabs_group")
+text = "Controles"
+script = ExtResource("cartoon_button")
+color = Color(1, 0.6, 0.3, 1)
+
+[node name="Pages" type="PanelContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("page_style")
+
+[node name="ScreenPage" type="GridContainer" parent="Panel/Margin/VBox/Pages"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="ModeLabel" type="Label" parent="Panel/Margin/VBox/Pages/ScreenPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Modo"
+
+[node name="ModeOption" type="OptionButton" parent="Panel/Margin/VBox/Pages/ScreenPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+focus_mode = 0
+selected = 0
+item_count = 2
+popup/item_0/text = "Ventana"
+popup/item_0/id = 0
+popup/item_1/text = "Pantalla completa"
+popup/item_1/id = 1
+
+[node name="SizeLabel" type="Label" parent="Panel/Margin/VBox/Pages/ScreenPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Tamaño de la ventana"
+
+[node name="SizeOption" type="OptionButton" parent="Panel/Margin/VBox/Pages/ScreenPage"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+focus_mode = 0
+
+[node name="VsyncLabel" type="Label" parent="Panel/Margin/VBox/Pages/ScreenPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Sincronización vertical"
+
+[node name="VsyncCheck" type="CheckButton" parent="Panel/Margin/VBox/Pages/ScreenPage"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+focus_mode = 0
+tooltip_text = "Evita que la imagen se corte; apagala si sentís que el juego responde tarde"
+
+[node name="FpsLabel" type="Label" parent="Panel/Margin/VBox/Pages/ScreenPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Mostrar FPS"
+
+[node name="FpsCheck" type="CheckButton" parent="Panel/Margin/VBox/Pages/ScreenPage"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+focus_mode = 0
+
+[node name="SoundPage" type="GridContainer" parent="Panel/Margin/VBox/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+columns = 3
+
+[node name="MasterLabel" type="Label" parent="Panel/Margin/VBox/Pages/SoundPage"]
+layout_mode = 2
+text = "General"
+
+[node name="MasterSlider" type="HSlider" parent="Panel/Margin/VBox/Pages/SoundPage"]
+custom_minimum_size = Vector2(150, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 0
+max_value = 1.0
+step = 0.05
+
+[node name="MasterValue" type="Label" parent="Panel/Margin/VBox/Pages/SoundPage"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
+
+[node name="MusicLabel" type="Label" parent="Panel/Margin/VBox/Pages/SoundPage"]
+layout_mode = 2
+text = "Música"
+
+[node name="MusicSlider" type="HSlider" parent="Panel/Margin/VBox/Pages/SoundPage"]
+custom_minimum_size = Vector2(150, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 0
+max_value = 1.0
+step = 0.05
+
+[node name="MusicValue" type="Label" parent="Panel/Margin/VBox/Pages/SoundPage"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
+
+[node name="SFXLabel" type="Label" parent="Panel/Margin/VBox/Pages/SoundPage"]
+layout_mode = 2
+text = "Efectos"
+
+[node name="SFXSlider" type="HSlider" parent="Panel/Margin/VBox/Pages/SoundPage"]
+custom_minimum_size = Vector2(150, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 0
+max_value = 1.0
+step = 0.05
+
+[node name="SFXValue" type="Label" parent="Panel/Margin/VBox/Pages/SoundPage"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+text = "100%"
+horizontal_alignment = 2
+
+[node name="KeysPage" type="VBoxContainer" parent="Panel/Margin/VBox/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Grid" type="GridContainer" parent="Panel/Margin/VBox/Pages/KeysPage"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="leftLabel" type="Label" parent="Panel/Margin/VBox/Pages/KeysPage/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Izquierda"
+
+[node name="leftKey" type="Button" parent="Panel/Margin/VBox/Pages/KeysPage/Grid"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+focus_mode = 0
+text = "-"
+
+[node name="rightLabel" type="Label" parent="Panel/Margin/VBox/Pages/KeysPage/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Derecha"
+
+[node name="rightKey" type="Button" parent="Panel/Margin/VBox/Pages/KeysPage/Grid"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+focus_mode = 0
+text = "-"
+
+[node name="jumpLabel" type="Label" parent="Panel/Margin/VBox/Pages/KeysPage/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Saltar"
+
+[node name="jumpKey" type="Button" parent="Panel/Margin/VBox/Pages/KeysPage/Grid"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+focus_mode = 0
+text = "-"
+
+[node name="KeysHint" type="Label" parent="Panel/Margin/VBox/Pages/KeysPage"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.7)
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "Tocá un botón y apretá la tecla nueva. Las flechas y el joystick también funcionan."
+autowrap_mode = 3
+
+[node name="ResetKeysButton" type="Button" parent="Panel/Margin/VBox/Pages/KeysPage"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+focus_mode = 0
+text = "Restaurar teclas"
+
+[node name="Bottom" type="HBoxContainer" parent="Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="Hint" type="Label" parent="Panel/Margin/VBox/Bottom"]
+modulate = Color(1, 1, 1, 0.6)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+text = "F11: pantalla completa · Esc: volver"
+vertical_alignment = 1
+
+[node name="BackButton" type="Button" parent="Panel/Margin/VBox/Bottom"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Volver"
+script = ExtResource("cartoon_button")
+color = Color(0.67, 0.5, 0.95, 1)

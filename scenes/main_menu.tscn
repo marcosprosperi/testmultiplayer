@@ -1,6 +1,28 @@
 [gd_scene format=3 uid="uid://bic4vii45hnn1"]
 
 [ext_resource type="Script" uid="uid://cvg2vccvc6d0e" path="res://scenes/main_menu.gd" id="1_l6cm7"]
+[ext_resource type="PackedScene" path="res://race/backgrounds/day.tscn" id="2_day"]
+[ext_resource type="TileSet" path="res://resources/level_tileset.tres" id="3_tiles"]
+[ext_resource type="Script" path="res://ui/title_logo.gd" id="4_logo"]
+[ext_resource type="FontFile" path="res://ui/fonts/LilitaOne-Regular.ttf" id="5_title_font"]
+[ext_resource type="Script" path="res://ui/cartoon_button.gd" id="6_cartoon"]
+[ext_resource type="PackedScene" path="res://ui/settings_menu.tscn" id="7_settings"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sticker"]
+content_margin_left = 8.0
+content_margin_top = 1.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(1, 0.98, 0.9, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.17, 0.11, 0.23, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -11,60 +33,123 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_l6cm7")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Scenery" type="Node2D" parent="."]
+
+[node name="Background" parent="Scenery" instance=ExtResource("2_day")]
+
+[node name="Ground" type="TileMapLayer" parent="Scenery"]
+unique_name_in_owner = true
+tile_set = ExtResource("3_tiles")
+
+[node name="Runners" type="Node2D" parent="Scenery"]
+unique_name_in_owner = true
+
+[node name="Logo" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_top = 6.0
+offset_bottom = 70.0
 grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.08, 0.09, 0.13, 1)
+mouse_filter = 2
+script = ExtResource("4_logo")
+font = ExtResource("5_title_font")
+
+[node name="Sticker" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -84.0
+offset_top = 66.0
+offset_right = 84.0
+offset_bottom = 84.0
+grow_horizontal = 2
+rotation = -0.04
+pivot_offset = Vector2(84, 9)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_sticker")
+
+[node name="Text" type="Label" parent="Sticker"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.17, 0.11, 0.23, 1)
+theme_override_font_sizes/font_size = 9
+text = "¡Carreras locas de hasta 8 jugadores!"
+horizontal_alignment = 1
 
 [node name="StartScreen" type="VBoxContainer" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(170, 0)
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -80.0
-offset_right = 100.0
-offset_bottom = 80.0
+offset_left = -85.0
+offset_top = 90.0
+offset_right = 85.0
+offset_bottom = 200.0
 grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 8
-alignment = 1
-
-[node name="Title" type="Label" parent="StartScreen"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "CARRERA"
-horizontal_alignment = 1
+theme_override_constants/separation = 5
 
 [node name="ErrorLabel" type="Label" parent="StartScreen"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.46, 0.46, 1)
+theme_override_colors/font_color = Color(1, 0.36, 0.36, 1)
+theme_override_colors/font_outline_color = Color(0.17, 0.11, 0.23, 1)
+theme_override_constants/outline_size = 4
 horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="HostButton" type="Button" parent="StartScreen"]
 unique_name_in_owner = true
 layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 12
 text = "Crear partida"
+script = ExtResource("6_cartoon")
+color = Color(0.45, 0.88, 0.5, 1)
 
 [node name="JoinButton" type="Button" parent="StartScreen"]
 unique_name_in_owner = true
 layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 12
 text = "Unirse a una partida"
+script = ExtResource("6_cartoon")
+color = Color(0.35, 0.78, 0.98, 1)
+
+[node name="OptionsButton" type="Button" parent="StartScreen"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 12
+text = "Opciones"
+script = ExtResource("6_cartoon")
+color = Color(0.67, 0.5, 0.95, 1)
 
 [node name="QuitButton" type="Button" parent="StartScreen"]
 unique_name_in_owner = true
 layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 12
 text = "Salir"
+script = ExtResource("6_cartoon")
+color = Color(1, 0.42, 0.42, 1)
+
+[node name="Footer" type="Label" parent="."]
+modulate = Color(1, 1, 1, 0.75)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -13.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 0.98, 0.9, 1)
+theme_override_font_sizes/font_size = 8
+text = "Moverse: A / D o flechas · Saltar: Espacio · F11: pantalla completa"
+horizontal_alignment = 1
 
 [node name="JoinScreen" type="PanelContainer" parent="."]
 unique_name_in_owner = true
@@ -73,17 +158,17 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 12.0
-offset_right = -16.0
-offset_bottom = -12.0
+offset_left = 24.0
+offset_top = 16.0
+offset_right = -24.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Margin" type="MarginContainer" parent="JoinScreen"]
 layout_mode = 2
 theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
+theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 10
 theme_override_constants/margin_bottom = 8
 
@@ -93,8 +178,13 @@ theme_override_constants/separation = 6
 
 [node name="Title" type="Label" parent="JoinScreen/Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_colors/font_outline_color = Color(0.17, 0.11, 0.23, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("5_title_font")
+theme_override_font_sizes/font_size = 20
 text = "Unirse a una partida"
+horizontal_alignment = 1
 
 [node name="DiscoveryLabel" type="Label" parent="JoinScreen/Margin/VBox"]
 unique_name_in_owner = true
@@ -109,15 +199,19 @@ size_flags_vertical = 3
 [node name="JoinSelectedButton" type="Button" parent="JoinScreen/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
+focus_mode = 0
 disabled = true
 text = "Unirse a la partida elegida"
+script = ExtResource("6_cartoon")
+color = Color(0.45, 0.88, 0.5, 1)
 
 [node name="IpRow" type="HBoxContainer" parent="JoinScreen/Margin/VBox"]
 layout_mode = 2
+theme_override_constants/separation = 6
 
 [node name="IpTitle" type="Label" parent="JoinScreen/Margin/VBox/IpRow"]
 layout_mode = 2
-text = "O ingresá la IP del host:"
+text = "O escribí la IP del host:"
 
 [node name="IpEdit" type="LineEdit" parent="JoinScreen/Margin/VBox/IpRow"]
 unique_name_in_owner = true
@@ -128,11 +222,21 @@ placeholder_text = "192.168.0.10"
 [node name="ConnectButton" type="Button" parent="JoinScreen/Margin/VBox/IpRow"]
 unique_name_in_owner = true
 layout_mode = 2
+focus_mode = 0
 disabled = true
 text = "Conectar"
+script = ExtResource("6_cartoon")
+color = Color(0.35, 0.78, 0.98, 1)
 
 [node name="BackButton" type="Button" parent="JoinScreen/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
+focus_mode = 0
 text = "Volver"
+script = ExtResource("6_cartoon")
+color = Color(0.67, 0.5, 0.95, 1)
+
+[node name="SettingsMenu" parent="." instance=ExtResource("7_settings")]
+unique_name_in_owner = true
+layout_mode = 1

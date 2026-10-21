@@ -1,0 +1,99 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/pause_menu.gd" id="script"]
+[ext_resource type="Script" path="res://ui/cartoon_button.gd" id="cartoon_button"]
+[ext_resource type="FontFile" path="res://ui/fonts/LilitaOne-Regular.ttf" id="title_font"]
+[ext_resource type="PackedScene" path="res://ui/settings_menu.tscn" id="settings_menu"]
+
+[node name="PauseMenu" type="CanvasLayer" groups=["pause_menu"]]
+layer = 60
+script = ExtResource("script")
+
+[node name="Main" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Main"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.04, 0.12, 0.6)
+
+[node name="Panel" type="PanelContainer" parent="Main"]
+custom_minimum_size = Vector2(190, 0)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -95.0
+offset_top = -80.0
+offset_right = 95.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="Main/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 12
+
+[node name="VBox" type="VBoxContainer" parent="Main/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 7
+
+[node name="Title" type="Label" parent="Main/Panel/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_colors/font_outline_color = Color(0.17, 0.11, 0.23, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("title_font")
+theme_override_font_sizes/font_size = 22
+text = "Pausa"
+horizontal_alignment = 1
+
+[node name="Note" type="Label" parent="Main/Panel/Margin/VBox"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0.7)
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "¡Ojo! La carrera sigue para los demás"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="ResumeButton" type="Button" parent="Main/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Seguir"
+script = ExtResource("cartoon_button")
+color = Color(0.45, 0.88, 0.5, 1)
+
+[node name="OptionsButton" type="Button" parent="Main/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Opciones"
+script = ExtResource("cartoon_button")
+color = Color(0.67, 0.5, 0.95, 1)
+
+[node name="LeaveButton" type="Button" parent="Main/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Salir de la partida"
+script = ExtResource("cartoon_button")
+color = Color(1, 0.42, 0.42, 1)
+
+[node name="SettingsMenu" parent="." instance=ExtResource("settings_menu")]
+unique_name_in_owner = true

@@ -13,3 +13,6 @@ Scripts de Python que generan contenido del juego. Godot no los procesa (`.gdign
 - `gen_backgrounds.py`: genera las capas de fondo de `resources/backgrounds/`
   (`python3 gen_backgrounds.py ../resources/backgrounds ../resources/sky_.png`).
 - `gen_sounds.py`: genera los efectos de sonido de `sounds/` (`python3 gen_sounds.py ../sounds`). Necesita numpy.
+- `gen_music.py`: genera la música en loop de `sounds/` (`music_menu`, `music_race` y `music_dark`
+  para la cueva y la noche) con melodías escritas como notas (`python3 gen_music.py ../sounds`).
+  Necesita numpy.
