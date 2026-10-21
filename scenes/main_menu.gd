@@ -12,6 +12,16 @@ class_name MainMenu extends Control
 @onready var ip_edit: LineEdit = %IpEdit
 @onready var connect_button: Button = %ConnectButton
 @onready var back_button: Button = %BackButton
+@onready var options_button: Button = %OptionsButton
+@onready var settings_menu: SettingsMenu = %SettingsMenu
+@onready var ground: TileMapLayer = %Ground
+@onready var runners: Node2D = %Runners
+@onready var footer: Label = $Footer
+
+const RUNNERS = 5
+# Grass tiles (nature tileset in level_tileset.tres)
+const NATURE = 4
+const BUSHES = [Vector2i(6, 6), Vector2i(5, 6), Vector2i(3, 6), Vector2i(4, 6)]
 
 # ip of each row in games_list
 var _list_ips: Array = []
@@ -19,6 +29,8 @@ var _list_ips: Array = []
 func _ready() -> void:
 	host_button.pressed.connect(NetworkManager.host_game)
 	join_button.pressed.connect(_show_join_screen)
+	options_button.pressed.connect(settings_menu.open)
+	settings_menu.closed.connect(_refresh_footer)
 	quit_button.pressed.connect(get_tree().quit)
 	back_button.pressed.connect(_show_start_screen)
 	connect_button.pressed.connect(_connect_to_typed_ip)
@@ -33,6 +45,49 @@ func _ready() -> void:
 	error_label.text = NetworkManager.last_error
 	NetworkManager.last_error = ""
 	_show_start_screen()
+	_build_scenery()
+	_refresh_footer()
+
+func _unhandled_input(event: InputEvent) -> void:
+	var key = event as InputEventKey
+	if key and key.pressed and key.keycode == KEY_ESCAPE and join_screen.visible:
+		get_viewport().set_input_as_handled()
+		_show_start_screen()
+
+func _refresh_footer() -> void:
+	footer.text = "Moverse: %s / %s o flechas · Saltar: %s · F11: pantalla completa" % [
+		Settings.key_name("left"), Settings.key_name("right"), Settings.key_name("jump")]
+
+# Grass along the bottom with a few racers running over it
+func _build_scenery() -> void:
+	var view = get_viewport_rect().size
+	var top_row = int(view.y / 16) - 2
+	for x in range(-1, int(view.x / 16) + 2):
+		ground.set_cell(Vector2i(x, top_row), NATURE, Vector2i(1, 0))
+		for y in range(top_row + 1, top_row + 4):
+			ground.set_cell(Vector2i(x, y), NATURE, Vector2i(1, 1))
+		if posmod(x * 7, 5) == 0:
+			ground.set_cell(Vector2i(x, top_row - 1), NATURE, BUSHES[posmod(x, BUSHES.size())])
+	var frames = _player_frames()
+	if frames == null:
+		return
+	var colors = PlayersManager.COLORS.duplicate()
+	colors.shuffle()
+	for i in RUNNERS:
+		var runner = MenuRunner.new()
+		runner.ground_y = top_row * 16
+		runner.position = Vector2(-30 - i * 100 - randf() * 60, runner.ground_y)
+		runner.setup(frames, colors[i % colors.size()])
+		runners.add_child(runner)
+
+# The racers' animations, read from the player scene without creating one
+func _player_frames() -> SpriteFrames:
+	var state = (load("res://scenes/player.tscn") as PackedScene).get_state()
+	for node in state.get_node_count():
+		for i in state.get_node_property_count(node):
+			if state.get_node_property_name(node, i) == "sprite_frames":
+				return state.get_node_property_value(node, i)
+	return null
 
 func _show_start_screen() -> void:
 	LanDiscovery.stop_listening()

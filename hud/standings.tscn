@@ -1,18 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://hud/standings.gd" id="1_standings"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.1, 0.11, 0.15, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(1, 1, 1, 0.25)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+[ext_resource type="FontFile" path="res://ui/fonts/LilitaOne-Regular.ttf" id="2_title_font"]
 
 [node name="Standings" type="CanvasLayer"]
 layer = 5
@@ -25,7 +14,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0, 0, 0, 0.6)
+color = Color(0.08, 0.04, 0.12, 0.6)
 
 [node name="Panel" type="PanelContainer" parent="."]
 anchors_preset = 8
@@ -39,7 +28,6 @@ offset_right = 175.0
 offset_bottom = 110.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
 [node name="Margin" type="MarginContainer" parent="Panel"]
 layout_mode = 2
@@ -55,9 +43,11 @@ theme_override_constants/separation = 4
 [node name="Title" type="Label" parent="Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_colors/font_outline_color = Color(0.17, 0.11, 0.23, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_title_font")
+theme_override_font_sizes/font_size = 20
 text = "Resultados"
 horizontal_alignment = 1
 

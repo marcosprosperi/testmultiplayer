@@ -6,6 +6,8 @@ class_name Level extends Node2D
 ## Moves the view relative to the player, e.g. (0, -60) to see more above
 @export var camera_offset := Vector2.ZERO
 @export var background_color := Color(0.3, 0.3, 0.3)
+## Background music (see the Music autoload)
+@export_enum("race", "dark") var music := "race"
 
 # Runs on every peer when the level is spawned
 func _ready() -> void:

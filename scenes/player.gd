@@ -78,11 +78,13 @@ func _physics_process(delta: float) -> void:
 	var frozen := RaceManager.has_finished(name.to_int()) or not RaceManager.can_move()
 
 	var bot_input = brain.update(delta) if brain else {}
+	# Your keys don't move you while a menu is open over the race
+	var keys = brain == null and not Settings.menu_open
 	if is_on_floor():
 		_coyote_left = COYOTE_TIME
 	else:
 		_coyote_left -= delta
-	if bot_input.get("jump", false) if brain else Input.is_action_just_pressed("jump"):
+	if bot_input.get("jump", false) or (keys and Input.is_action_just_pressed("jump")):
 		_jump_buffer_left = JUMP_BUFFER
 	else:
 		_jump_buffer_left -= delta
@@ -96,7 +98,7 @@ func _physics_process(delta: float) -> void:
 
 	var direction := 0.0
 	if not frozen:
-		direction = bot_input.get("dir", 0.0) if brain else Input.get_axis("left", "right")
+		direction = bot_input.get("dir", 0.0) if brain else (Input.get_axis("left", "right") if keys else 0.0)
 	if velocity.x > 0:
 		animated_sprite_2d.scale.x = 1 
 	elif velocity.x < 0:

@@ -1,18 +1,19 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://lobby/lobby.gd" id="1_lobby"]
+[ext_resource type="Script" path="res://ui/cartoon_button.gd" id="2_cartoon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_levels"]
-bg_color = Color(0.1, 0.11, 0.15, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(1, 1, 1, 0.25)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+bg_color = Color(0.24, 0.17, 0.37, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.17, 0.11, 0.23, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="Lobby" type="CanvasLayer"]
 layer = 10
@@ -24,7 +25,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.08, 0.09, 0.13, 0.92)
+color = Color(0.11, 0.07, 0.18, 0.94)
 
 [node name="Panel" type="PanelContainer" parent="."]
 anchors_preset = 15
@@ -181,7 +182,19 @@ layout_mode = 2
 [node name="LeaveButton" type="Button" parent="Panel/Margin/VBox/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
+focus_mode = 0
 text = "Salir"
+script = ExtResource("2_cartoon")
+color = Color(1, 0.42, 0.42, 1)
+
+[node name="OptionsButton" type="Button" parent="Panel/Margin/VBox/Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Pantalla, sonido y controles (también con Esc)"
+text = "Opciones"
+script = ExtResource("2_cartoon")
+color = Color(0.67, 0.5, 0.95, 1)
 
 [node name="Spacer" type="Control" parent="Panel/Margin/VBox/Buttons"]
 layout_mode = 2
@@ -190,7 +203,10 @@ size_flags_horizontal = 3
 [node name="StartButton" type="Button" parent="Panel/Margin/VBox/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
+focus_mode = 0
 text = "Empezar carrera"
+script = ExtResource("2_cartoon")
+color = Color(0.45, 0.88, 0.5, 1)
 
 [node name="LevelsDim" type="ColorRect" parent="."]
 unique_name_in_owner = true

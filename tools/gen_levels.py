@@ -135,7 +135,7 @@ def level3():
 def level4():
     """Mazmorra (hard): stone, low ceiling, crushers, spiked enemies, trap doors"""
     b = LevelBuilder("Level_4", "cave", "stone", seed=44)
-    b.root_extra = "background_color = Color(0.12, 0.1, 0.11, 1)\n"
+    b.root_extra = "background_color = Color(0.12, 0.1, 0.11, 1)\nmusic = \"dark\"\n"
     b.run(20)
     b.retractable_run(auto=True)
     door = b.uname("TrapDoor")
@@ -179,7 +179,7 @@ def level4():
 def level5():
     """Noche (hard): floating islands, moving platforms, elevators, bats, saws"""
     b = LevelBuilder("Level_5", "night", "grass", seed=55)
-    b.root_extra = "background_color = Color(0.05, 0.06, 0.15, 1)\n"
+    b.root_extra = "background_color = Color(0.05, 0.06, 0.15, 1)\nmusic = \"dark\"\n"
     b.run(20)
     b.gap(12, "mover")
     b.enemies_run(["bat", "slime"], length=36)

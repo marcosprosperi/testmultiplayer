@@ -3,6 +3,8 @@ class_name Standings extends CanvasLayer
 ## Championship table: shown after every race (with that race's results),
 ## as the champion screen after the last one, and while holding Tab.
 
+const TITLE_COLOR = Color(1, 0.82, 0.25)
+
 @onready var title: Label = %Title
 @onready var subtitle: Label = %Subtitle
 @onready var table: GridContainer = %Table
@@ -42,7 +44,7 @@ func _on_results_shown(results: Array, final: bool) -> void:
 		subtitle.text = "Campeonato terminado · " + race
 	else:
 		title.text = "Resultados"
-		title.remove_theme_color_override("font_color")
+		title.add_theme_color_override("font_color", TITLE_COLOR)
 		subtitle.text = race
 	var rows = []
 	for result in results:
@@ -55,7 +57,7 @@ func _on_results_shown(results: Array, final: bool) -> void:
 
 func _show_current() -> void:
 	title.text = "Campeonato"
-	title.remove_theme_color_override("font_color")
+	title.add_theme_color_override("font_color", TITLE_COLOR)
 	subtitle.text = "Carrera %d de %d" % [RaceManager.round_index + 1, RaceManager.rounds_total]
 	footer.text = "Soltá Tab para volver"
 	var rows = []

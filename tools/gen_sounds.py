@@ -87,4 +87,9 @@ swell = np.concatenate([np.linspace(0, 1, int(RATE * 0.3)), np.ones(int(RATE * 0
 save("wind", whoosh * swell[:len(whoosh)] * 0.8)
 # Squashing an enemy: soft boing
 save("stomp", note(np.linspace(500, 180, int(RATE * 0.12)), 0.12, 0.35, duty=0.5, release=0.6))
+# Menu button: a round little pop
+pop = note(np.linspace(600, 1100, int(RATE * 0.05)), 0.05, 0.3, duty=0.5, release=0.7)
+save("ui_click", np.concatenate([pop, note(1320, 0.04, 0.15, duty=0.25, release=0.9)]))
+# Pointing at a button: a tiny tick
+save("ui_hover", note(1700, 0.025, 0.15, duty=0.25, release=0.8))
 print("ok")

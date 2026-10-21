@@ -50,6 +50,7 @@ func _ready() -> void:
 	name_edit.text_submitted.connect(func(_text): _on_confirm_pressed())
 	name_edit.text_changed.connect(func(_text): _refresh())
 	leave_button.pressed.connect(func(): NetworkManager.leave())
+	%OptionsButton.pressed.connect(func(): get_tree().call_group("pause_menu", "open_settings"))
 	start_button.pressed.connect(func(): main.start_game())
 	copy_button.pressed.connect(_on_copy_pressed)
 	# Only the host can change the rules; everyone else sees them
@@ -77,6 +78,9 @@ func _ready() -> void:
 
 	start_button.visible = NetworkManager.is_hosting
 	copy_button.visible = NetworkManager.is_hosting
+	# Same name and color as last time (if they're free)
+	name_edit.text = Settings.player_name
+	selected_color = Settings.player_color if Settings.player_color < PlayersManager.COLORS.size() else -1
 	_refresh()
 
 func _local_id() -> int:
@@ -250,6 +254,7 @@ func _on_confirm_pressed() -> void:
 
 func _on_profile_result(ok: bool, message: String) -> void:
 	if ok:
+		Settings.set_profile(name_edit.text.strip_edges(), selected_color)
 		var waiting = not PlayersManager.game_started and not NetworkManager.is_hosting
 		_set_status("¡Listo! Esperando a que el host empiece..." if waiting else "¡Listo!", Color("#55efc4"))
 	else:

@@ -4,7 +4,9 @@ extends Node
 ## coin...), play_at() for things in the world you hear when you're near.
 
 const SOUNDS = ["beep", "go", "jump", "death", "coin", "finish", "results", "champion", "cannon", "crack",
-	"click", "spikes", "slam", "wind", "stomp"]
+	"click", "spikes", "slam", "wind", "stomp", "ui_click", "ui_hover"]
+## Menu sounds and how loud they are
+const UI_VOLUME = {"ui_click": -4.0, "ui_hover": -12.0}
 ## Positional sounds fade out over this distance
 const HEARING_DISTANCE = 600.0
 
@@ -18,6 +20,7 @@ func play(sound: String, volume_db := 0.0) -> void:
 	var player = AudioStreamPlayer.new()
 	player.stream = _streams[sound]
 	player.volume_db = volume_db
+	player.bus = "SFX"
 	player.finished.connect(player.queue_free)
 	add_child(player)
 	player.play()
@@ -30,7 +33,11 @@ func play_at(sound: String, global_position: Vector2, volume_db := 0.0) -> void:
 	player.stream = _streams[sound]
 	player.volume_db = volume_db
 	player.max_distance = HEARING_DISTANCE
+	player.bus = "SFX"
 	player.finished.connect(player.queue_free)
 	scene.add_child(player)
 	player.global_position = global_position
 	player.play()
+
+func play_ui(sound: String) -> void:
+	play(sound, UI_VOLUME.get(sound, 0.0))
