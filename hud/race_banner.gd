@@ -6,8 +6,8 @@ class_name RaceBanner extends Control
 const OUTLINE = Color(0.17, 0.11, 0.23)
 const TITLE_FONT = preload("res://ui/fonts/LilitaOne-Regular.ttf")
 const PODIUM = [Color("#ffd23f"), Color("#dfe6ee"), Color("#e0975a")]
-const DIFFICULTY = ["", "Fácil", "Medio", "Difícil"]
-const DIFFICULTY_COLOR = [Color.WHITE, Color("#55efc4"), Color("#fdcb6e"), Color("#ff7675")]
+const DIFFICULTY = ["", "Fácil", "Medio", "Difícil", "¡Extremo!"]
+const DIFFICULTY_COLOR = [Color.WHITE, Color("#55efc4"), Color("#fdcb6e"), Color("#ff7675"), Color("#e056fd")]
 
 # Intro card: how far it has slid in (0 = off screen, 1 = in place)
 var _card := 0.0
@@ -52,7 +52,7 @@ func _draw_card() -> void:
 	var font = get_theme_default_font()
 	var race = "CARRERA %d DE %d" % [RaceManager.round_index + 1, RaceManager.rounds_total]
 	var title = RaceManager.level_title.to_upper()
-	var difficulty = DIFFICULTY[clampi(RaceManager.level_difficulty, 0, 3)]
+	var difficulty = DIFFICULTY[clampi(RaceManager.level_difficulty, 0, 4)]
 	var width = maxf(TITLE_FONT.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x, 120) + 40
 	# Slides in from the left with a little overshoot
 	var t = ease(_card, -2.2)

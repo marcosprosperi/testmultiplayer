@@ -15,6 +15,8 @@
 [ext_resource type="PackedScene" path="res://scenes/level_7.tscn" id="17_level7"]
 [ext_resource type="PackedScene" path="res://scenes/level_8.tscn" id="18_level8"]
 [ext_resource type="PackedScene" path="res://scenes/level_9.tscn" id="19_level9"]
+[ext_resource type="PackedScene" path="res://scenes/level_10.tscn" id="20_level10"]
+[ext_resource type="PackedScene" path="res://scenes/level_11.tscn" id="21_level11"]
 
 [sub_resource type="Resource" id="LevelInfo_1"]
 script = ExtResource("10_level_info")
@@ -70,9 +72,21 @@ title = "Castillo"
 difficulty = 3
 scene = ExtResource("19_level9")
 
+[sub_resource type="Resource" id="LevelInfo_10"]
+script = ExtResource("10_level_info")
+title = "Infierno"
+difficulty = 4
+scene = ExtResource("20_level10")
+
+[sub_resource type="Resource" id="LevelInfo_11"]
+script = ExtResource("10_level_info")
+title = "Glaciar"
+difficulty = 4
+scene = ExtResource("21_level11")
+
 [node name="Main" type="Node" unique_id=1346978070]
 script = ExtResource("1_o5qli")
-levels = Array[Resource]([SubResource("LevelInfo_1"), SubResource("LevelInfo_2"), SubResource("LevelInfo_3"), SubResource("LevelInfo_4"), SubResource("LevelInfo_5"), SubResource("LevelInfo_6"), SubResource("LevelInfo_7"), SubResource("LevelInfo_8"), SubResource("LevelInfo_9")])
+levels = Array[Resource]([SubResource("LevelInfo_1"), SubResource("LevelInfo_2"), SubResource("LevelInfo_3"), SubResource("LevelInfo_4"), SubResource("LevelInfo_5"), SubResource("LevelInfo_6"), SubResource("LevelInfo_7"), SubResource("LevelInfo_8"), SubResource("LevelInfo_9"), SubResource("LevelInfo_10"), SubResource("LevelInfo_11")])
 
 [node name="PlayersSpawner" type="MultiplayerSpawner" parent="." unique_id=1942581705]
 _spawnable_scenes = PackedStringArray("uid://g03n8e1oanp3")
