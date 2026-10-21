@@ -4,7 +4,8 @@ extends Node
 ## coin...), play_at() for things in the world you hear when you're near.
 
 const SOUNDS = ["beep", "go", "jump", "death", "coin", "finish", "results", "champion", "cannon", "crack",
-	"click", "spikes", "slam", "wind", "stomp", "ui_click", "ui_hover"]
+	"click", "spikes", "slam", "wind", "stomp", "ui_click", "ui_hover",
+	"item_box", "turbo", "star", "zap", "portal", "slip", "shield_break"]
 ## Menu sounds and how loud they are
 const UI_VOLUME = {"ui_click": -4.0, "ui_hover": -12.0}
 ## Positional sounds fade out over this distance

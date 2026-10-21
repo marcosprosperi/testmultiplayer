@@ -92,4 +92,23 @@ pop = note(np.linspace(600, 1100, int(RATE * 0.05)), 0.05, 0.3, duty=0.5, releas
 save("ui_click", np.concatenate([pop, note(1320, 0.04, 0.15, duty=0.25, release=0.9)]))
 # Pointing at a button: a tiny tick
 save("ui_hover", note(1700, 0.025, 0.15, duty=0.25, release=0.8))
+# Power-ups. Item box: quick rising arpeggio
+save("item_box", np.concatenate([note(f, 0.05, 0.3, duty=0.25, release=0.3) for f in (523, 659, 784, 1047, 1319)]))
+# Turbo: engine-like rising buzz
+save("turbo", note(np.linspace(180, 900, int(RATE * 0.45)), 0.45, 0.3, duty=0.125, release=0.4))
+# Star: sparkly fast arpeggio up and down
+sparkle = [1047, 1319, 1568, 2093, 1568, 1319, 1568, 2093]
+save("star", np.concatenate([note(f, 0.045, 0.22, duty=0.25, release=0.4) for f in sparkle]))
+# Lightning: noisy crack and a low rumble
+crackle = noise(0.5) * envelope(int(RATE * 0.5), attack=0.001, release=0.95) * 0.9
+save("zap", crackle + lowpass(noise(0.5), 0.04) * envelope(int(RATE * 0.5), release=0.9) * 2.5)
+# Portal: warbling sweep
+warble = 600 + 300 * np.sin(np.arange(int(RATE * 0.5)) / RATE * 2 * np.pi * 14) + np.linspace(0, 600, int(RATE * 0.5))
+save("portal", note(warble, 0.5, 0.25, duty=0.5, release=0.5))
+# Slipping on a peel: wobbly falling slide
+slide = 900 - np.linspace(0, 600, int(RATE * 0.4)) + 80 * np.sin(np.arange(int(RATE * 0.4)) / RATE * 2 * np.pi * 9)
+save("slip", note(slide, 0.4, 0.3, duty=0.25, release=0.6))
+# Shield breaking: glassy crash
+glass = noise(0.3) * envelope(int(RATE * 0.3), attack=0.001, release=0.9) * 0.6
+save("shield_break", glass + note(np.linspace(2400, 1200, int(RATE * 0.3)), 0.3, 0.2, duty=0.125, release=0.8))
 print("ok")

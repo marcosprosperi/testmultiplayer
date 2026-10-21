@@ -4,6 +4,9 @@ class_name KillZone extends Area2D
 ## Any player touching this area loses and starts again from the beginning.
 ## Give it a CollisionShape2D child with the shape of the trap / pit.
 
+## A pit (or lava): not even a shield or a star saves you from it
+@export var pit := false
+
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
@@ -12,4 +15,4 @@ func _ready() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	# Each player's own peer moves it, so that peer handles the death
 	if body is Player and body.is_multiplayer_authority():
-		body.die()
+		body.die(pit)

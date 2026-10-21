@@ -55,8 +55,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_show_start_screen()
 
 func _refresh_footer() -> void:
-	footer.text = "Moverse: %s / %s o flechas · Saltar: %s · F11: pantalla completa" % [
-		Settings.key_name("left"), Settings.key_name("right"), Settings.key_name("jump")]
+	footer.text = "Moverse: %s / %s o flechas · Saltar: %s · Poder: %s · F11: pantalla completa" % [
+		Settings.key_name("left"), Settings.key_name("right"), Settings.key_name("jump"), Settings.key_name("use_item")]
 
 # Grass along the bottom with a few racers running over it
 func _build_scenery() -> void:

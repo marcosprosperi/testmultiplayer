@@ -147,7 +147,7 @@ autowrap_mode = 3
 
 [node name="Options" type="HBoxContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 6
 
 [node name="CoinsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
 unique_name_in_owner = true
@@ -156,6 +156,14 @@ focus_mode = 0
 tooltip_text = "Cada moneda suma 1 punto al terminar la carrera, pero te hace más lento"
 button_pressed = true
 text = "Monedas"
+
+[node name="ItemsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Cajas con poderes en las carreras: cuanto más atrás vas, mejores poderes te tocan"
+button_pressed = true
+text = "Poderes"
 
 [node name="CheckpointsCheck" type="CheckButton" parent="Panel/Margin/VBox/Options"]
 unique_name_in_owner = true

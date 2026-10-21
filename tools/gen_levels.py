@@ -9,6 +9,7 @@ def level1():
     """Pradera (easy): runs, small gaps, stairs, slimes, climbs and drops"""
     b = LevelBuilder("Level_1", "day", "grass", uid="uid://bxwdv7rjp1mf5", seed=11)
     b.run(20)
+    b.item_boxes()
     b.spikes_run(groups=2, length=2)
     b.gap(5)
     b.enemies_run(["slime", "slime"], length=36)
@@ -63,6 +64,7 @@ def level2():
     """Atardecer (medium): bats, saws, moving platforms, crushers, cannon, fans"""
     b = LevelBuilder("Level_2", "sunset", "grass", uid="uid://cibp8iksdlty", seed=22)
     b.run(20)
+    b.item_boxes()
     b.retractable_run(auto=True)
     b.gap(12, "mover")
     b.enemies_run(["bat", "slime", "bat"], length=44)
@@ -106,6 +108,7 @@ def level3():
     b = LevelBuilder("Level_3", "sky", "grass", seed=33)
     b.root_extra = "camera_offset = Vector2(0, -60)\nbackground_color = Color(0.49, 0.75, 0.9, 1)\n"
     b.run(20)
+    b.item_boxes()
     b.enemies_run(["slime", "bat"], length=36)
     b.gap(6)
     b.balloon_shaft(height_rows=40)
@@ -136,6 +139,7 @@ def level4():
     b = LevelBuilder("Level_4", "cave", "stone", seed=44)
     b.root_extra = "background_color = Color(0.12, 0.1, 0.11, 1)\nmusic = \"dark\"\n"
     b.run(20)
+    b.item_boxes()
     b.retractable_run(auto=True)
     door = b.uname("TrapDoor")
     b.button([door])
@@ -180,6 +184,7 @@ def level5():
     b = LevelBuilder("Level_5", "night", "grass", seed=55)
     b.root_extra = "background_color = Color(0.05, 0.06, 0.15, 1)\nmusic = \"dark\"\n"
     b.run(20)
+    b.item_boxes()
     b.gap(12, "mover")
     b.enemies_run(["bat", "slime"], length=36)
     b.climb(levels=3, elevator=True)
@@ -229,6 +234,7 @@ def level6():
     b.wide_spacing = True
     b.root_extra = "background_color = Color(0.45, 0.68, 0.85, 1)\n"
     b.run(20)
+    b.item_boxes()
     b.enemies_run(["frog", "slime"], length=36)
     b.gap(6)
     b.stairs(3, up=True)
@@ -277,6 +283,7 @@ def level7():
     b.wide_spacing = True
     b.root_extra = "background_color = Color(0.75, 0.85, 0.95, 1)\n"
     b.run(20)
+    b.item_boxes()
     b.ice_run(30, ["penguin"])
     b.gap(6)
     b.enemies_run(["penguin", "spiky"], length=40)
@@ -320,6 +327,7 @@ def level8():
     b.wide_spacing = True
     b.root_extra = "background_color = Color(0.2, 0.07, 0.07, 1)\nmusic = \"dark\"\n"
     b.run(20)
+    b.item_boxes()
     b.lava_run(pits=3)
     b.enemies_run(["spiky", "frog"], length=36)
     b.climb(levels=3)
@@ -355,6 +363,7 @@ def level9():
     b.wide_spacing = True
     b.root_extra = "background_color = Color(0.1, 0.06, 0.16, 1)\nmusic = \"dark\"\n"
     b.run(20)
+    b.item_boxes()
     b.enemies_run(["ghost", "bat"], length=36)
     door = b.uname("TrapDoor")
     b.button([door])

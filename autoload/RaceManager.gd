@@ -28,8 +28,17 @@ signal coins_changed
 signal trap_triggered(id: int)
 # Everyone finished: results is [{id, name, color, position, gained, total}]
 signal results_shown(results: Array, final: bool)
+# Power-ups: who holds what changed / someone used one (on every screen)
+signal items_changed
+signal item_used(id: int, item: String)
 
 var state := State.WAITING
+# Power-up each player is holding (id -> PowerUps name), synced by the server
+var items = {}
+# Effects on each player: id -> {effect: race time it ends}. Effects are
+# "turbo", "star", "slow" (lightning) and "shield" (until it saves you)
+var effects = {}
+var _peels := 0
 # Coins picked up by each player in this race (synced by the server)
 var race_coins = {}
 # Which race of the championship this is (0-based) and how many there are
@@ -69,6 +78,8 @@ func register_level(level: Node2D) -> void:
 		_race_token += 1
 		_sync_finish_order.rpc(finish_order)
 		_sync_coins.rpc({})
+		_sync_items.rpc({})
+		_sync_effects.rpc({})
 		_sync_state.rpc(State.WAITING, 0)
 		_start_anyway_after_timeout(_race_token)
 
@@ -91,6 +102,8 @@ func reset() -> void:
 	grid_order = []
 	_last_finish_order = []
 	race_coins = {}
+	items = {}
+	effects = {}
 	finish_order_changed.emit()
 	state_changed.emit()
 	grid_changed.emit()
@@ -101,15 +114,25 @@ func send_state_to(id: int) -> void:
 	_sync_grid.rpc_id(id, grid_order)
 	_sync_round.rpc_id(id, round_index, rounds_total)
 	_sync_coins.rpc_id(id, race_coins)
+	_sync_items.rpc_id(id, items)
+	_sync_effects.rpc_id(id, effects)
 
 func coins_of(id: int) -> int:
 	return race_coins.get(id, 0)
 
-## 1.0 = normal speed; each coin carried this race makes you slower
+## 1.0 = normal speed; each coin carried this race makes you slower, and
+## power-ups make you faster (turbo, star) or slower (someone's lightning)
 func speed_factor(id: int) -> float:
-	if not PlayersManager.coins_enabled():
-		return 1.0
-	return 1.0 - minf(coins_of(id) * COIN_SLOWDOWN, MAX_SLOWDOWN)
+	var factor = 1.0
+	if PlayersManager.coins_enabled():
+		factor -= minf(coins_of(id) * COIN_SLOWDOWN, MAX_SLOWDOWN)
+	if has_effect(id, "turbo"):
+		factor *= PowerUps.TURBO_SPEED
+	if has_effect(id, "star"):
+		factor *= PowerUps.STAR_SPEED
+	if has_effect(id, "slow"):
+		factor *= PowerUps.LIGHTNING_SPEED
+	return factor
 
 ## Server only: called by a coin when a player touches it
 func collect_coin(id: int) -> void:
@@ -283,6 +306,8 @@ func report_finish() -> void:
 func _finish(id: int) -> void:
 	if finish_order.has(id) or !PlayersManager.joined_players.has(id):
 		return
+	if items.erase(id):
+		_sync_items.rpc(items)
 
 	finish_order.append(id)
 	_sync_finish_order.rpc(finish_order)
@@ -362,3 +387,161 @@ func _find_in_level(group: String) -> Node2D:
 		if current_level.is_ancestor_of(node):
 			return node
 	return null
+
+# --- Power-ups ---------------------------------------------------------------
+
+func item_of(id: int) -> String:
+	return items.get(id, "")
+
+func has_effect(id: int, effect: String) -> bool:
+	return effects.get(id, {}).get(effect, -1.0) > race_time()
+
+## 0 = leading, 1 = last. Whoever already finished counts as ahead
+func place_of(id: int) -> float:
+	var players = get_tree().get_nodes_in_group("player")
+	if players.size() <= 1:
+		return 0.5
+	var score = func(player: Node2D) -> float:
+		var pid = player.name.to_int()
+		return 1000.0 - finish_order.find(pid) if has_finished(pid) else get_progress(player)
+	players.sort_custom(func(a, b): return score.call(a) > score.call(b))
+	var index = players.find_custom(func(p): return p.name.to_int() == id)
+	return float(maxi(index, 0)) / (players.size() - 1)
+
+## Server only: a player touched an item box. Returns whether they got
+## something (one at a time: you have to use it before picking another)
+func give_item(id: int) -> bool:
+	if not multiplayer.is_server() or state != State.RACING or has_finished(id) or items.has(id):
+		return false
+	items[id] = PowerUps.pick(place_of(id))
+	_sync_items.rpc(items)
+	return true
+
+## Sent by a player to the server to use what they're holding
+@rpc("any_peer", "call_local", "reliable")
+func request_use_item() -> void:
+	if not multiplayer.is_server():
+		return
+	var id = multiplayer.get_remote_sender_id()
+	use_item(id if id != 0 else multiplayer.get_unique_id())
+
+## Server only (bots call it directly)
+func use_item(id: int) -> void:
+	var item = item_of(id)
+	if not multiplayer.is_server() or item == "" or state != State.RACING or has_finished(id):
+		return
+	items.erase(id)
+	_sync_items.rpc(items)
+	var now = race_time()
+	var player = _player_node(id)
+	match item:
+		PowerUps.TURBO:
+			_set_effect(id, "turbo", now + PowerUps.TURBO_TIME)
+		PowerUps.STAR:
+			_set_effect(id, "star", now + PowerUps.STAR_TIME)
+		PowerUps.SHIELD:
+			_set_effect(id, "shield", now + 100000.0)
+		PowerUps.LIGHTNING:
+			# Everyone ahead slows down for a while (a star protects you)
+			var my_place = place_of(id)
+			for other in get_tree().get_nodes_in_group("player"):
+				var other_id = other.name.to_int()
+				if other_id != id and not has_finished(other_id) and place_of(other_id) < my_place \
+						and not has_effect(other_id, "star"):
+					_set_effect(other_id, "slow", now + PowerUps.LIGHTNING_TIME)
+		PowerUps.PEEL:
+			if player:
+				var back = -signf(player.animated_sprite_2d.scale.x)
+				_peels += 1
+				_spawn_peel.rpc("Peel%d" % _peels, player.global_position + Vector2(back * 22, 0), id)
+		PowerUps.PORTAL:
+			var target = _next_checkpoint(player)
+			if target != Vector2.INF:
+				_teleport.rpc(id, target)
+			else:
+				_set_effect(id, "turbo", now + PowerUps.TURBO_TIME)
+	_sync_effects.rpc(effects)
+	_item_used.rpc(id, item)
+
+func _set_effect(id: int, effect: String, until: float) -> void:
+	if not effects.has(id):
+		effects[id] = {}
+	effects[id][effect] = until
+
+func _player_node(id: int) -> Node2D:
+	for player in get_tree().get_nodes_in_group("player"):
+		if player.name.to_int() == id:
+			return player
+	return null
+
+# The first flag further along the course than the player (INF if none)
+func _next_checkpoint(player: Node2D) -> Vector2:
+	if player == null or not is_instance_valid(current_level):
+		return Vector2.INF
+	var mine = get_progress(player)
+	var best = Vector2.INF
+	var best_progress = INF
+	for flag in current_level.find_children("*", "Checkpoint", true, false):
+		var progress = get_progress(flag)
+		if progress > mine + 0.01 and progress < best_progress:
+			best_progress = progress
+			best = flag.global_position + Vector2(0, -2)
+	return best
+
+## A shield saved this player (sent by whoever moves them)
+func break_shield(id: int) -> void:
+	if effects.has(id):
+		effects[id].erase("shield")
+	if multiplayer.is_server():
+		_sync_effects.rpc(effects)
+	else:
+		_request_break_shield.rpc_id(1, id)
+
+@rpc("any_peer", "reliable")
+func _request_break_shield(id: int) -> void:
+	if multiplayer.is_server() and multiplayer.get_remote_sender_id() == id:
+		break_shield(id)
+
+## Someone slipped on a peel: it's gone for everyone
+func peel_hit(peel_name: String) -> void:
+	_request_remove_peel.rpc_id(1, peel_name)
+
+@rpc("any_peer", "call_local", "reliable")
+func _request_remove_peel(peel_name: String) -> void:
+	if multiplayer.is_server():
+		_remove_peel.rpc(peel_name)
+
+@rpc("authority", "call_local", "reliable")
+func _remove_peel(peel_name: String) -> void:
+	if is_instance_valid(current_level) and current_level.has_node(peel_name):
+		current_level.get_node(peel_name).queue_free()
+
+@rpc("authority", "call_local", "reliable")
+func _spawn_peel(peel_name: String, at: Vector2, owner_id: int) -> void:
+	if not is_instance_valid(current_level):
+		return
+	var peel = preload("res://race/powerups/peel.tscn").instantiate()
+	peel.name = peel_name
+	peel.owner_id = owner_id
+	current_level.add_child(peel)
+	peel.global_position = at
+
+@rpc("authority", "call_local", "reliable")
+func _teleport(id: int, at: Vector2) -> void:
+	var player = _player_node(id)
+	if player and player.is_multiplayer_authority():
+		player.global_position = at
+		player.velocity = Vector2.ZERO
+
+@rpc("authority", "call_local", "reliable")
+func _sync_items(server_items: Dictionary) -> void:
+	items = server_items
+	items_changed.emit()
+
+@rpc("authority", "call_local", "reliable")
+func _sync_effects(server_effects: Dictionary) -> void:
+	effects = server_effects
+
+@rpc("authority", "call_local", "reliable")
+func _item_used(id: int, item: String) -> void:
+	item_used.emit(id, item)
