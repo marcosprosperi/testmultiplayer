@@ -36,8 +36,9 @@ static func _build(scene: PackedScene) -> Texture2D:
 			var property = state.get_node_property_name(node, i)
 			if node == 0 and property == "background_color" and sky == Color(0.3, 0.3, 0.3):
 				sky = state.get_node_property_value(node, i)
-			elif property == "tile_map_data":
-				# All the tile layers (ground, deeper ground...), header skipped
+			elif property == "tile_map_data" and state.get_node_name(node) != "Deeper":
+				# The tile layers near the surface (the deep ground would fill
+				# the whole map), header skipped
 				var layer: PackedByteArray = state.get_node_property_value(node, i)
 				data.append_array(layer.slice(2) if not data.is_empty() else layer)
 	# tile_map_data: 2 bytes of header, then 12 bytes per cell:

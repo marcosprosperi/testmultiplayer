@@ -10,6 +10,12 @@ GRASSY = {"grass": 4, "snow": 5, "volcano": 6}
 SUMMER = 0      # summer_.png source (grey stone blocks)
 CEILING_GAP = 9 # rows between floor and ceiling in cave levels
 FLAG_EVERY = 1800  # px of route between checkpoint flags (at most, about)
+# The level never seems to end: ground goes this many rows down under every
+# floor (deeper than the camera ever looks, even falling into a pit), and
+# past both ends there's this much more land, behind a cliff too tall to jump
+FILL = 22
+BORDER = 34
+END_CLIFF = 8
 
 
 class LevelBuilder:
@@ -444,13 +450,19 @@ color = {colors[i]}''')
         self.depth = {}             # (x, y) -> rows below the surface (ground only)
         cols = sorted(self.surface)
         first, last = cols[0], cols[-1]
-        def solid(src, ax, ay):
-            return (src, ax, ay)
+        r0 = self.surface[first]
+        r1 = self.surface[last]
+        if self.grassy:
+            # More land past both ends (with trees too: decorate sees it)
+            for i in range(1, BORDER + 1):
+                self.surface[first - i] = r0 - END_CLIFF
+                self.surface[last + i] = r1 - END_CLIFF
+            cols = sorted(self.surface)
         for x in cols:
             r = self.surface[x]
-            # Fill down far enough to make a wall where the neighbour is lower
+            # Fill down out of sight, and further where the neighbour is lower
             neighbours = [self.surface.get(x - 1, r), self.surface.get(x + 1, r)]
-            depth = max(4, max(n - r for n in neighbours) + 4)
+            depth = max(FILL, max(n - r for n in neighbours) + 4)
             left_open = self.surface.get(x - 1) is None or self.surface.get(x - 1) > r
             right_open = self.surface.get(x + 1) is None or self.surface.get(x + 1) > r
             for d in range(depth + 1):
@@ -490,16 +502,14 @@ color = {colors[i]}''')
                 self.ceiling[x] = c
                 for y in range(top, c + 1):
                     tiles[(x, y)] = (SUMMER, 7, self.stone_row + (2 if y == c else 1))
-        # Walls at both ends: just taller than anyone can jump (or up to the
-        # ceiling in stone levels)
-        r0 = self.surface[first]
-        r1 = self.surface[last]
-        wall = (self.src, 6, 1) if self.grassy else (SUMMER, 7, self.stone_row + 1)
-        for (cols, r) in (((first - 1, first - 2), r0), ((last + 1, last + 2), r1)):
-            height = 7 if self.grassy else 20
-            for y in range(r - height, r + 5):
-                for x in cols:
-                    tiles[(x, y)] = wall
+        # Stone levels end in solid rock, from above the ceiling to the depths
+        if not self.grassy:
+            rock = (SUMMER, 7, self.stone_row + 1)
+            for (xs, r) in ((range(first - BORDER, first), r0), (range(last + 1, last + BORDER + 1), r1)):
+                for x in xs:
+                    for y in range(r - 20, r + FILL + 1):
+                        tiles[(x, y)] = rock
+                        self.depth[(x, y)] = max(0, y - r)
         tiles.update({k: v for k, v in self.extra_tiles.items() if k not in tiles})
         if self.grassy:
             self.decorate(tiles)
