@@ -15,6 +15,7 @@ const GONE_TIME = 1.6
 
 func _init() -> void:
 	stompable = false
+	wait_for_it = true
 	body_height = 14.0
 	poll_overlaps = true
 

@@ -21,6 +21,8 @@
 [ext_resource type="PackedScene" path="res://race/enemies/slime.tscn" id="slime"]
 [ext_resource type="PackedScene" path="res://race/enemies/spiky.tscn" id="spiky"]
 [ext_resource type="PackedScene" path="res://race/enemies/bat.tscn" id="bat"]
+[ext_resource type="PackedScene" path="res://race/enemies/spark.tscn" id="spark"]
+[ext_resource type="PackedScene" path="res://race/enemies/mace.tscn" id="mace"]
 [ext_resource type="PackedScene" path="res://race/powerups/item_box.tscn" id="item_box"]
 [ext_resource type="PackedScene" path="res://race/decor/torch.tscn" id="torch"]
 
@@ -167,18 +169,18 @@ travel = Vector2(48, 0)
 speed = 35.0
 phase = 0.48
 
-[node name="Bat1" parent="Hazards" instance=ExtResource("bat")]
-position = Vector2(4928, 748)
-travel = Vector2(64, 0)
-speed = 50.0
-phase = 0.19
-bob = 8.0
+[node name="Mace1" parent="Hazards" instance=ExtResource("mace")]
+position = Vector2(5032, 672)
+travel = Vector2(116, 0)
+swing = 0.84
+period = 2.4
+phase = 0.25
 
 [node name="Spiky3" parent="Hazards" instance=ExtResource("spiky")]
 position = Vector2(5216, 800)
-travel = Vector2(80, 0)
+travel = Vector2(48, 0)
 speed = 45.0
-phase = 0.75
+phase = 0.04
 
 [node name="Checkpoint3" parent="Hazards" instance=ExtResource("checkpoint")]
 position = Vector2(5648, 800)
@@ -218,7 +220,7 @@ active_time = 0.8
 [node name="PopSpikes2" parent="Hazards" instance=ExtResource("retractable")]
 position = Vector2(7120, 608)
 tiles = 3
-auto_period = 2.9
+auto_period = 3.0
 active_time = 1.0
 
 [node name="Checkpoint4" parent="Hazards" instance=ExtResource("checkpoint")]
@@ -236,16 +238,16 @@ position = Vector2(7528, 596)
 [node name="Saw1" parent="Hazards" instance=ExtResource("saw")]
 position = Vector2(7864, 538)
 travel = Vector2(0, 90)
-period = 2.1
+period = 2.0
 radius = 11.0
 
 [node name="Spiky4" parent="Hazards" instance=ExtResource("spiky")]
 position = Vector2(8480, 800)
-travel = Vector2(64, 0)
+travel = Vector2(48, 0)
 speed = 45.0
-phase = 0.88
+phase = 0.58
 
-[node name="Bat2" parent="Hazards" instance=ExtResource("bat")]
+[node name="Bat1" parent="Hazards" instance=ExtResource("bat")]
 position = Vector2(8768, 748)
 travel = Vector2(80, 0)
 speed = 50.0
@@ -330,23 +332,24 @@ targets = Array[NodePath]([NodePath("../TrapDoor2")])
 [node name="Checkpoint7" parent="Hazards" instance=ExtResource("checkpoint")]
 position = Vector2(12928, 736)
 
-[node name="Slime2" parent="Hazards" instance=ExtResource("slime")]
-position = Vector2(13168, 736)
-travel = Vector2(48, 0)
-speed = 35.0
-phase = 0.27
-
-[node name="Spiky6" parent="Hazards" instance=ExtResource("spiky")]
-position = Vector2(13456, 736)
-travel = Vector2(48, 0)
-speed = 45.0
+[node name="Spark1" parent="Hazards" instance=ExtResource("spark")]
+position = Vector2(13200, 703)
+travel = Vector2(32, 0)
+speed = 56
 phase = 0.44
 
-[node name="Bat3" parent="Hazards" instance=ExtResource("bat")]
+[node name="Mace2" parent="Hazards" instance=ExtResource("mace")]
+position = Vector2(13560, 608)
+travel = Vector2(116, 0)
+swing = 0.94
+period = 2.6
+phase = 0.19
+
+[node name="Bat2" parent="Hazards" instance=ExtResource("bat")]
 position = Vector2(13744, 684)
-travel = Vector2(64, 0)
+travel = Vector2(48, 0)
 speed = 50.0
-phase = 0.69
+phase = 0.28
 bob = 8.0
 
 [node name="TrapDoor2" parent="Hazards" instance=ExtResource("trap_door")]
@@ -357,29 +360,29 @@ active_time = 2.0
 [node name="PopSpikes3" parent="Hazards" instance=ExtResource("retractable")]
 position = Vector2(14512, 736)
 tiles = 3
-auto_period = 2.9
+auto_period = 3.2
 active_time = 1.0
 
 [node name="Checkpoint8" parent="Hazards" instance=ExtResource("checkpoint")]
 position = Vector2(14784, 736)
 
-[node name="Spiky7" parent="Hazards" instance=ExtResource("spiky")]
+[node name="Spiky6" parent="Hazards" instance=ExtResource("spiky")]
 position = Vector2(15488, 544)
-travel = Vector2(96, 0)
+travel = Vector2(48, 0)
 speed = 45.0
-phase = 0.07
+phase = 0.32
 
-[node name="Spiky8" parent="Hazards" instance=ExtResource("spiky")]
+[node name="Spiky7" parent="Hazards" instance=ExtResource("spiky")]
 position = Vector2(15776, 544)
-travel = Vector2(80, 0)
+travel = Vector2(64, 0)
 speed = 45.0
-phase = 0.13
+phase = 0.94
 
-[node name="Bat4" parent="Hazards" instance=ExtResource("bat")]
+[node name="Bat3" parent="Hazards" instance=ExtResource("bat")]
 position = Vector2(16064, 492)
 travel = Vector2(64, 0)
 speed = 50.0
-phase = 0.66
+phase = 0.07
 bob = 8.0
 
 [node name="Coin1" parent="Coins" instance=ExtResource("coin")]
@@ -401,46 +404,37 @@ position = Vector2(4152, 774)
 position = Vector2(4184, 774)
 
 [node name="Coin7" parent="Coins" instance=ExtResource("coin")]
-position = Vector2(5888, 662)
-
-[node name="Coin8" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(6376, 596)
 
-[node name="Coin9" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin8" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(6536, 596)
 
-[node name="Coin10" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin9" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(6696, 596)
 
-[node name="Coin11" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin10" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(6856, 596)
 
-[node name="Coin12" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin11" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(10040, 678)
 
-[node name="Coin13" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin12" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(10072, 678)
 
-[node name="Coin14" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin13" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(10104, 678)
 
-[node name="Coin15" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin14" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(11328, 566)
 
-[node name="Coin16" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin15" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(11720, 564)
 
-[node name="Coin17" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin16" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(11880, 564)
 
-[node name="Coin18" parent="Coins" instance=ExtResource("coin")]
+[node name="Coin17" parent="Coins" instance=ExtResource("coin")]
 position = Vector2(12040, 564)
-
-[node name="Coin19" parent="Coins" instance=ExtResource("coin")]
-position = Vector2(14928, 662)
-
-[node name="Coin20" parent="Coins" instance=ExtResource("coin")]
-position = Vector2(15120, 534)
 
 [node name="Torch6" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(104, 592)
@@ -508,41 +502,38 @@ position = Vector2(4712, 752)
 [node name="Torch304" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(4872, 752)
 
-[node name="Torch314" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(5032, 752)
+[node name="Torch318" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(5096, 752)
 
-[node name="Torch330" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(5288, 752)
+[node name="Torch333" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(5336, 752)
 
-[node name="Torch343" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(5496, 752)
+[node name="Torch346" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(5544, 752)
 
-[node name="Torch357" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(5720, 752)
+[node name="Torch358" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(5736, 752)
 
-[node name="Torch367" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(5880, 752)
+[node name="Torch368" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(5896, 752)
 
-[node name="Torch382" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(6120, 560)
+[node name="Torch383" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(6136, 560)
 
-[node name="Torch393" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(6296, 560)
+[node name="Torch394" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(6312, 560)
 
-[node name="Torch405" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(6488, 560)
+[node name="Torch406" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(6504, 560)
 
-[node name="Torch416" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(6664, 560)
+[node name="Torch422" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(6760, 560)
 
-[node name="Torch432" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(6920, 560)
+[node name="Torch435" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(6968, 560)
 
-[node name="Torch442" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(7080, 560)
-
-[node name="Torch454" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(7272, 560)
+[node name="Torch449" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(7192, 560)
 
 [node name="Torch474" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(7592, 560)
@@ -550,80 +541,77 @@ position = Vector2(7592, 560)
 [node name="Torch485" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(7768, 560)
 
-[node name="Torch498" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(7976, 560)
+[node name="Torch496" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(7944, 560)
 
-[node name="Torch512" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(8200, 752)
+[node name="Torch509" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(8152, 752)
 
-[node name="Torch527" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(8440, 752)
+[node name="Torch523" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(8376, 752)
 
 [node name="Torch538" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(8616, 752)
 
-[node name="Torch553" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(8856, 752)
+[node name="Torch552" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(8840, 752)
 
 [node name="Torch570" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(9128, 752)
 
-[node name="Torch585" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(9368, 752)
+[node name="Torch584" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(9352, 752)
 
-[node name="Torch601" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(9624, 752)
+[node name="Torch599" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(9592, 752)
 
-[node name="Torch614" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(9832, 656)
+[node name="Torch615" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(9848, 656)
 
 [node name="Torch635" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(10168, 656)
 
-[node name="Torch651" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(10424, 656)
+[node name="Torch645" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(10328, 656)
 
-[node name="Torch670" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(10728, 656)
+[node name="Torch661" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(10584, 656)
 
 [node name="Torch687" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(11000, 656)
 
-[node name="Torch697" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(11160, 656)
+[node name="Torch698" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(11176, 656)
 
-[node name="Torch709" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(11352, 656)
+[node name="Torch708" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(11336, 656)
 
-[node name="Torch725" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(11608, 528)
+[node name="Torch720" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(11528, 528)
 
-[node name="Torch740" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(11848, 528)
+[node name="Torch736" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(11784, 528)
 
-[node name="Torch750" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(12008, 528)
-
-[node name="Torch762" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(12200, 528)
+[node name="Torch756" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(12104, 528)
 
 [node name="Torch776" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(12424, 528)
 
-[node name="Torch786" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(12584, 528)
+[node name="Torch789" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(12632, 688)
 
 [node name="Torch803" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(12856, 688)
 
-[node name="Torch814" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(13032, 688)
+[node name="Torch813" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(13016, 688)
 
-[node name="Torch827" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(13240, 688)
+[node name="Torch829" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(13272, 688)
 
-[node name="Torch837" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(13400, 688)
+[node name="Torch840" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(13448, 688)
 
 [node name="Torch851" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(13624, 688)
@@ -640,32 +628,35 @@ position = Vector2(14344, 688)
 [node name="Torch911" parent="Decor" instance=ExtResource("torch")]
 position = Vector2(14584, 688)
 
-[node name="Torch928" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(14856, 688)
+[node name="Torch922" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(14760, 688)
 
-[node name="Torch942" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(15080, 688)
+[node name="Torch935" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(14968, 688)
 
-[node name="Torch953" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(15256, 496)
+[node name="Torch949" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(15192, 496)
 
-[node name="Torch966" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(15464, 496)
+[node name="Torch963" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(15416, 496)
 
-[node name="Torch978" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(15656, 496)
+[node name="Torch974" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(15592, 496)
 
-[node name="Torch993" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(15896, 496)
+[node name="Torch990" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(15848, 496)
 
-[node name="Torch1008" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(16136, 496)
+[node name="Torch1002" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(16040, 496)
 
-[node name="Torch1022" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(16360, 496)
+[node name="Torch1017" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(16280, 496)
 
-[node name="Torch1032" parent="Decor" instance=ExtResource("torch")]
-position = Vector2(16520, 496)
+[node name="Torch1028" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(16456, 496)
+
+[node name="Torch1042" parent="Decor" instance=ExtResource("torch")]
+position = Vector2(16680, 496)
 
 [node name="Kill0" type="Area2D" parent="KillZones"]
 position = Vector2(1680.0, 832)

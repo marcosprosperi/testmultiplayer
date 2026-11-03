@@ -10,6 +10,7 @@ const WING = Color(0.85, 0.95, 1.0, 0.75)
 
 func _init() -> void:
 	stompable = true
+	wait_for_it = true
 	body_height = 8.0
 
 func patrol_offset(t: float) -> Vector2:
