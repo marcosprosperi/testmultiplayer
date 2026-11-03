@@ -197,6 +197,12 @@ func _ray(from: Vector2, to: Vector2) -> Dictionary:
 	var query = PhysicsRayQueryParameters2D.create(from, to, 512)
 	return player.get_world_2d().direct_space_state.intersect_ray(query)
 
+func _solid_at(point: Vector2) -> bool:
+	var query = PhysicsPointQueryParameters2D.new()
+	query.position = point
+	query.collision_mask = 512
+	return not player.get_world_2d().direct_space_state.intersect_point(query, 1).is_empty()
+
 func _course_target(ahead: float) -> Vector2:
 	var curve = _course.curve
 	var offset = curve.get_closest_offset(_course.to_local(player.global_position))
@@ -210,7 +216,11 @@ func _landing(dir: float, max_dist := 190) -> Dictionary:
 	# Slower (lightning, coins) means shorter jumps, faster (turbo) longer ones
 	max_dist = int(max_dist * RaceManager.speed_factor(player.name.to_int()))
 	for d in range(30, max_dist, 6):
-		var hit = _ray(player.global_position + Vector2(dir * d, -60), player.global_position + Vector2(dir * d, 140))
+		var from = player.global_position + Vector2(dir * d, -60)
+		# Inside a wall there's nowhere to land (only the seams between its blocks)
+		if _solid_at(from):
+			continue
+		var hit = _ray(from, player.global_position + Vector2(dir * d, 140))
 		if hit.is_empty():
 			continue
 		# Never jump onto an elevator going up or down (wait until it's level)
@@ -243,7 +253,9 @@ func _ledge_above(dir: float) -> Dictionary:
 			continue
 		if hit.collider is MovingPlatform and hit.collider.travel.y != 0:
 			continue
-		if _ray(Vector2(x, hit.position.y - 2), Vector2(x, hit.position.y - 14)).is_empty():
+		# Room to stand on it (not a seam between the blocks of a wall)
+		if not _solid_at(Vector2(x, hit.position.y - 4)) \
+				and _ray(Vector2(x, hit.position.y - 2), Vector2(x, hit.position.y - 14)).is_empty():
 			return {"x": x + dir * 10, "y": hit.position.y, "body": hit.collider}
 	return {}
 
