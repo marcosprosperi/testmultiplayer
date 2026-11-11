@@ -42,7 +42,8 @@ var state := State.WAITING
 # Power-up each player is holding (id -> PowerUps name), synced by the server
 var items = {}
 # Effects on each player: id -> {effect: race time it ends}. Effects are
-# "turbo", "star", "slow" (lightning) and "shield" (until it saves you)
+# "turbo", "star", "slow" (lightning), "shield" (until it saves you),
+# "wings" (one more jump in the air) and "ink" (a stained screen)
 var effects = {}
 var _peels := 0
 # Coins picked up by each player in this race (synced by the server)
@@ -521,6 +522,23 @@ func use_item(id: int) -> void:
 				_teleport.rpc(id, target)
 			else:
 				_set_effect(id, "turbo", now + PowerUps.TURBO_TIME)
+		PowerUps.WINGS:
+			_set_effect(id, "wings", now + PowerUps.WINGS_TIME)
+		PowerUps.INK:
+			# Everyone ahead gets a stained screen (a star keeps it clean)
+			var my_place = place_of(id)
+			for other in get_tree().get_nodes_in_group("player"):
+				var other_id = other.name.to_int()
+				if other_id != id and not has_finished(other_id) and place_of(other_id) < my_place \
+						and not has_effect(other_id, "star"):
+					_set_effect(other_id, "ink", now + PowerUps.INK_TIME)
+		PowerUps.ROCKET:
+			# Whoever is right ahead gets hit; leading, it's just a turbo
+			var target = _player_ahead(player)
+			if target:
+				_rocket_hit.rpc(id, target.name.to_int())
+			else:
+				_set_effect(id, "turbo", now + PowerUps.TURBO_TIME)
 	_sync_effects.rpc(effects)
 	_item_used.rpc(id, item)
 
@@ -534,6 +552,33 @@ func _player_node(id: int) -> Node2D:
 		if player.name.to_int() == id:
 			return player
 	return null
+
+# The closest player still racing that's further along than this one
+func _player_ahead(player: Node2D) -> Node2D:
+	if player == null:
+		return null
+	var mine = get_progress(player)
+	var best: Node2D = null
+	for other in get_tree().get_nodes_in_group("player"):
+		if other == player or has_finished(other.name.to_int()):
+			continue
+		var progress = get_progress(other)
+		if progress > mine and (best == null or progress < get_progress(best)):
+			best = other
+	return best
+
+# A rocket flies from one player to another (drawn on every screen); the one
+# it hits spins for a moment, unless a star or a shield saves them
+@rpc("authority", "call_local", "reliable")
+func _rocket_hit(from_id: int, target_id: int) -> void:
+	var from = _player_node(from_id)
+	var target = _player_node(target_id)
+	if target == null or not is_instance_valid(current_level):
+		return
+	var rocket = preload("res://race/powerups/rocket.gd").new()
+	rocket.target = target
+	current_level.add_child(rocket)
+	rocket.global_position = (from.global_position if from else target.global_position) + Vector2(0, -10)
 
 # The first flag further along the course than the player (INF if none)
 func _next_checkpoint(player: Node2D) -> Vector2:

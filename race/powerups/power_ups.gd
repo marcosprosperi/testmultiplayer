@@ -10,10 +10,14 @@ const TURBO = "turbo"
 const STAR = "star"
 const LIGHTNING = "lightning"
 const PORTAL = "portal"
+const WINGS = "wings"
+const ROCKET = "rocket"
+const INK = "ink"
 
 const NAMES = {
 	PEEL: "Cáscara", SHIELD: "Escudo", TURBO: "Turbo",
 	STAR: "Estrella", LIGHTNING: "Rayo", PORTAL: "Portal",
+	WINGS: "Alas", ROCKET: "Cohete", INK: "Tinta",
 }
 const HINTS = {
 	PEEL: "la dejás atrás y el que la pisa resbala",
@@ -22,6 +26,9 @@ const HINTS = {
 	STAR: "nada te lastima y corrés más rápido",
 	LIGHTNING: "frena a todos los que van adelante tuyo",
 	PORTAL: "te lleva a la próxima bandera",
+	WINGS: "podés saltar otra vez en el aire",
+	ROCKET: "marea al que va justo adelante tuyo",
+	INK: "les mancha la pantalla a los que van adelante",
 }
 ## Chances [when you're first, when you're last]; in between they blend
 const WEIGHTS = {
@@ -31,6 +38,9 @@ const WEIGHTS = {
 	STAR: [5.0, 25.0],
 	LIGHTNING: [0.0, 20.0],
 	PORTAL: [0.0, 20.0],
+	WINGS: [15.0, 10.0],
+	ROCKET: [5.0, 20.0],
+	INK: [5.0, 15.0],
 }
 
 ## Effects (seconds) and how much faster or slower they make you
@@ -41,6 +51,8 @@ const STAR_SPEED = 1.25
 const LIGHTNING_TIME = 3.0
 const LIGHTNING_SPEED = 0.65
 const STUN_TIME = 1.2
+const WINGS_TIME = 8.0
+const INK_TIME = 4.0
 
 ## place: 0 = first, 1 = last
 static func pick(place: float, rng: RandomNumberGenerator = null) -> String:
@@ -101,3 +113,35 @@ static func draw_icon(canvas: CanvasItem, item: String, center: Vector2, size: f
 			canvas.draw_circle(center, 5 * s, Color("#3bceac"))
 			canvas.draw_circle(center, 3 * s, Color("#1d1530"))
 			canvas.draw_arc(center, 7 * s, 0, TAU, 20, outline, 1.0)
+		WINGS:
+			# Two feathered wings and a little body between them
+			for side in [-1.0, 1.0]:
+				var wing = PackedVector2Array([center + Vector2(side * 1, 1) * s, center + Vector2(side * 4, -6) * s,
+					center + Vector2(side * 8, -4) * s, center + Vector2(side * 7, 0) * s, center + Vector2(side * 5, 4) * s])
+				canvas.draw_colored_polygon(wing, Color("#f4f7ff"))
+				canvas.draw_polyline(wing + PackedVector2Array([wing[0]]), outline, 1.0)
+				canvas.draw_line(center + Vector2(side * 3, -1) * s, center + Vector2(side * 6, -3) * s, Color("#a9c4f5"), 1.0)
+			canvas.draw_circle(center + Vector2(0, 1) * s, 2.2 * s, Color("#ffd23f"))
+		ROCKET:
+			# A red rocket pointing forward, with a flame
+			var hull = PackedVector2Array([center + Vector2(-5, -3) * s, center + Vector2(3, -3) * s, center + Vector2(8, 0) * s,
+				center + Vector2(3, 3) * s, center + Vector2(-5, 3) * s])
+			canvas.draw_colored_polygon(PackedVector2Array([center + Vector2(-5, -1.5) * s, center + Vector2(-9, 0) * s,
+				center + Vector2(-5, 1.5) * s]), Color("#ff9f1c"))
+			canvas.draw_colored_polygon(hull, Color("#ff5e5b"))
+			canvas.draw_polyline(hull + PackedVector2Array([hull[0]]), outline, 1.0)
+			canvas.draw_colored_polygon(PackedVector2Array([center + Vector2(-5, -3) * s, center + Vector2(-7, -6) * s,
+				center + Vector2(-2, -3) * s]), outline)
+			canvas.draw_colored_polygon(PackedVector2Array([center + Vector2(-5, 3) * s, center + Vector2(-7, 6) * s,
+				center + Vector2(-2, 3) * s]), outline)
+			canvas.draw_circle(center + Vector2(2, 0) * s, 1.6 * s, Color("#e8fbff"))
+		INK:
+			# A splat of ink with a shine (and a light edge, to stand out on dark)
+			for pass_color in [Color("#b9a7ff"), outline]:
+				var grow = 0.9 * s if pass_color != outline else 0.0
+				canvas.draw_circle(center, 5 * s + grow, pass_color)
+				for k in 6:
+					var a = k * TAU / 6.0 + 0.3
+					canvas.draw_circle(center + Vector2(cos(a), sin(a)) * 6 * s, (1.6 if k % 2 == 0 else 2.4) * s + grow, pass_color)
+			canvas.draw_circle(center + Vector2(-2, -2) * s, 1.4 * s, Color("#6c5ce7"))
+

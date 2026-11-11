@@ -453,8 +453,117 @@ def level11():
     return b
 
 
+def level12():
+    """Selva (medium): frogs, hawks and bees between islands and falling platforms"""
+    b = LevelBuilder("Level_12", "forest", "grass", seed=1212)
+    b.wide_spacing = True
+    b.root_extra = "background_color = Color(0.45, 0.68, 0.85, 1)\n"
+    b.run(20)
+    b.item_boxes()
+    b.enemies_run(["frog", "hawk"], length=36)
+    b.pillars(count=4, width=3, gaps=(3, 5), rises=(-1, 0, 1))
+    b.stairs(3, up=True)
+    b.enemies_run(["bee", "diamond", "frog"], length=44)
+    b.checkpoint()
+    b.gap(12, "falling")
+    b.saw_run(24)
+    b.climb(levels=3)
+    b.enemies_run(["hawk", "bee"], length=36)
+    b.drop(rows=10)
+    b.checkpoint()
+    b.pillars(count=5, width=3, gaps=(4, 5), rises=(-2, -1, 1, 2))
+    b.spikes_run(groups=2, length=3)
+    b.gap(12, "mover")
+    b.enemies_run(["frog", "spark", "hawk"], length=44)
+    b.checkpoint()
+    b.fan_run(auto=True)
+    b.stairs(3, up=False)
+    b.gap(12, "falling")
+    b.enemies_run(["diamond", "frog", "bee"], length=44)
+    b.climb(levels=2)
+    b.checkpoint()
+    b.pillars(count=4, width=2, gaps=(4, 5))
+    b.retractable_run(auto=True)
+    b.enemies_run(["hawk", "slime", "hawk"], length=44)
+    b.finish()
+    return b
+
+
+def level13():
+    """Cumbre (hard): ice between islands, penguins, hawks diving, crushers"""
+    b = LevelBuilder("Level_13", "snow", "snow", seed=1313)
+    b.wide_spacing = True
+    b.root_extra = "background_color = Color(0.75, 0.85, 0.95, 1)\n"
+    b.run(20)
+    b.item_boxes()
+    b.ice_run(28, ["penguin"])
+    b.pillars(count=4, width=3, gaps=(4, 5), rises=(0, 1, 2))
+    b.enemies_run(["hawk", "spiky"], length=36)
+    b.climb(levels=3)
+    b.checkpoint()
+    b.ice_run(24)
+    b.gap(7, "saw")
+    b.crusher_hall(count=3)
+    b.enemies_run(["diamond", "penguin", "hawk"], length=44)
+    b.checkpoint()
+    b.pillars(count=5, width=2, gaps=(4, 6), rises=(-1, 1, 2))
+    b.ice_run(30, ["penguin", "penguin"])
+    b.gap(12, "falling")
+    b.climb(levels=2, elevator=True)
+    b.checkpoint()
+    b.enemies_run(["spark", "bat", "spiky"], length=44)
+    b.retractable_run(auto=True)
+    b.gap(13, "mover")
+    b.ice_run(24, ["penguin"])
+    b.drop(rows=10)
+    b.checkpoint()
+    b.spikes_run(groups=3, length=3)
+    b.pillars(count=4, width=2, gaps=(5, 6))
+    b.enemies_run(["hawk", "diamond", "penguin"], length=44)
+    b.ice_run(24)
+    b.finish()
+    return b
+
+
+def level14():
+    """Fortaleza (hard): a dungeon of maces, sparks, crushers and trap doors"""
+    b = LevelBuilder("Level_14", "cave", "stone", seed=1414)
+    b.wide_spacing = True
+    b.root_extra = "background_color = Color(0.12, 0.1, 0.12, 1)\nmusic = \"dark\"\n"
+    b.run(20)
+    b.item_boxes()
+    b.enemies_run(["mace", "spiky"], length=36)
+    b.crusher_hall(count=3)
+    b.gap(7, "saw")
+    b.checkpoint()
+    door = b.uname("TrapDoor")
+    b.button([door])
+    b.enemies_run(["spark", "mace"], length=40)
+    b.gap(8, "trapdoor", name=door)
+    b.stairs(3, up=True)
+    b.retractable_run(auto=True)
+    b.checkpoint()
+    b.enemies_run(["mace", "bat", "mace"], length=44)
+    b.gap(12, "mover")
+    b.drop(rows=10)
+    b.crusher_hall(count=4, spacing=8, period=3.0)
+    b.checkpoint()
+    b.spikes_run(groups=3, length=3)
+    b.enemies_run(["ghost", "spark", "spiky"], length=44)
+    b.climb(levels=3)
+    b.gap(12, "falling")
+    b.checkpoint()
+    b.fan_run(auto=True)
+    b.enemies_run(["mace", "ghost", "mace"], length=44)
+    b.gap(7, "saw")
+    b.crusher_hall(count=3)
+    b.enemies_run(["spark", "bat"], length=36)
+    b.finish()
+    return b
+
+
 LEVELS = {1: level1, 2: level2, 3: level3, 4: level4, 5: level5, 6: level6, 7: level7, 8: level8, 9: level9,
-          10: level10, 11: level11}
+          10: level10, 11: level11, 12: level12, 13: level13, 14: level14}
 for n in [int(a) for a in sys.argv[2:]] or list(LEVELS):
     LEVELS[n]().write(f"{OUT}/level_{n}.tscn")
 

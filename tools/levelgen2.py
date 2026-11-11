@@ -15,7 +15,7 @@ FLAG_EVERY = 1800  # px of route between checkpoint flags (at most, about)
 # past both ends there's this much more land, behind a cliff too tall to jump
 FILL = 22
 BORDER = 34
-END_CLIFF = 8
+END_CLIFF = 12  # taller than a double jump (the Alas power-up)
 
 
 class LevelBuilder:
