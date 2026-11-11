@@ -62,6 +62,9 @@ func _ready() -> void:
 	%OptionsButton.pressed.connect(func(): get_tree().call_group("pause_menu", "open_settings"))
 	start_button.pressed.connect(func(): main.start_game())
 	copy_button.pressed.connect(_on_copy_pressed)
+	%InternetButton.visible = NetworkManager.is_hosting
+	%InternetButton.pressed.connect(NetworkManager.open_to_internet)
+	NetworkManager.internet_changed.connect(_refresh)
 	# Only the host can change the rules; everyone else sees them
 	coins_check.toggled.connect(func(on): PlayersManager.set_coins_enabled(on))
 	checkpoints_check.toggled.connect(func(on): PlayersManager.set_checkpoints_enabled(on))
@@ -118,7 +121,19 @@ func _refresh() -> void:
 		game_name_edit.placeholder_text = "Partida de %s" % my_name if my_name != "" else "Ej: Carrera de los viernes"
 		var ips = NetworkManager.get_local_ips()
 		var ip_text = ", ".join(ips) if not ips.is_empty() else "127.0.0.1"
-		address_label.text = "Compartí tu IP: %s  (puerto %d)" % [ip_text, NetworkManager.port]
+		var local = "En tu red: %s  (puerto %d)" % [ip_text, NetworkManager.port]
+		match NetworkManager.internet:
+			NetworkManager.Internet.TRYING:
+				address_label.text = "Pidiéndole al router que abra el puerto..."
+			NetworkManager.Internet.OPEN:
+				var public = "Por internet: %s" % NetworkManager.public_ip if NetworkManager.public_ip != "" else "Puerto abierto"
+				address_label.text = "%s · %s" % [public, NetworkManager.internet_note if NetworkManager.internet_note != "" else local]
+			NetworkManager.Internet.FAILED:
+				address_label.text = "%s. %s" % [NetworkManager.internet_note, local]
+			_:
+				address_label.text = "Compartí tu IP: %s  (puerto %d)" % [ip_text, NetworkManager.port]
+		%InternetButton.disabled = NetworkManager.internet in [NetworkManager.Internet.TRYING, NetworkManager.Internet.OPEN]
+		%InternetButton.text = "Abierto a internet" if NetworkManager.internet == NetworkManager.Internet.OPEN else "Abrir a internet"
 	elif connected:
 		title.text = PlayersManager.game_display_name()
 		var state = "Carrera en curso" if PlayersManager.game_started else "Sala de espera"
@@ -328,9 +343,11 @@ func _on_profile_result(ok: bool, message: String) -> void:
 		_set_status(message, Color("#ff7675"))
 
 func _on_copy_pressed() -> void:
+	# The one people outside the house need, once the port is open
 	var ips = NetworkManager.get_local_ips()
-	DisplayServer.clipboard_set(ips[0] if not ips.is_empty() else "127.0.0.1")
-	_set_status("IP copiada", Color.WHITE)
+	var ip = NetworkManager.public_ip if NetworkManager.public_ip != "" else (ips[0] if not ips.is_empty() else "127.0.0.1")
+	DisplayServer.clipboard_set(ip)
+	_set_status("IP copiada: " + ip, Color.WHITE)
 
 func _set_status(text: String, color: Color) -> void:
 	status_label.text = text

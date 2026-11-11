@@ -11,6 +11,9 @@ const SLIPSTREAM_BOOST = 1.2
 const COYOTE_TIME = 0.1
 ## Jump buffer: pressing jump this long before landing still jumps
 const JUMP_BUFFER = 0.12
+## Letting go of the jump key on the way up cuts the jump short (this much
+## of the upward speed is left): tap for a hop, hold for a full jump
+const JUMP_CUT = 0.45
 ## Bounce after stomping an enemy
 const STOMP_BOUNCE = -300.0
 ## Width of your feet: what's under the outer pixel of each side doesn't hold you
@@ -59,6 +62,8 @@ var _safe_left := 0.0
 # Slipped on a peel: can't move for a moment
 var _stun_left := 0.0
 var _jump_buffer_left := 0.0
+# Rising from a jump of your own that letting go of the key can still cut
+var _can_cut_jump := false
 
 func _enter_tree():
 	# Set authority based on the node name (which is now just the ID); bots
@@ -148,8 +153,16 @@ func _physics_process(delta: float) -> void:
 		velocity.y = JUMP_VELOCITY
 		_jump_buffer_left = 0.0
 		_coyote_left = 0.0
+		# Bots always jump all the way
+		_can_cut_jump = brain == null
 		if is_local():
 			Sfx.play("jump", -6.0)
+
+	if velocity.y >= 0.0:
+		_can_cut_jump = false
+	elif _can_cut_jump and keys and not Input.is_action_pressed("jump"):
+		_can_cut_jump = false
+		velocity.y *= JUMP_CUT
 
 	var direction := 0.0
 	if not frozen:
@@ -327,6 +340,7 @@ func _unsnag() -> void:
 ## Called when you land on an enemy you can squash
 func bounce() -> void:
 	velocity.y = STOMP_BOUNCE
+	_can_cut_jump = false
 	_coyote_left = 0.0
 
 ## Losing sends the player back to the start of the level. A star or a
