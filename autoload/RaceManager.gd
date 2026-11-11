@@ -11,6 +11,10 @@ const RESULTS_TIME = 6.0
 const FINAL_RESULTS_TIME = 10.0
 ## Once every person crossed the line, bots get this long to finish too
 const BOT_GRACE_TIME = 25.0
+## Once the first person crosses the line, the rest have this long: a race
+## never waits forever for someone who's stuck or away. Whoever is still
+## running then finishes behind, in order of how far they got
+const FINISH_TIME_LIMIT = 120.0
 const COUNTDOWN_FROM = 3
 ## Start anyway if someone takes longer than this to load the level
 const MAX_WAIT_FOR_PLAYERS = 10.0
@@ -66,7 +70,13 @@ var current_level: Node2D
 var finish_order: Array = []
 # Who we already celebrated crossing the line this race (see player_finished)
 var _announced_finishes: Array = []
+# Race time at which the race ends for whoever is still running (-1: no limit
+# yet). Synced by the server
+var finish_deadline := -1.0
 var _changing_level := false
+# See get_progress
+var _progress_cache := {}
+var _progress_frame := -1
 
 func _ready() -> void:
 	PlayersManager.players_changed.connect(_check_everyone_finished)
@@ -88,6 +98,7 @@ func register_level(level: Node2D) -> void:
 		_sync_coins.rpc({})
 		_sync_items.rpc({})
 		_sync_effects.rpc({})
+		_sync_deadline.rpc(-1.0)
 		_sync_state.rpc(State.WAITING, 0)
 		_start_anyway_after_timeout(_race_token)
 
@@ -114,6 +125,7 @@ func reset() -> void:
 	_announced_finishes = []
 	items = {}
 	effects = {}
+	finish_deadline = -1.0
 	finish_order_changed.emit()
 	state_changed.emit()
 	grid_changed.emit()
@@ -126,6 +138,7 @@ func send_state_to(id: int) -> void:
 	_sync_coins.rpc_id(id, race_coins)
 	_sync_items.rpc_id(id, items)
 	_sync_effects.rpc_id(id, effects)
+	_sync_deadline.rpc_id(id, finish_deadline)
 
 func coins_of(id: int) -> int:
 	return race_coins.get(id, 0)
@@ -269,8 +282,20 @@ func get_finish() -> Node2D:
 
 ## 0.0 at the start, 1.0 at the finish line. Measured along the level's
 ## "Course" (a Path2D following the route, for levels that go up and down),
-## or else along the straight line from the spawn to the finish
+## or else along the straight line from the spawn to the finish.
+## Asked many times a frame (the HUD's ranking, the bots...), and finding the
+## closest point of a long course isn't free: one answer per node per frame
 func get_progress(player: Node2D) -> float:
+	var frame = Engine.get_process_frames()
+	if frame != _progress_frame:
+		_progress_frame = frame
+		_progress_cache.clear()
+	var key = player.get_instance_id()
+	if not _progress_cache.has(key):
+		_progress_cache[key] = _measure_progress(player)
+	return _progress_cache[key]
+
+func _measure_progress(player: Node2D) -> float:
 	var path = current_level.get_node_or_null("Course") as Path2D if is_instance_valid(current_level) else null
 	if path and path.curve and path.curve.point_count >= 2:
 		var curve = path.curve
@@ -325,6 +350,9 @@ func _finish(id: int) -> void:
 	_sync_finish_order.rpc(finish_order)
 	print("Jugador ", id, " llegó a la meta en posición ", finish_order.size())
 	_check_everyone_finished()
+	# A person made it: the clock starts for the rest
+	if id > 0 and not _changing_level:
+		_set_deadline(FINISH_TIME_LIMIT)
 
 # Also runs when someone leaves, so the race doesn't wait for them
 func _check_everyone_finished() -> void:
@@ -336,9 +364,10 @@ func _check_everyone_finished() -> void:
 	if not players.all(func(id): return finish_order.has(id)):
 		# Only bots left on the course: give them a little time, then end
 		if players.all(func(id): return id < 0 or finish_order.has(id)):
-			_wait_for_bots(_race_token)
+			_set_deadline(BOT_GRACE_TIME)
 		return
 	_changing_level = true
+	var token = _race_token
 
 	# Hand out the points (players who left don't take a position)
 	var results = []
@@ -358,21 +387,30 @@ func _check_everyone_finished() -> void:
 	_show_results.rpc(results, final)
 
 	await get_tree().create_timer(FINAL_RESULTS_TIME if final else RESULTS_TIME).timeout
+	# The host went back to the lobby (or left) meanwhile
+	if token != _race_token:
+		return
 	if final:
 		PlayersManager.championship_over.emit()
 	else:
 		PlayersManager.finish_level.emit()
 
-var _bots_wait_token := -1
+## Seconds until the race ends for whoever is still running (INF: no limit yet)
+func time_left() -> float:
+	return maxf(finish_deadline - race_time(), 0.0) if finish_deadline >= 0.0 and state == State.RACING else INF
 
-func _wait_for_bots(token: int) -> void:
-	if _bots_wait_token == token:
+# Server: the race ends in `seconds` at the latest (a limit only gets shorter)
+func _set_deadline(seconds: float) -> void:
+	var at = race_time() + seconds
+	if state != State.RACING or (finish_deadline >= 0.0 and finish_deadline <= at):
 		return
-	_bots_wait_token = token
-	await get_tree().create_timer(BOT_GRACE_TIME).timeout
-	if token != _race_token or _changing_level:
+	_sync_deadline.rpc(at)
+	var token = _race_token
+	await get_tree().create_timer(seconds).timeout
+	# Another race by now, everyone made it, or a shorter limit took over
+	if token != _race_token or _changing_level or not is_equal_approx(finish_deadline, at):
 		return
-	# Bots still running finish behind, in order of how far they got
+	# Whoever is still running finishes behind, in order of how far they got
 	var left = PlayersManager.joined_players.keys().filter(func(id): return not finish_order.has(id))
 	var nodes = {}
 	for player in get_tree().get_nodes_in_group("player"):
@@ -382,6 +420,10 @@ func _wait_for_bots(token: int) -> void:
 		finish_order.append(id)
 	_sync_finish_order.rpc(finish_order)
 	_check_everyone_finished()
+
+@rpc("authority", "call_local", "reliable")
+func _sync_deadline(at: float) -> void:
+	finish_deadline = at
 
 @rpc("authority", "call_local", "reliable")
 func _show_results(results: Array, final: bool) -> void:

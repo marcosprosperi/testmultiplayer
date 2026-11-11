@@ -22,7 +22,7 @@ func _ready() -> void:
 	PlayersManager.player_added.connect(_on_player_added)
 	PlayersManager.player_removed.connect(_on_player_removed)
 	PlayersManager.finish_level.connect(_on_level_finished)
-	PlayersManager.championship_over.connect(_return_to_lobby)
+	PlayersManager.championship_over.connect(return_to_lobby)
 	# Host or join now that the spawners exist
 	NetworkManager.start()
 
@@ -33,6 +33,7 @@ func start_game() -> void:
 	playlist = PlayersManager.get_playlist().filter(func(i): return i >= 0 and i < levels.size())
 	if playlist.is_empty():
 		playlist = default_playlist()
+	Settings.set_host_rules(PlayersManager.settings)
 	PlayersManager.reset_points()
 	if PlayersManager.bots_enabled():
 		PlayersManager.add_bots()
@@ -50,10 +51,11 @@ func default_playlist() -> Array:
 		or (levels[a].difficulty == levels[b].difficulty and a < b))
 	return order
 
-# Server: the championship ended, everyone goes back to the lobby (still
-# connected, with their name and color) to change things and play again
-func _return_to_lobby() -> void:
-	if not multiplayer.is_server():
+## Server: the championship ended (or the host stopped it from the pause
+## menu), everyone goes back to the lobby (still connected, with their name
+## and color) to change things and play again
+func return_to_lobby() -> void:
+	if not multiplayer.is_server() or not PlayersManager.game_started:
 		return
 	for child in level_container.get_children():
 		level_container.remove_child(child)

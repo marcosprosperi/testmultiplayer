@@ -57,6 +57,7 @@ func _broadcast() -> void:
 		"players": multiplayer.get_peers().size() + 1,
 		"max_players": NetworkManager.MAX_PLAYERS,
 		"started": PlayersManager.game_started,
+		"version": NetworkManager.version(),
 	}
 	var packet = JSON.stringify(info).to_utf8_buffer()
 	# Broadcast for the LAN, plus localhost so two windows on the same PC find each other

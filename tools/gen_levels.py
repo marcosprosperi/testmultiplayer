@@ -1,4 +1,5 @@
 # Builds the race levels with levelgen2. Usage: gen_levels.py <scenes dir> [level numbers]
+import hashlib
 import sys
 from levelgen2 import LevelBuilder
 
@@ -456,3 +457,13 @@ LEVELS = {1: level1, 2: level2, 3: level3, 4: level4, 5: level5, 6: level6, 7: l
           10: level10, 11: level11}
 for n in [int(a) for a in sys.argv[2:]] or list(LEVELS):
     LEVELS[n]().write(f"{OUT}/level_{n}.tscn")
+
+# Fingerprint of all the levels: builds with different levels can't play
+# together, and this is how they notice (see NetworkManager.version)
+digest = hashlib.md5()
+for n in sorted(LEVELS):
+    with open(f"{OUT}/level_{n}.tscn", "rb") as level_file:
+        digest.update(level_file.read())
+with open(f"{OUT}/../race/levels_version.gd", "w", newline="\n") as stamp:
+    stamp.write("class_name LevelsVersion\n\n## Written by tools/gen_levels.py: changes whenever a level does\n"
+                f'const HASH = "{digest.hexdigest()[:8]}"\n')

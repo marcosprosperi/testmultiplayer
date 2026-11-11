@@ -22,6 +22,11 @@ const DEATH_TIME = 0.45
 ## On ice you speed up and slow down slowly (pixels per second²)
 const ICE_ACCEL = 650.0
 const ICE_FRICTION = 260.0
+## On other screens you glide to where your own says you are (this fast), so
+## an uneven connection doesn't make you stutter; further than
+## NET_SNAP_DISTANCE (a respawn, a portal) you just appear there
+const NET_SMOOTHING = 25.0
+const NET_SNAP_DISTANCE = 48.0
 
 @onready var camera_2d: Camera2D = $Camera2D
 @onready var animated_sprite_2d: AnimatedSprite2D = $AnimatedSprite2D
@@ -30,6 +35,13 @@ const ICE_FRICTION = 260.0
 var name_label: Label
 # Synced so everyone sees the speed lines
 var slipstream := false
+# Synced: where this player is on the screen of whoever moves it. The other
+# screens follow it smoothly (see _follow_net)
+var net_position := Vector2.ZERO:
+	set(value):
+		net_position = value
+		_net_known = true
+var _net_known := false
 # Added to the velocity for one frame by things like fans
 var push := Vector2.ZERO
 # Last checkpoint flag touched in this level (if the host turned them on)
@@ -64,6 +76,11 @@ func is_local() -> bool:
 func _ready() -> void:
 	if RaceManager.has_spawn():
 		global_position = RaceManager.get_start_position(name.to_int())
+	# Someone already racing (we joined late) is wherever their screen says
+	if _net_known and not is_multiplayer_authority():
+		position = net_position
+	else:
+		net_position = position
 
 	camera_2d.zoom = Vector2.ONE * RaceManager.get_camera_zoom()
 	camera_2d.offset = RaceManager.get_camera_offset()
@@ -92,9 +109,13 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	# Only the player with authority processes input
-	if not is_multiplayer_authority() or _dying:
+	if not is_multiplayer_authority():
+		_follow_net(delta)
 		return
-		
+	if _dying:
+		net_position = position
+		return
+
 	if is_on_floor() && int(velocity.x) == 0:
 		animated_sprite_2d.play("idle")
 		
@@ -167,6 +188,16 @@ func _physics_process(delta: float) -> void:
 		_show_fx.rpc(Fx.DUST, global_position)
 	_was_on_floor = is_on_floor()
 	_unsnag()
+	net_position = position
+
+# Someone else's player: glide to where their screen says they are
+func _follow_net(delta: float) -> void:
+	if not _net_known:
+		return
+	if position.distance_to(net_position) > NET_SNAP_DISTANCE:
+		position = net_position
+	else:
+		position = position.lerp(net_position, 1.0 - exp(-NET_SMOOTHING * delta))
 
 func _process(delta: float) -> void:
 	queue_redraw()

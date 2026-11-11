@@ -24,6 +24,9 @@ func _ready() -> void:
 	add_child(_podium)
 
 func _process(delta: float) -> void:
+	# Back in the lobby already (the host cut the championship short)
+	if not PlayersManager.game_started:
+		_time_left = 0.0
 	if _time_left > 0.0:
 		_time_left -= delta
 		var next = "Volviendo a la sala en %d..." if _final else "Próxima carrera en %d..."
