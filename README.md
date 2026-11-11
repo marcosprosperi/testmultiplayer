@@ -45,6 +45,16 @@ por ejemplo `v3.2f79362e`). Si no coincide, el juego avisa y no deja entrar.
 2. Elegir "Windows Desktop" → **Export Project...**, destildar "Export With Debug" → **Save**.
 3. Queda `build/CarrerasLocas.exe` (un solo archivo). Esa carpeta no se sube al repo.
 
+## Publicar una versión (release)
+
+GitHub arma el juego para Windows y lo publica solo. Dos formas de pedirlo:
+
+- En GitHub: **Actions → Release → Run workflow**, escribir el nombre de la versión (por ejemplo `v4`).
+- O subir una etiqueta: `git tag v4 && git push origin v4`.
+
+En unos minutos aparece en **Releases** un zip con `CarrerasLocas.exe` para pasarle a quien quieras.
+Para probar el mismo armado en tu PC (Linux): `tools/ci/build_windows.sh`.
+
 ## Cómo está armado
 
 | Carpeta | Qué hay |

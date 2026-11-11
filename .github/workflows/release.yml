@@ -1,0 +1,48 @@
+# Builds the game for Windows and publishes it as a GitHub release.
+# It runs when a tag like v4 or v1.2 is pushed, or by hand from the Actions
+# tab ("Run workflow", writing the name of the version).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Nombre de la versión (por ejemplo v4). Se crea la etiqueta si no existe"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the Windows game
+        run: tools/ci/build_windows.sh "$RUNNER_TEMP/godot-ci"
+
+      - name: Zip it
+        run: |
+          cd build
+          zip -9 "CarrerasLocas-$TAG-windows.zip" CarrerasLocas.exe
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(sed -n 's/^const GAME_VERSION = //p' autoload/NetworkManager.gd)
+          LEVELS=$(sed -n 's/^const HASH = "\(.*\)"/\1/p' race/levels_version.gd)
+          NOTES="Versión del juego: **v$VERSION.$LEVELS** (se ve arriba a la derecha en el menú). Todos los que jueguen juntos tienen que tener la misma.
+
+          Para jugar: bajá el zip, descomprimilo y abrí \`CarrerasLocas.exe\`. Si Windows avisa que protegió tu PC, tocá *Más información → Ejecutar de todas formas*."
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "build/CarrerasLocas-$TAG-windows.zip" --clobber
+          else
+            gh release create "$TAG" "build/CarrerasLocas-$TAG-windows.zip" --target "$GITHUB_SHA" \
+              --title "Carreras Locas $TAG" --notes "$NOTES"
+          fi
