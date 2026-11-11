@@ -5,9 +5,27 @@ const MAX_PLAYERS = 8
 ## Bump it when a change makes this build unable to play with older ones
 ## (rules, power-ups, network messages...). Changed levels are noticed by
 ## themselves (LevelsVersion). Host and guests must have the same version()
-const GAME_VERSION = 2
+const GAME_VERSION = 3
 ## Guests that never say which version they have (older builds) are let go
 const HELLO_TIMEOUT = 5.0
+
+## Asking the router to open the game's port (UPnP), so people outside the
+## house can join with the public IP. Only when the host asks for it
+enum Internet { OFF, TRYING, OPEN, FAILED }
+## How long the router keeps the port open if the game can't close it (a crash)
+const PORT_LEASE_SECONDS = 4 * 60 * 60
+
+signal internet_changed
+
+var internet := Internet.OFF
+## The address people outside the house use (once internet is OPEN)
+var public_ip := ""
+## Why it didn't work (when internet is FAILED), or a warning when it did
+var internet_note := ""
+var _upnp: UPNP
+var _upnp_thread: Thread
+# Bumped on every try, so the answer to an old one isn't taken for the new one's
+var _upnp_attempt := 0
 
 var game_scene_path = "res://scenes/main.tscn"
 var menu_scene_path = "res://scenes/main_menu.tscn"
@@ -72,6 +90,7 @@ func leave(error_message := "") -> void:
 	_greeted.clear()
 	Settings.set_window_title()
 	LanDiscovery.stop_broadcasting()
+	close_to_internet()
 	if multiplayer.has_multiplayer_peer():
 		multiplayer.multiplayer_peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
@@ -141,3 +160,96 @@ func peer_disconnected(id: int) -> void:
 	if multiplayer.is_server():
 		_greeted.erase(id)
 		PlayersManager.remove_player(id)
+
+# --- Internet (UPnP) -----------------------------------------------------------
+
+## Host only: ask the router to send the game's port to this PC. It takes a
+## couple of seconds, so it runs apart; internet_changed says how it went
+func open_to_internet() -> void:
+	if not is_hosting or internet == Internet.TRYING or internet == Internet.OPEN:
+		return
+	_set_internet(Internet.TRYING)
+	_join_upnp_thread()
+	_upnp_attempt += 1
+	_upnp_thread = Thread.new()
+	_upnp_thread.start(_open_port.bind(port, _upnp_attempt))
+
+## Gives the port back to the router (leaving the game, or closing it)
+func close_to_internet() -> void:
+	# Still trying: its answer will find the game gone and close the port itself
+	_upnp_attempt += 1
+	if internet == Internet.OPEN and _upnp:
+		_join_upnp_thread()
+		_upnp_thread = Thread.new()
+		_upnp_thread.start(_close_port.bind(_upnp, port))
+	_upnp = null
+	_set_internet(Internet.OFF)
+
+# In a thread: finding the router and talking to it blocks
+func _open_port(game_port: int, attempt: int) -> void:
+	var upnp = UPNP.new()
+	var note = ""
+	var ip = ""
+	if upnp.discover(2000, 2, "InternetGatewayDevice") != UPNP.UPNP_RESULT_SUCCESS \
+			or upnp.get_gateway() == null or not upnp.get_gateway().is_valid_gateway():
+		note = "No encontré un router que deje abrir puertos (UPnP apagado)"
+	else:
+		# Some routers only take mappings that never expire
+		var result = upnp.add_port_mapping(game_port, game_port, Settings.GAME_TITLE, "UDP", PORT_LEASE_SECONDS)
+		if result != UPNP.UPNP_RESULT_SUCCESS:
+			result = upnp.add_port_mapping(game_port, game_port, Settings.GAME_TITLE, "UDP", 0)
+		if result != UPNP.UPNP_RESULT_SUCCESS:
+			note = "El router no dejó abrir el puerto %d" % game_port
+		else:
+			ip = upnp.query_external_address()
+			if not ip.is_valid_ip_address():
+				ip = ""
+				note = "El puerto se abrió, pero el router no dice tu IP pública: buscá \"cuál es mi IP\""
+			elif is_private_ip(ip):
+				note = "Tu proveedor comparte la IP entre clientes: desde afuera no van a poder entrar (usá Tailscale)"
+	_port_opened.call_deferred(upnp, ip, note, game_port, attempt)
+
+func _port_opened(upnp: UPNP, ip: String, note: String, game_port: int, attempt: int) -> void:
+	_join_upnp_thread()
+	var opened = ip != "" or note.begins_with("El puerto se abrió")
+	# Left the game (or stopped hosting) while it was trying
+	if attempt != _upnp_attempt or internet != Internet.TRYING:
+		if opened:
+			_upnp_thread = Thread.new()
+			_upnp_thread.start(_close_port.bind(upnp, game_port))
+		return
+	_upnp = upnp if opened else null
+	public_ip = ip
+	internet_note = note
+	_set_internet(Internet.OPEN if opened else Internet.FAILED)
+
+func _close_port(upnp: UPNP, game_port: int) -> void:
+	upnp.delete_port_mapping(game_port, "UDP")
+
+func _set_internet(value: Internet) -> void:
+	if value != Internet.OPEN:
+		public_ip = ""
+	if value == Internet.OFF or value == Internet.TRYING:
+		internet_note = ""
+	if value != internet:
+		internet = value
+		internet_changed.emit()
+
+func _join_upnp_thread() -> void:
+	if _upnp_thread and _upnp_thread.is_started():
+		_upnp_thread.wait_to_finish()
+	_upnp_thread = null
+
+func _exit_tree() -> void:
+	close_to_internet()
+	_join_upnp_thread()
+
+## Addresses that only work inside a network (home, or the provider's own)
+static func is_private_ip(ip: String) -> bool:
+	var parts = ip.split(".")
+	if parts.size() != 4:
+		return false
+	var a = parts[0].to_int()
+	var b = parts[1].to_int()
+	return a == 10 or a == 127 or (a == 192 and b == 168) or (a == 172 and b >= 16 and b <= 31) \
+		or (a == 100 and b >= 64 and b <= 127) or (a == 169 and b == 254)

@@ -76,6 +76,12 @@ size_flags_horizontal = 3
 autowrap_mode = 3
 text = "Compartí tu IP"
 
+[node name="InternetButton" type="Button" parent="Panel/Margin/VBox/AddressRow"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Le pide al router que abra el puerto del juego (UPnP), para que entren desde otra casa con tu IP pública. Se cierra al salir de la partida"
+text = "Abrir a internet"
+
 [node name="CopyButton" type="Button" parent="Panel/Margin/VBox/AddressRow"]
 unique_name_in_owner = true
 layout_mode = 2

@@ -9,7 +9,7 @@ campeonato gana quien juntó más puntos. Los lugares libres se pueden completar
 | Acción | Teclado | Gamepad |
 |---|---|---|
 | Moverse | A / D o flechas | Cruceta o stick izquierdo |
-| Saltar | Espacio o flecha arriba | Botón de abajo (A / ✕) |
+| Saltar (un toque: salto corto; mantener: salto largo) | Espacio o flecha arriba | Botón de abajo (A / ✕) |
 | Usar el poder | E | Botón de la izquierda (X / ☐) |
 | Pausa | Esc | Start |
 | Ver el campeonato | Tab (mantener) | |
@@ -31,11 +31,13 @@ Quien arma la partida toca **Crear partida** y elige las reglas y los niveles en
 - **Por internet:** los demás escriben la IP del host en "O escribí la IP del host". Dos formas de que esa IP funcione:
   - *Red privada virtual (lo más simple):* todos instalan [Tailscale](https://tailscale.com) (o ZeroTier / Radmin VPN),
     entran a la misma red y usan la IP que muestra el programa (en Tailscale empieza con `100.`).
-  - *Abrir el puerto:* en el router del host, redirigir el puerto **8080 UDP** a su PC y pasarles su IP pública.
-    No funciona si el proveedor de internet comparte la IP entre clientes (CGNAT).
+  - *Abrir el puerto:* el host toca **Abrir a internet** en la sala: el juego le pide al router que abra el
+    puerto (UPnP) y muestra la IP pública para pasarles. Se cierra al salir de la partida. Si el router no lo
+    permite, se puede redirigir a mano el puerto **8080 UDP** a la PC del host.
+    No funciona si el proveedor de internet comparte la IP entre clientes (CGNAT): el juego avisa.
 
 Todos tienen que tener **la misma versión** del juego (se ve arriba a la derecha en el menú,
-por ejemplo `v2.2f79362e`). Si no coincide, el juego avisa y no deja entrar.
+por ejemplo `v3.2f79362e`). Si no coincide, el juego avisa y no deja entrar.
 
 ## Exportar para Windows
 
