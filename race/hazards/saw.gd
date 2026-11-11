@@ -2,7 +2,8 @@
 class_name Saw extends KillZone
 
 ## Spinning saw that goes back and forth between its start and start + travel.
-## The server moves it and the MultiplayerSynchronizer copies the position.
+## Its position comes from the race clock (like the moving platforms), so it's
+## in the same place on every screen without syncing.
 
 @export var travel := Vector2(128, 0):
 	set(value):
@@ -16,7 +17,6 @@ class_name Saw extends KillZone
 		queue_redraw()
 
 var _origin: Vector2
-var _time := 0.0
 
 func _ready() -> void:
 	_origin = position
@@ -27,18 +27,19 @@ func _ready() -> void:
 		collision.shape = shape
 	super()
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	queue_redraw()
-	if Engine.is_editor_hint() or not is_multiplayer_authority():
+	if Engine.is_editor_hint():
 		return
-	_time += delta
-	var t = 0.5 - 0.5 * cos(TAU * _time / period)
-	position = _origin + travel * t
+	position = _origin + travel * _along(RaceManager.race_time())
 
-## Server: where the saw will be in `seconds` (bots use it to time their jumps)
+# 0..1..0 along its trip at race time t
+func _along(t: float) -> float:
+	return 0.5 - 0.5 * cos(TAU * t / period)
+
+## Where the saw will be in `seconds` (bots use it to time their jumps)
 func global_position_in(seconds: float) -> Vector2:
-	var t = 0.5 - 0.5 * cos(TAU * (_time + seconds) / period)
-	return get_parent().to_global(_origin + travel * t)
+	return get_parent().to_global(_origin + travel * _along(RaceManager.race_time() + seconds))
 
 func _draw() -> void:
 	if Engine.is_editor_hint():

@@ -41,12 +41,21 @@ func _ready() -> void:
 	games_list.item_activated.connect(func(_index): _join_selected())
 	LanDiscovery.games_changed.connect(_refresh_games)
 
-	ip_edit.text = NetworkManager.join_address
+	ip_edit.text = NetworkManager.join_address if NetworkManager.join_address != "" else Settings.last_address
 	error_label.text = NetworkManager.last_error
 	NetworkManager.last_error = ""
 	_show_start_screen()
 	_build_scenery()
 	_refresh_footer()
+	# Which build this is, in a corner: host and guests need the same one
+	var version = Label.new()
+	version.text = "v" + NetworkManager.version()
+	version.add_theme_font_size_override("font_size", 6)
+	version.modulate = Color(1, 1, 1, 0.55)
+	version.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	version.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	version.position += Vector2(-4, 2)
+	add_child(version)
 
 func _unhandled_input(event: InputEvent) -> void:
 	var key = event as InputEventKey
@@ -102,13 +111,16 @@ func _refresh_games() -> void:
 	for ip in LanDiscovery.games:
 		var game = LanDiscovery.games[ip]
 		var full = game.players >= game.max_players
-		var state = "llena" if full else ("en carrera" if game.started else "esperando")
+		# A game from another build of the game can't be joined
+		var other_version = game.get("version", "") != NetworkManager.version()
+		var state = "otra versión del juego" if other_version else \
+			("llena" if full else ("en carrera" if game.started else "esperando"))
 		var host = (" · host: %s" % game.host) if game.get("host", "") != "" else ""
 		var text = "%s  (%d/%d, %s%s)  —  %s" % [game.name, game.players, game.max_players, state, host, ip]
 		var index = games_list.add_item(text)
-		games_list.set_item_disabled(index, full)
+		games_list.set_item_disabled(index, full or other_version)
 		_list_ips.append(ip)
-		if ip == selected_ip and not full:
+		if ip == selected_ip and not full and not other_version:
 			games_list.select(index)
 	if not _list_ips.is_empty():
 		discovery_label.text = "Partidas encontradas en tu red:"

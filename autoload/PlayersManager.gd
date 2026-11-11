@@ -70,6 +70,18 @@ func set_playlist(level_indices: Array) -> void:
 		settings["levels"] = level_indices
 		_sync_settings.rpc(settings)
 
+## Host only: the rules of the last game hosted (see Settings.host_rules).
+## Anything it doesn't say, or says wrong, stays as it is
+func set_rules(rules: Dictionary) -> void:
+	if not multiplayer.is_server():
+		return
+	for key in ["coins", "checkpoints", "bots", "items"]:
+		if rules.get(key) is bool:
+			settings[key] = rules[key]
+	if rules.get("levels") is Array:
+		settings["levels"] = rules["levels"].filter(func(i): return i is int or i is float).map(func(i): return int(i))
+	_sync_settings.rpc(settings)
+
 ## Host only
 func set_checkpoints_enabled(enabled: bool) -> void:
 	if multiplayer.is_server():

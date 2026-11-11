@@ -7,6 +7,7 @@ class_name PauseMenu extends CanvasLayer
 @onready var note: Label = %Note
 @onready var resume_button: Button = %ResumeButton
 @onready var options_button: Button = %OptionsButton
+@onready var lobby_button: Button = %LobbyButton
 @onready var leave_button: Button = %LeaveButton
 @onready var settings_menu: SettingsMenu = %SettingsMenu
 
@@ -19,6 +20,10 @@ func _ready() -> void:
 		main.visible = false
 		_back_to_pause = true
 		settings_menu.open())
+	# Host only: stop the championship and take everyone back to the lobby
+	lobby_button.pressed.connect(func():
+		close()
+		get_parent().return_to_lobby())
 	leave_button.pressed.connect(func():
 		close()
 		NetworkManager.leave())
@@ -42,6 +47,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func open() -> void:
 	var racing = is_instance_valid(RaceManager.current_level)
 	note.visible = racing
+	lobby_button.visible = NetworkManager.is_hosting and PlayersManager.game_started
 	leave_button.text = "Terminar la partida" if NetworkManager.is_hosting else "Salir de la partida"
 	leave_button.tooltip_text = "Se termina para todos" if NetworkManager.is_hosting else ""
 	main.visible = true

@@ -87,6 +87,15 @@ text = "Opciones"
 script = ExtResource("cartoon_button")
 color = Color(0.67, 0.5, 0.95, 1)
 
+[node name="LobbyButton" type="Button" parent="Main/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Corta el campeonato: todos vuelven a la sala, sin desconectarse"
+text = "Volver a la sala"
+script = ExtResource("cartoon_button")
+color = Color(1, 0.72, 0.3, 1)
+
 [node name="LeaveButton" type="Button" parent="Main/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2

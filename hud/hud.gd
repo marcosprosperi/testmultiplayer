@@ -10,6 +10,9 @@ var _toast_left := 0.0
 var _flash: ColorRect
 var _badge: PlaceBadge
 var _flags_level: Node
+# "Termina en 0:45", once the race has a time limit
+var _deadline: Label
+var _last_tick := -1
 
 func _ready() -> void:
 	RaceManager.trap_triggered.connect(_on_trap_triggered)
@@ -25,6 +28,13 @@ func _ready() -> void:
 	_badge.size = Vector2(200, 50)
 	add_child(_badge)
 	position_label.visible = false
+	_deadline = Label.new()
+	_deadline.position = Vector2(8, 9)
+	_deadline.add_theme_font_size_override("font_size", 9)
+	_deadline.add_theme_stylebox_override("normal", pill())
+	_deadline.add_theme_color_override("font_outline_color", Color(0.17, 0.11, 0.23))
+	_deadline.visible = false
+	add_child(_deadline)
 	# White flash when someone's lightning hits you
 	_flash = ColorRect.new()
 	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -72,6 +82,22 @@ func _process(delta: float) -> void:
 	_update_track_flags()
 	race_track.entries = _track_entries()
 	_update_position_label(ranking)
+	_update_deadline()
+
+# How long the ones still running have left (red and ticking at the end)
+func _update_deadline() -> void:
+	var left = RaceManager.time_left()
+	_deadline.visible = left != INF
+	if not _deadline.visible:
+		_last_tick = -1
+		return
+	var seconds = ceili(left)
+	_deadline.text = "Termina en %d:%02d" % [floori(seconds / 60.0), seconds % 60]
+	var hurry = seconds <= 10
+	_deadline.add_theme_color_override("font_color", Color("#ff7675") if hurry else Color.WHITE)
+	if hurry and seconds != _last_tick and seconds > 0 and _last_tick != -1:
+		Sfx.play("beep", -10.0)
+	_last_tick = seconds
 
 ## Dark rounded tag behind on-screen messages, so they read on any background
 static func pill() -> StyleBoxFlat:

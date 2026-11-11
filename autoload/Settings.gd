@@ -6,6 +6,7 @@ extends Node
 signal changed
 
 const PATH = "user://settings.cfg"
+const GAME_TITLE = "Carreras Locas"
 const WINDOW_SIZES = [Vector2i(960, 540), Vector2i(1440, 810), Vector2i(1920, 1080)]
 ## Audio buses (see default_bus_layout.tres) and their names in the menu
 const VOLUMES = {"Master": "General", "Music": "Música", "SFX": "Efectos"}
@@ -22,6 +23,11 @@ var show_fps := false
 var volumes = {"Master": 0.2, "Music": 0.6, "SFX": 0.8}
 var player_name := ""
 var player_color := -1
+## The rules of the last game you hosted (see PlayersManager.settings), so
+## the lobby starts with them next time
+var host_rules := {}
+## The last game you joined by typing its address
+var last_address := ""
 ## True while a menu is open over the race: your player ignores the keyboard
 var menu_open := false
 
@@ -33,6 +39,7 @@ func _ready() -> void:
 	for action in KEY_ACTIONS:
 		_default_keys[action] = key_of(action)
 	_load()
+	set_window_title()
 	_apply_display()
 	for bus in volumes:
 		_apply_volume(bus)
@@ -72,6 +79,11 @@ func set_vsync(value: bool) -> void:
 func set_show_fps(value: bool) -> void:
 	show_fps = value
 	save()
+
+## The game's name on the window (and who hosts, to tell two windows apart)
+func set_window_title(note := "") -> void:
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_title(GAME_TITLE + (" (%s)" % note if note != "" else ""))
 
 func _apply_display() -> void:
 	if DisplayServer.get_name() == "headless":
@@ -166,6 +178,15 @@ func set_profile(new_name: String, color: int) -> void:
 	player_color = color
 	save()
 
+func set_host_rules(rules: Dictionary) -> void:
+	host_rules = rules.duplicate(true)
+	save()
+
+func set_last_address(address: String) -> void:
+	if address != last_address:
+		last_address = address
+		save()
+
 # --- File --------------------------------------------------------------------
 
 func save() -> void:
@@ -180,6 +201,8 @@ func save() -> void:
 		config.set_value("keys", action, key_of(action))
 	config.set_value("player", "name", player_name)
 	config.set_value("player", "color", player_color)
+	config.set_value("host", "rules", host_rules)
+	config.set_value("join", "address", last_address)
 	config.save(PATH)
 	changed.emit()
 
@@ -199,6 +222,9 @@ func _load() -> void:
 			_set_main_key(action, physical)
 	player_name = config.get_value("player", "name", player_name)
 	player_color = config.get_value("player", "color", player_color)
+	var rules = config.get_value("host", "rules", {})
+	host_rules = rules if rules is Dictionary else {}
+	last_address = str(config.get_value("join", "address", ""))
 
 # --- Little things -----------------------------------------------------------
 

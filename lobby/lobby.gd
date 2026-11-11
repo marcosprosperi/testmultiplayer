@@ -83,7 +83,10 @@ func _ready() -> void:
 		var shuffled = _playlist().duplicate()
 		shuffled.shuffle()
 		PlayersManager.set_playlist(shuffled))
-	if NetworkManager.is_hosting and PlayersManager.get_playlist().is_empty():
+	# Same rules and levels as the last game you hosted
+	if NetworkManager.is_hosting and not PlayersManager.game_started:
+		PlayersManager.set_rules(Settings.host_rules)
+	if NetworkManager.is_hosting and _playlist_is_default():
 		PlayersManager.set_playlist(main.default_playlist())
 	PlayersManager.players_changed.connect(_refresh)
 	PlayersManager.profile_result.connect(_on_profile_result)
@@ -115,7 +118,7 @@ func _refresh() -> void:
 		game_name_edit.placeholder_text = "Partida de %s" % my_name if my_name != "" else "Ej: Carrera de los viernes"
 		var ips = NetworkManager.get_local_ips()
 		var ip_text = ", ".join(ips) if not ips.is_empty() else "127.0.0.1"
-		address_label.text = "Compartí tu IP: %s  (puerto %d)" % [ip_text, NetworkManager.PORT]
+		address_label.text = "Compartí tu IP: %s  (puerto %d)" % [ip_text, NetworkManager.port]
 	elif connected:
 		title.text = PlayersManager.game_display_name()
 		var state = "Carrera en curso" if PlayersManager.game_started else "Sala de espera"
@@ -194,6 +197,10 @@ func _add_faded_row(text: String) -> void:
 	players_list.add_child(row)
 
 # --- Levels ------------------------------------------------------------------
+
+# Nothing (valid) chosen yet
+func _playlist_is_default() -> bool:
+	return PlayersManager.get_playlist().filter(func(i): return i >= 0 and i < main.levels.size()).is_empty()
 
 func _playlist() -> Array:
 	var chosen = PlayersManager.get_playlist().filter(func(i): return i >= 0 and i < main.levels.size())
