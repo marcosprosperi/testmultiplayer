@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/enemies/mace.gd" id="1_mace"]
+
+[sub_resource type="CircleShape2D" id="Shape_mace"]
+radius = 8.5
+
+[node name="Mace" type="Area2D"]
+script = ExtResource("1_mace")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -8)
+shape = SubResource("Shape_mace")

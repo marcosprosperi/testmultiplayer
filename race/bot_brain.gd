@@ -282,8 +282,8 @@ func _hazard_ahead(dir: float) -> bool:
 		var d = (b.global_position.x - pos.x) * dir
 		if d > 0 and d < 110 and absf(b.global_position.y - pos.y) < 40: return true
 	for e in player.get_tree().get_nodes_in_group("enemy"):
-		# Ghosts and bees: wait for them (_enemy_on_path); fireballs: timed gap jumps
-		if not e.is_alive() or e is Ghost or e is Bee or e is Fireball: continue
+		# Ghosts, bees, sparks...: wait for them (_enemy_on_path); fireballs: timed gap jumps
+		if not e.is_alive() or e.wait_for_it or e is Fireball: continue
 		if e is Bat and pos.y - e.global_position.y > 30: continue
 		var reach = e.warning_distance if e.warning_distance > 0 else (60.0 if not e.stompable else 44.0)
 		var d = (e.global_position.x - pos.x) * dir
@@ -333,13 +333,13 @@ func _enemies_near(distance: float) -> Array:
 	return player.get_tree().get_nodes_in_group("enemy").filter(func(e): return e.is_alive() \
 		and not e is Fireball and absf(e.global_position.x - pos.x) < distance and absf(e.global_position.y - pos.y) < 120)
 
-# A ghost or a bee will be where we're about to run: wait until it isn't
+# A ghost, a bee, a spark... will be where we're about to run: wait until it isn't
 func _enemy_on_path(dir: float) -> bool:
 	var pos = player.global_position
 	var now = RaceManager.race_time()
 	var speed = Player.SPEED * _pace
 	for e in player.get_tree().get_nodes_in_group("enemy"):
-		if not (e is Ghost or e is Bee):
+		if not e.wait_for_it:
 			continue
 		var d = (e.global_position.x - pos.x) * dir
 		if d < -24 or d > 110:

@@ -295,6 +295,29 @@ class LevelBuilder:
                 patrol = self.rnd.randint(6, 9) * T
                 self.node("Penguin", "penguin", self.px(cx), self.row * T, travel=f"Vector2({patrol}, 0)",
                           speed=round(self.rnd.uniform(85, 100)), phase=round(self.rnd.random(), 2))
+            elif kind == "diamond":
+                # Bounces diagonally in a box over the floor: pass under it
+                # when it's high, or jump it when it's low
+                patrol = self.rnd.randint(5, 7) * T
+                self.node("Diamond", "diamond", self.px(cx), self.row * T, travel=f"Vector2({patrol}, {-self.rnd.choice([40, 48, 56])})",
+                          speed=round(self.rnd.uniform(60, 75)), phase=round(self.rnd.random(), 2))
+            elif kind == "hawk":
+                # Zigzags down to head height and back up while it patrols
+                patrol = self.rnd.randint(6, 9) * T
+                self.node("Hawk", "hawk", self.px(cx), self.row * T - 10, travel=f"Vector2({patrol}, 0)",
+                          speed=55.0, phase=round(self.rnd.random(), 2), dive=40.0, zig=40.0)
+            elif kind == "spark":
+                # Runs around a diamond-shaped track that touches the floor
+                radius = self.rnd.choice([28, 32, 36])
+                self.node("Spark", "spark", self.px(cx) + radius, self.row * T - radius - 1, travel=f"Vector2({radius}, 0)",
+                          speed=round(self.rnd.uniform(55, 70)), phase=round(self.rnd.random(), 2))
+                patrol = radius * 2
+            elif kind == "mace":
+                # Swings from the ceiling (stone levels), skimming the floor
+                patrol = 12 * T
+                self.node("Mace", "mace", self.px(cx + 6) + 8, (self.row - CEILING_GAP + 1) * T,
+                          travel=f"Vector2({(CEILING_GAP - 1) * T - 12}, 0)", swing=round(self.rnd.uniform(0.8, 1.0), 2),
+                          period=round(self.rnd.uniform(2.2, 2.8), 1), phase=round(self.rnd.random(), 2))
             else:
                 scene = "slime" if kind == "slime" else "spiky"
                 self.node(kind.capitalize(), scene, self.px(cx), self.row * T, travel=f"Vector2({patrol}, 0)",
@@ -631,6 +654,10 @@ color = {rnd.choice(colors)}''')
             "bee": "res://race/enemies/bee.tscn",
             "fireball": "res://race/enemies/fireball.tscn",
             "penguin": "res://race/enemies/penguin.tscn",
+            "diamond": "res://race/enemies/diamond.tscn",
+            "hawk": "res://race/enemies/hawk.tscn",
+            "spark": "res://race/enemies/spark.tscn",
+            "mace": "res://race/enemies/mace.tscn",
             "ice": "res://race/hazards/ice_zone.tscn",
             "item_box": "res://race/powerups/item_box.tscn",
             "torch": "res://race/decor/torch.tscn",

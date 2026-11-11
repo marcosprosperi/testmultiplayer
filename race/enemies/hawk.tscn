@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://race/enemies/hawk.gd" id="1_hawk"]
+
+[sub_resource type="RectangleShape2D" id="Shape_hawk"]
+size = Vector2(12, 8)
+
+[node name="Hawk" type="Area2D"]
+script = ExtResource("1_hawk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -5)
+shape = SubResource("Shape_hawk")

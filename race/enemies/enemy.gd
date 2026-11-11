@@ -25,6 +25,9 @@ var body_height := 10.0
 var facing := 1
 ## Bots jump over it when it's this close (0: the usual distance)
 var warning_distance := 0.0
+## Moves around freely (circles, zigzags, swings): bots wait for it to be
+## out of the way instead of jumping over it
+var wait_for_it := false
 ## For enemies that turn harmless now and then (ghosts, fireballs): also
 ## catch players already inside when it turns dangerous again
 var poll_overlaps := false
