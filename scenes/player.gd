@@ -22,6 +22,8 @@ const UNSNAG_WIDTH = 9.0
 const LOOK_AHEAD = 70.0
 ## Seconds you stay "gone" (a poof) after losing, before coming back
 const DEATH_TIME = 0.45
+## Seconds nothing can hurt you after coming back (you blink meanwhile)
+const RESPAWN_SAFE_TIME = 1.0
 ## On ice you speed up and slow down slowly (pixels per second²)
 const ICE_ACCEL = 650.0
 const ICE_FRICTION = 260.0
@@ -64,6 +66,8 @@ var _stun_left := 0.0
 var _jump_buffer_left := 0.0
 # Rising from a jump of your own that letting go of the key can still cut
 var _can_cut_jump := false
+# With the Alas power-up: a jump in the air, once until you touch the floor
+var _air_jump_ready := false
 
 func _enter_tree():
 	# Set authority based on the node name (which is now just the ID); bots
@@ -149,7 +153,13 @@ func _physics_process(delta: float) -> void:
 	else:
 		_jump_buffer_left -= delta
 
-	if _jump_buffer_left > 0.0 and _coyote_left > 0.0 and not frozen:
+	if is_on_floor():
+		_air_jump_ready = true
+	var air_jump = _coyote_left <= 0.0 and _air_jump_ready and RaceManager.has_effect(name.to_int(), "wings")
+	if _jump_buffer_left > 0.0 and (_coyote_left > 0.0 or air_jump) and not frozen:
+		if _coyote_left <= 0.0:
+			_air_jump_ready = false
+			_show_fx.rpc(Fx.DUST, global_position)
 		velocity.y = JUMP_VELOCITY
 		_jump_buffer_left = 0.0
 		_coyote_left = 0.0
@@ -205,6 +215,7 @@ func _physics_process(delta: float) -> void:
 
 # Someone else's player: glide to where their screen says they are
 func _follow_net(delta: float) -> void:
+	_stun_left = maxf(_stun_left - delta, 0.0)
 	if not _net_known:
 		return
 	if position.distance_to(net_position) > NET_SNAP_DISTANCE:
@@ -309,6 +320,22 @@ func slip() -> void:
 	_stun_left = PowerUps.STUN_TIME
 	velocity.x = 0.0
 	Sfx.play_at("slip", global_position)
+	_show_stun.rpc()
+
+# The other screens see the stars spinning over your head too
+@rpc("authority", "call_remote", "reliable")
+func _show_stun() -> void:
+	_stun_left = PowerUps.STUN_TIME
+
+## A rocket got you: a shield takes it, a star doesn't even notice
+func rocket_hit() -> void:
+	if not is_multiplayer_authority() or RaceManager.has_effect(name.to_int(), "star"):
+		return
+	if RaceManager.has_effect(name.to_int(), "shield"):
+		RaceManager.break_shield(name.to_int())
+		Sfx.play_at("shield_break", global_position)
+		return
+	slip()
 
 # Sliding down a wall, the box can catch on the corner where two blocks
 # meet and take it for floor. With nothing really under your feet, step a
@@ -374,6 +401,8 @@ func die(pit := false) -> void:
 		return
 	respawn()
 	_dying = false
+	# A moment to get going before anything can get you again
+	_safe_left = RESPAWN_SAFE_TIME
 	_set_gone.rpc(false)
 	_show_fx.rpc(Fx.SPARKLE, global_position + Vector2(0, -8))
 	if _fade:
@@ -429,6 +458,11 @@ func _draw_effects() -> void:
 	if RaceManager.has_effect(id, "shield"):
 		draw_circle(Vector2(0, -8), 13.0, Color(0.45, 0.8, 1.0, 0.18))
 		draw_arc(Vector2(0, -8), 13.0, 0, TAU, 24, Color(0.5, 0.85, 1.0, 0.8), 1.0)
+	if RaceManager.has_effect(id, "wings"):
+		var flap = sin(t * 14.0) * 3.0
+		for side in [-1.0, 1.0]:
+			draw_colored_polygon(PackedVector2Array([Vector2(side * 4, -10), Vector2(side * 13, -15 - flap),
+				Vector2(side * 11, -8)]), Color(0.96, 0.97, 1.0, 0.9))
 	if RaceManager.has_effect(id, "turbo"):
 		var back = -signf(animated_sprite_2d.scale.x)
 		for i in 3:

@@ -35,6 +35,7 @@ func _ready() -> void:
 	_deadline.add_theme_color_override("font_outline_color", Color(0.17, 0.11, 0.23))
 	_deadline.visible = false
 	add_child(_deadline)
+	add_child(InkSplats.new())
 	# White flash when someone's lightning hits you
 	_flash = ColorRect.new()
 	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -45,7 +46,8 @@ func _ready() -> void:
 func _on_item_used(id: int, item: String) -> void:
 	var me = multiplayer.get_unique_id()
 	var sounds = {PowerUps.TURBO: "turbo", PowerUps.STAR: "star", PowerUps.SHIELD: "item_box",
-		PowerUps.LIGHTNING: "zap", PowerUps.PORTAL: "portal", PowerUps.PEEL: "click"}
+		PowerUps.LIGHTNING: "zap", PowerUps.PORTAL: "portal", PowerUps.PEEL: "click",
+		PowerUps.WINGS: "portal", PowerUps.ROCKET: "cannon", PowerUps.INK: "slip"}
 	if item == PowerUps.LIGHTNING:
 		# Everyone hears the thunder; the ones it hit see the flash
 		Sfx.play(sounds[item])
@@ -55,7 +57,9 @@ func _on_item_used(id: int, item: String) -> void:
 	elif id == me:
 		Sfx.play(sounds[item])
 	# Only the big ones are announced to everybody
-	if id == me or item in [PowerUps.LIGHTNING, PowerUps.STAR, PowerUps.PORTAL]:
+	if item == PowerUps.INK and RaceManager.has_effect(me, "ink"):
+		Sfx.play("slip")
+	if id == me or item in [PowerUps.LIGHTNING, PowerUps.STAR, PowerUps.PORTAL, PowerUps.INK]:
 		var who = "¡Usaste" if id == me else "¡%s usó" % PlayersManager.name_of(id)
 		toast.text = "%s %s! (%s)" % [who, PowerUps.NAMES[item], PowerUps.HINTS[item]]
 		toast.add_theme_color_override("font_color", PlayersManager.color_of(id))

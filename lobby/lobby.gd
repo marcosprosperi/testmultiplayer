@@ -244,7 +244,7 @@ func _refresh_level_rows() -> void:
 func _make_level_card(index: int) -> Button:
 	var info = main.levels[index]
 	var card = Button.new()
-	card.custom_minimum_size = Vector2(100, 54)
+	card.custom_minimum_size = Vector2(86, 54)
 	card.focus_mode = Control.FOCUS_NONE
 	card.tooltip_text = "%s · %s" % [info.title, DIFFICULTY_TEXT[info.difficulty]]
 	card.pressed.connect(_on_level_card_pressed.bind(index))
@@ -265,12 +265,12 @@ func _make_level_card(index: int) -> Button:
 	var title = Label.new()
 	title.text = info.title
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 9)
+	title.add_theme_font_size_override("font_size", 8)
 	title.add_theme_color_override("font_color", Color.WHITE)
 	row.add_child(title)
 	var difficulty = Label.new()
 	difficulty.text = DIFFICULTY_TEXT[info.difficulty]
-	difficulty.add_theme_font_size_override("font_size", 8)
+	difficulty.add_theme_font_size_override("font_size", 7)
 	difficulty.add_theme_color_override("font_color", DIFFICULTY_COLOR[info.difficulty])
 	row.add_child(difficulty)
 	var badge = Label.new()

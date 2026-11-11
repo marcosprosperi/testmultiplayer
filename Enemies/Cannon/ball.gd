@@ -27,8 +27,12 @@ func _on_life_timer_timeout():
 
 func _on_body_entered(body: Node2D) -> void:
 	# The hit player's own peer sends it back to the start
-	if body is Player and body.is_multiplayer_authority():
-		body.die()
+	if body is Player:
+		if body.is_multiplayer_authority():
+			body.die()
+		# It flies on through players: each screen sees them a little apart,
+		# and a ball stopping on one could vanish before reaching you on another
+		return
 	if !is_multiplayer_authority():
 		return
 	# Despawning on the server also removes the ball on the clients
