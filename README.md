@@ -17,7 +17,7 @@ campeonato gana quien juntó más puntos. Los lugares libres se pueden completar
 
 Las teclas se pueden cambiar en **Opciones → Controles**.
 
-- **Monedas:** cada una suma 1 punto al final de la carrera, pero te hace un poco más lento.
+- **Monedas:** cada una suma 1 punto al final de la carrera, pero te hace correr un poco más lento (saltás igual de lejos).
 - **Poderes:** se consiguen en las cajas "?". Cuanto más atrás vas, mejores salen.
 - **Banderas:** si perdés, volvés a la última bandera que tocaste.
 - **Límite de tiempo:** cuando llega la primera persona, el resto tiene 2 minutos
