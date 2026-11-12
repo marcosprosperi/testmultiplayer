@@ -5,7 +5,7 @@ const MAX_PLAYERS = 8
 ## Bump it when a change makes this build unable to play with older ones
 ## (rules, power-ups, network messages...). Changed levels are noticed by
 ## themselves (LevelsVersion). Host and guests must have the same version()
-const GAME_VERSION = 4
+const GAME_VERSION = 5
 ## Guests that never say which version they have (older builds) are let go
 const HELLO_TIMEOUT = 5.0
 

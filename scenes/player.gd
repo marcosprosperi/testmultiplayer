@@ -155,7 +155,9 @@ func _physics_process(delta: float) -> void:
 
 	if is_on_floor():
 		_air_jump_ready = true
-	var air_jump = _coyote_left <= 0.0 and _air_jump_ready and RaceManager.has_effect(name.to_int(), "wings")
+	# (bots plan one jump at a time: a second one in the air would throw them off)
+	var air_jump = _coyote_left <= 0.0 and _air_jump_ready and brain == null \
+		and RaceManager.has_effect(name.to_int(), "wings")
 	if _jump_buffer_left > 0.0 and (_coyote_left > 0.0 or air_jump) and not frozen:
 		if _coyote_left <= 0.0:
 			_air_jump_ready = false
@@ -186,7 +188,7 @@ func _physics_process(delta: float) -> void:
 		
 	slipstream = not frozen and _is_in_slipstream(direction)
 	# Coins make you heavier (slower); the slipstream helps
-	var speed = SPEED * RaceManager.speed_factor(name.to_int())
+	var speed = SPEED * RaceManager.speed_factor(name.to_int(), is_on_floor())
 	if slipstream:
 		speed *= SLIPSTREAM_BOOST
 

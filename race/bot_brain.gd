@@ -214,7 +214,7 @@ func _floor_ahead(dir: float, dist := 12.0) -> bool:
 # Somewhere to land going forward at about the same height or lower
 func _landing(dir: float, max_dist := 190) -> Dictionary:
 	# Slower (lightning, coins) means shorter jumps, faster (turbo) longer ones
-	max_dist = int(max_dist * RaceManager.speed_factor(player.name.to_int()))
+	max_dist = int(max_dist * RaceManager.speed_factor(player.name.to_int(), false))
 	for d in range(30, max_dist, 6):
 		var from = player.global_position + Vector2(dir * d, -60)
 		# Inside a wall there's nowhere to land (only the seams between its blocks)
@@ -295,7 +295,7 @@ func _hazard_ahead(dir: float) -> bool:
 func _jump_is_safe(dir: float) -> bool:
 	var pos = player.global_position
 	var now = RaceManager.race_time()
-	var speed = Player.SPEED * RaceManager.speed_factor(player.name.to_int())
+	var speed = Player.SPEED * RaceManager.speed_factor(player.name.to_int(), false)
 	var gravity = player.get_gravity().y
 	var enemies = _enemies_near(320.0)
 	var t := 0.0
@@ -365,7 +365,7 @@ func _saw_in_gap_blocking(dir: float, landing_x: float) -> bool:
 		return false
 	var now = RaceManager.race_time()
 	_careful_jump = true
-	var speed = Player.SPEED * RaceManager.speed_factor(player.name.to_int())
+	var speed = Player.SPEED * RaceManager.speed_factor(player.name.to_int(), false)
 	var gravity = player.get_gravity().y
 	var t := 0.0
 	while t < 1.0:

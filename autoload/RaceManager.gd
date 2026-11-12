@@ -1,7 +1,8 @@
 extends Node
 
 ## Championship points by finishing position (1st, 2nd, ...)
-const POINTS = [10, 8, 6, 5, 4, 3, 2, 1]
+## (like F1: where you finish weighs more than the coins you picked up)
+const POINTS = [25, 18, 15, 12, 10, 8, 6, 4]
 ## Each coin is +1 point but makes you this much slower, up to MAX_SLOWDOWN
 const COIN_SLOWDOWN = 0.04
 const MAX_SLOWDOWN = 0.3
@@ -146,9 +147,11 @@ func coins_of(id: int) -> int:
 
 ## 1.0 = normal speed; each coin carried this race makes you slower, and
 ## power-ups make you faster (turbo, star) or slower (someone's lightning)
-func speed_factor(id: int) -> float:
+func speed_factor(id: int, on_floor := true) -> float:
 	var factor = 1.0
-	if PlayersManager.coins_enabled():
+	# Coins weigh on your running, not on your jumps: no pit gets too wide
+	# to cross because of them
+	if on_floor and PlayersManager.coins_enabled():
 		factor -= minf(coins_of(id) * COIN_SLOWDOWN, MAX_SLOWDOWN)
 	if has_effect(id, "turbo"):
 		factor *= PowerUps.TURBO_SPEED
